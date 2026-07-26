@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Dictionaries: From First Principles to Real Databases</title>
+<style>
+  :root{
+    --bg:#F7F9FB;
+    --card:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#51606E;
+    --border:#DEE6ED;
+    --blue:#2C5F8A;
+    --blue-dark:#1E4363;
+    --gold:#D98E2E;
+    --gold-soft:#FBF1DF;
+    --green:#1F8A5F;
+    --green-soft:#E7F5EE;
+    --red:#C0392B;
+    --red-soft:#FBEAE8;
+    --code-bg:#101A2B;
+    --code-text:#E7ECF3;
+    --tok-keyword:#F2A6C7;
+    --tok-string:#8FD6B0;
+    --tok-const:#F0B35E;
+    --tok-comment:#8393A6;
+    --tok-builtin:#7EC3E8;
+    --tok-number:#F0B35E;
+    --radius:12px;
+    --serif:Georgia,'Iowan Old Style','Palatino Linotype',serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --mono:Consolas,'SFMono-Regular',Menlo,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--blue-dark);}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:linear-gradient(180deg,#0F1B2E 0%,#16273F 100%);
+    color:#EDF2F7;
+    padding:44px 0 40px;
+    border-bottom:4px solid var(--gold);
+  }
+  .hero .eyebrow{
+    font-family:var(--mono);
+    font-size:13px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#9FC6E8;
+    margin:0 0 10px;
+  }
+  .hero h1{
+    font-family:var(--serif);
+    font-size:clamp(28px,4vw,40px);
+    line-height:1.15;
+    margin:0 0 12px;
+  }
+  .hero p.sub{
+    font-size:16px;
+    color:#C7D4E2;
+    max-width:640px;
+    margin:0 0 26px;
+  }
+  .hero-diagram{
+    background:#0B1524;
+    border:1px solid #23385A;
+    border-radius:var(--radius);
+    padding:22px 24px;
+    font-family:var(--mono);
+    font-size:clamp(15px,2.4vw,19px);
+    overflow-x:auto;
+  }
+  .hero-diagram .line{white-space:pre;}
+  .hero-diagram .hl-key{
+    background:rgba(242,166,199,.18);
+    color:var(--tok-keyword);
+    border-radius:4px;
+    padding:1px 3px;
+  }
+  .hero-diagram .hl-val{
+    background:rgba(143,214,176,.18);
+    color:var(--tok-string);
+    border-radius:4px;
+    padding:1px 3px;
+  }
+  .hero-labels{
+    display:flex;
+    gap:28px;
+    margin-top:10px;
+    font-family:var(--sans);
+    font-size:13px;
+  }
+  .hero-labels span{display:flex;align-items:center;gap:6px;color:#AEC2D6;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .dot.key{background:var(--tok-keyword);}
+  .dot.val{background:var(--tok-string);}
+
+  /* ---------- NAV ---------- */
+  .tabbar{
+    position:sticky;top:0;z-index:20;
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    box-shadow:0 2px 6px rgba(20,30,45,.04);
+  }
+  .tabbar-inner{
+    max-width:920px;margin:0 auto;padding:0 20px;
+    display:flex;gap:4px;overflow-x:auto;
+    -ms-overflow-style:none;scrollbar-width:none;
+  }
+  .tabbar-inner::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    appearance:none;border:none;background:transparent;
+    font-family:var(--sans);font-size:14px;font-weight:600;
+    color:var(--ink-soft);padding:14px 14px 12px;
+    white-space:nowrap;cursor:pointer;border-bottom:3px solid transparent;
+    transition:color .15s, border-color .15s;
+  }
+  .tab-btn:hover{color:var(--blue-dark);}
+  .tab-btn.active{color:var(--blue-dark);border-bottom-color:var(--gold);}
+  .tab-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+
+  /* ---------- LAYOUT / SECTIONS ---------- */
+  main{padding:34px 0 60px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .level-badge{
+    display:inline-block;font-family:var(--mono);font-size:12px;
+    letter-spacing:.06em;text-transform:uppercase;
+    background:var(--gold-soft);color:#8A5A0E;
+    padding:4px 10px;border-radius:999px;margin-bottom:10px;
+  }
+  h2.section-title{
+    font-family:var(--serif);font-size:28px;margin:0 0 6px;color:var(--blue-dark);
+  }
+  p.section-intro{color:var(--ink-soft);max-width:680px;margin:0 0 28px;}
+
+  .card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);padding:22px 24px;margin-bottom:22px;
+  }
+  .card h3{font-size:18px;margin:0 0 8px;color:var(--ink);}
+  .card p{margin:0 0 14px;color:var(--ink-soft);}
+  .card p:last-child{margin-bottom:0;}
+
+  /* ---------- CODE BLOCKS ---------- */
+  .code-block{margin:14px 0 18px;}
+  pre.code{
+    background:var(--code-bg);color:var(--code-text);
+    border-radius:10px;padding:16px 18px;overflow-x:auto;
+    font-family:var(--mono);font-size:13.5px;line-height:1.6;margin:0;
+  }
+  .tok-keyword{color:var(--tok-keyword);}
+  .tok-string{color:var(--tok-string);}
+  .tok-const{color:var(--tok-const);font-weight:600;}
+  .tok-comment{color:var(--tok-comment);font-style:italic;}
+  .tok-builtin{color:var(--tok-builtin);}
+  .tok-number{color:var(--tok-number);}
+
+  .reveal-btn{
+    appearance:none;border:1px solid var(--blue);background:#fff;color:var(--blue-dark);
+    font-family:var(--sans);font-size:13px;font-weight:600;
+    padding:7px 12px;border-radius:8px;cursor:pointer;margin-top:8px;
+  }
+  .reveal-btn:hover{background:var(--blue);color:#fff;}
+  .reveal-btn:focus-visible{outline:2px solid var(--blue-dark);outline-offset:2px;}
+  .output{
+    margin-top:8px;border-left:3px solid var(--green);
+    background:var(--green-soft);border-radius:0 8px 8px 0;
+    padding:10px 14px;font-family:var(--mono);font-size:13px;color:#155C3E;
+    white-space:pre-wrap;
+  }
+  .output.hidden{display:none;}
+  .output .label{
+    display:block;font-family:var(--sans);font-weight:700;font-size:11px;
+    text-transform:uppercase;letter-spacing:.05em;color:#1F8A5F;margin-bottom:4px;
+  }
+
+  .note{
+    border-left:3px solid var(--gold);background:var(--gold-soft);
+    padding:10px 14px;border-radius:0 8px 8px 0;font-size:14px;color:#7A5309;margin:14px 0;
+  }
+  .note strong{color:#5C3E06;}
+
+  /* ---------- PLAYGROUND ---------- */
+  .playground{
+    background:#0B1524;border:1px solid #23385A;border-radius:var(--radius);
+    padding:20px;color:#E7ECF3;
+  }
+  .playground h3{color:#fff;margin-top:0;}
+  .pg-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .pg-controls input{
+    font-family:var(--mono);font-size:13px;padding:8px 10px;border-radius:6px;
+    border:1px solid #2C4569;background:#132239;color:#E7ECF3;width:120px;
+  }
+  .pg-controls input::placeholder{color:#6E8199;}
+  .pg-controls button{
+    font-family:var(--sans);font-size:13px;font-weight:600;border:none;border-radius:6px;
+    padding:8px 14px;cursor:pointer;
+  }
+  .pg-add{background:var(--green);color:#fff;}
+  .pg-del{background:var(--red);color:#fff;}
+  .pg-clear{background:#3A4E6B;color:#fff;}
+  .pg-display{
+    font-family:var(--mono);font-size:14px;background:#0B1524;border:1px dashed #2C4569;
+    border-radius:8px;padding:14px;min-height:50px;white-space:pre-wrap;
+  }
+  .pg-log{font-family:var(--mono);font-size:12px;color:#8FA6C2;margin-top:10px;max-height:110px;overflow-y:auto;}
+  .pg-log div{padding:2px 0;}
+
+  /* ---------- QUIZ ---------- */
+  .quiz{margin-top:28px;}
+  .quiz-q{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px 20px;margin-bottom:14px;
+  }
+  .quiz-q p.q-text{font-weight:600;margin:0 0 12px;}
+  .quiz-options{display:flex;flex-direction:column;gap:8px;}
+  .quiz-option{
+    text-align:left;appearance:none;border:1px solid var(--border);background:#fff;
+    padding:9px 12px;border-radius:8px;font-family:var(--sans);font-size:14px;cursor:pointer;
+    color:var(--ink);
+  }
+  .quiz-option:hover{border-color:var(--blue);}
+  .quiz-option:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+  .quiz-option.correct{background:var(--green-soft);border-color:var(--green);color:#155C3E;font-weight:600;}
+  .quiz-option.incorrect{background:var(--red-soft);border-color:var(--red);color:#8C271B;}
+  .quiz-feedback{margin-top:10px;font-size:13.5px;color:var(--ink-soft);display:none;}
+  .quiz-feedback.show{display:block;}
+  .quiz-score{
+    font-family:var(--mono);font-size:13px;color:var(--ink-soft);margin-top:6px;
+  }
+
+  /* ---------- STEPPER (signature motif for DB section) ---------- */
+  .stepper{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    margin:0 0 30px;font-family:var(--mono);font-size:13px;color:var(--ink-soft);
+  }
+  .stepper .step{
+    padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;
+  }
+  .stepper .step.active{border-color:var(--blue);color:var(--blue-dark);background:#EAF2F8;font-weight:700;}
+  .stepper .arrow{color:var(--border);}
+
+  /* ---------- COMPARISON TABLE ---------- */
+  table.compare{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.compare th, table.compare td{
+    border:1px solid var(--border);padding:10px 12px;text-align:left;vertical-align:top;
+  }
+  table.compare th{background:#EFF4F8;color:var(--blue-dark);}
+  table.compare td.label{font-weight:700;background:#FAFBFC;}
+
+  footer{
+    border-top:1px solid var(--border);padding:24px 0 40px;color:var(--ink-soft);
+    font-size:13px;text-align:center;
+  }
+
+  @media (max-width:600px){
+    .hero{padding:32px 0 30px;}
+    .card{padding:18px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Python &middot; Data Structures</p>
+    <h1>Python Dictionaries: From First Principles to Real Databases</h1>
+    <p class="sub">A dictionary is Python's way of storing information as labeled pairs &mdash; and, as it turns out, it's also exactly how a JSON API response and a database row look once they land in your code. This tutorial builds that idea up from scratch.</p>
+    <div class="hero-diagram">
+      <div class="line">student = {<span class="hl-key">"name"</span>: <span class="hl-val">"Amara"</span>, <span class="hl-key">"major"</span>: <span class="hl-val">"Computer Science"</span>}</div>
+      <div class="hero-labels">
+        <span><i class="dot key"></i> key &mdash; the label you look things up by</span>
+        <span><i class="dot val"></i> value &mdash; the data stored under that label</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabbar" role="tablist" aria-label="Tutorial sections">
+  <div class="tabbar-inner">
+    <button class="tab-btn active" data-tab="tab-basics" role="tab" aria-selected="true">1. Basics</button>
+    <button class="tab-btn" data-tab="tab-intermediate" role="tab" aria-selected="false">2. Intermediate</button>
+    <button class="tab-btn" data-tab="tab-advanced" role="tab" aria-selected="false">3. Advanced</button>
+    <button class="tab-btn" data-tab="tab-nodb" role="tab" aria-selected="false">4. No Database</button>
+    <button class="tab-btn" data-tab="tab-airtable" role="tab" aria-selected="false">5. Airtable</button>
+    <button class="tab-btn" data-tab="tab-sqlserver" role="tab" aria-selected="false">6. SQL Server</button>
+    <button class="tab-btn" data-tab="tab-challenge" role="tab" aria-selected="false">7. Challenge</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ============================================================ -->
+<!-- 1. BASICS -->
+<!-- ============================================================ -->
+<section id="tab-basics" class="tab-panel active">
+  <span class="level-badge">Level 1 &middot; Beginner</span>
+  <h2 class="section-title">What is a dictionary?</h2>
+  <p class="section-intro">Think of a real dictionary: you look up a <em>word</em> and get its <em>definition</em>. A Python dictionary works the same way &mdash; you look up a <strong>key</strong> and get its <strong>value</strong>. Unlike a list, items aren't found by position (0, 1, 2&hellip;); they're found by name.</p>
+
+  <div class="card">
+    <h3>Creating a dictionary</h3>
+    <p>Curly braces <code>{}</code> hold comma-separated <code>key: value</code> pairs.</p>
+    <div class="code-block">
+      <pre class="code py">student = {
+    "name": "Amara",
+    "age": 21,
+    "major": "Computer Science"
+}
+print(student)
+print(type(student))</pre>
+      <button class="reveal-btn" data-target="out-1">Show output</button>
+      <div class="output hidden" id="out-1"><span class="label">Output</span>{'name': 'Amara', 'age': 21, 'major': 'Computer Science'}
+&lt;class 'dict'&gt;</div>
+    </div>
+    <p>You can also build one with <code>dict()</code>, or from a list of pairs:</p>
+    <div class="code-block">
+      <pre class="code py">empty = {}
+also_empty = dict()
+from_pairs = dict([("a", 1), ("b", 2)])
+via_kwargs = dict(name="Amara", age=21)
+print(from_pairs)
+print(via_kwargs)</pre>
+      <button class="reveal-btn" data-target="out-2">Show output</button>
+      <div class="output hidden" id="out-2"><span class="label">Output</span>{'a': 1, 'b': 2}
+{'name': 'Amara', 'age': 21}</div>
+    </div>
+    <div class="note"><strong>Since Python 3.7:</strong> dictionaries remember the order you inserted items in. Older tutorials that say "dicts are unordered" are describing versions before 3.7.</div>
+  </div>
+
+  <div class="card">
+    <h3>Accessing values</h3>
+    <p>Use square brackets with the key. If the key doesn't exist, Python raises a <code>KeyError</code> &mdash; so use <code>.get()</code> when you're not sure a key is there.</p>
+    <div class="code-block">
+      <pre class="code py">print(student["name"])
+print(student.get("gpa"))
+print(student.get("gpa", "N/A"))
+print(student["gpa"])  # this line will crash</pre>
+      <button class="reveal-btn" data-target="out-3">Show output</button>
+      <div class="output hidden" id="out-3"><span class="label">Output</span>Amara
+None
+N/A
+Traceback (most recent call last):
+KeyError: 'gpa'</div>
+    </div>
+    <p><code>.get(key, default)</code> is the safe way to peek at a dictionary without risking a crash.</p>
+  </div>
+
+  <div class="card">
+    <h3>Adding and updating</h3>
+    <p>Assigning to a key that doesn't exist yet <em>creates</em> it. Assigning to a key that already exists <em>overwrites</em> it. Same syntax, two behaviors &mdash; the dictionary just does whichever one applies.</p>
+    <div class="code-block">
+      <pre class="code py">student["gpa"] = 3.8       # new key -> added
+student["age"] = 22         # existing key -> updated
+print(student)</pre>
+      <button class="reveal-btn" data-target="out-4">Show output</button>
+      <div class="output hidden" id="out-4"><span class="label">Output</span>{'name': 'Amara', 'age': 22, 'major': 'Computer Science', 'gpa': 3.8}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Removing items</h3>
+    <div class="code-block">
+      <pre class="code py">del student["age"]                     # removes silently
+major = student.pop("major")           # removes AND returns the value
+missing = student.pop("minor", "N/A")  # avoids KeyError with a default
+print(major, missing)
+print(student)
+
+last_pair = student.popitem()  # removes the most-recently-inserted pair
+print(last_pair)
+
+student.clear()  # empty it out completely
+print(student)</pre>
+      <button class="reveal-btn" data-target="out-5">Show output</button>
+      <div class="output hidden" id="out-5"><span class="label">Output</span>Computer Science N/A
+{'name': 'Amara', 'gpa': 3.8}
+('gpa', 3.8)
+{}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Checking membership &amp; iterating</h3>
+    <div class="code-block">
+      <pre class="code py">contact = {"name": "Raj", "email": "raj@example.com", "city": "Seattle"}
+
+print("name" in contact)          # checks the KEYS
+print("Raj" in contact)           # False -- not checking values
+print("Raj" in contact.values())  # this is how you check values
+
+for key in contact:
+    print(key, "->", contact[key])
+
+for key, value in contact.items():
+    print(f"{key}: {value}")
+
+print(len(contact))</pre>
+      <button class="reveal-btn" data-target="out-6">Show output</button>
+      <div class="output hidden" id="out-6"><span class="label">Output</span>True
+False
+True
+name -> Raj
+email -> raj@example.com
+city -> Seattle
+name: Raj
+email: raj@example.com
+city: Seattle
+3</div>
+    </div>
+    <p><code>.keys()</code>, <code>.values()</code>, and <code>.items()</code> give you "view" objects &mdash; live windows onto the dictionary's keys, values, or pairs.</p>
+  </div>
+
+  <div class="card playground">
+    <h3>Try it: Dictionary Builder</h3>
+    <p style="color:#B9C8D9;">Add and remove keys below and watch the dictionary update in real time, the same way your code would after each line runs.</p>
+    <div class="pg-controls">
+      <input type="text" id="pg-key" placeholder="key (e.g. name)">
+      <input type="text" id="pg-value" placeholder="value (e.g. Amara)">
+      <button class="pg-add" id="pg-add-btn">Set item</button>
+      <button class="pg-del" id="pg-del-btn">Delete key</button>
+      <button class="pg-clear" id="pg-clear-btn">.clear()</button>
+    </div>
+    <div class="pg-display" id="pg-display">{}</div>
+    <div class="pg-log" id="pg-log"></div>
+  </div>
+
+  <div class="quiz" id="quiz-basics">
+    <h3 style="font-family:var(--serif);color:var(--blue-dark);">Check your understanding</h3>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 2. INTERMEDIATE -->
+<!-- ============================================================ -->
+<section id="tab-intermediate" class="tab-panel">
+  <span class="level-badge">Level 2 &middot; Intermediate</span>
+  <h2 class="section-title">Nesting, comprehensions, and everyday patterns</h2>
+  <p class="section-intro">Once the basics feel natural, dictionaries start showing up everywhere &mdash; holding other dictionaries, built in one line with comprehensions, or quietly counting things in a loop.</p>
+
+  <div class="card">
+    <h3>Nested dictionaries</h3>
+    <p>A value can be anything &mdash; including another dictionary. This is how you represent structured records, like a company directory.</p>
+    <div class="code-block">
+      <pre class="code py">company = {
+    "employee1": {"name": "Raj", "dept": "Engineering"},
+    "employee2": {"name": "Mei", "dept": "Marketing"}
+}
+print(company["employee1"]["name"])
+print(company["employee2"]["dept"])</pre>
+      <button class="reveal-btn" data-target="out-7">Show output</button>
+      <div class="output hidden" id="out-7"><span class="label">Output</span>Raj
+Marketing</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Useful methods: update() and setdefault()</h3>
+    <div class="code-block">
+      <pre class="code py">profile = {"name": "Mei", "city": "Seattle"}
+profile.update({"city": "Portland", "role": "Engineer"})
+print(profile)
+
+# setdefault: get the value if the key exists,
+# otherwise set it to the default AND return that default
+level = profile.setdefault("level", "Junior")
+print(level)
+print(profile)
+
+# calling it again on an EXISTING key does not overwrite it
+level_again = profile.setdefault("level", "Senior")
+print(level_again)</pre>
+      <button class="reveal-btn" data-target="out-8">Show output</button>
+      <div class="output hidden" id="out-8"><span class="label">Output</span>{'name': 'Mei', 'city': 'Portland', 'role': 'Engineer'}
+Junior
+{'name': 'Mei', 'city': 'Portland', 'role': 'Engineer', 'level': 'Junior'}
+Junior</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Dictionary comprehensions</h3>
+    <p>Just like a list comprehension, but it builds <code>key: value</code> pairs instead of single items.</p>
+    <div class="code-block">
+      <pre class="code py">squares = {x: x**2 for x in range(1, 6)}
+print(squares)
+
+evens_only = {x: x**2 for x in range(1, 11) if x % 2 == 0}
+print(evens_only)</pre>
+      <button class="reveal-btn" data-target="out-9">Show output</button>
+      <div class="output hidden" id="out-9"><span class="label">Output</span>{1: 1, 2: 4, 3: 9, 4: 16, 5: 25}
+{2: 4, 4: 16, 6: 36, 8: 64, 10: 100}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Merging dictionaries</h3>
+    <p>Three ways to combine dictionaries. In every case, when both sides share a key, <strong>the later value wins</strong>.</p>
+    <div class="code-block">
+      <pre class="code py">defaults = {"theme": "light", "font_size": 12}
+overrides = {"font_size": 16, "language": "en"}
+
+merged_update = defaults.copy()
+merged_update.update(overrides)
+
+merged_unpack = {**defaults, **overrides}
+
+merged_pipe = defaults | overrides   # Python 3.9+
+
+print(merged_pipe)</pre>
+      <button class="reveal-btn" data-target="out-10">Show output</button>
+      <div class="output hidden" id="out-10"><span class="label">Output</span>{'theme': 'light', 'font_size': 16, 'language': 'en'}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Counting with defaultdict</h3>
+    <p>A very common real pattern: tallying how often something occurs.</p>
+    <div class="code-block">
+      <pre class="code py">from collections import defaultdict
+
+word_count = defaultdict(int)  # missing keys start at 0 automatically
+for word in ["cat", "dog", "cat", "cat", "dog"]:
+    word_count[word] += 1
+
+print(word_count)
+print(dict(word_count))</pre>
+      <button class="reveal-btn" data-target="out-11">Show output</button>
+      <div class="output hidden" id="out-11"><span class="label">Output</span>defaultdict(&lt;class 'int'&gt;, {'cat': 3, 'dog': 2})
+{'cat': 3, 'dog': 2}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Sorting a dictionary</h3>
+    <p>Dictionaries themselves don't have a <code>.sort()</code> method &mdash; instead, sort the <code>.items()</code> and rebuild a dict from the result.</p>
+    <div class="code-block">
+      <pre class="code py">scores = {"Ana": 88, "Ben": 95, "Cy": 72}
+
+by_score_desc = dict(
+    sorted(scores.items(), key=lambda item: item[1], reverse=True)
+)
+print(by_score_desc)</pre>
+      <button class="reveal-btn" data-target="out-12">Show output</button>
+      <div class="output hidden" id="out-12"><span class="label">Output</span>{'Ben': 95, 'Ana': 88, 'Cy': 72}</div>
+    </div>
+  </div>
+
+  <div class="quiz" id="quiz-intermediate">
+    <h3 style="font-family:var(--serif);color:var(--blue-dark);">Check your understanding</h3>
+  </div>
+</section>
+<!-- ============================================================ -->
+<!-- 3. ADVANCED -->
+<!-- ============================================================ -->
+<section id="tab-advanced" class="tab-panel">
+  <span class="level-badge">Level 3 &middot; Advanced</span>
+  <h2 class="section-title">Dictionaries as data records</h2>
+  <p class="section-intro">This is the level where dictionaries stop being just "a Python thing" and start becoming the bridge between your code and everything outside it &mdash; APIs, files, and databases. Everything below is setup for the database examples that follow.</p>
+
+  <div class="card">
+    <h3>A list of dictionaries = a table</h3>
+    <p>If one dictionary is a record, a <strong>list of dictionaries</strong> is a table: each dictionary is a row, and its keys are the column names.</p>
+    <div class="code-block">
+      <pre class="code py">students = [
+    {"id": 1, "name": "Amara", "gpa": 3.8},
+    {"id": 2, "name": "Raj", "gpa": 3.5},
+    {"id": 3, "name": "Mei", "gpa": 3.9},
+]
+
+for row in students:
+    print(row["name"], "-", row["gpa"])</pre>
+      <button class="reveal-btn" data-target="out-13">Show output</button>
+      <div class="output hidden" id="out-13"><span class="label">Output</span>Amara - 3.8
+Raj - 3.5
+Mei - 3.9</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Building a dict with zip() &mdash; remember this one</h3>
+    <p><code>zip()</code> pairs up two sequences item by item. Feed the result into <code>dict()</code> and you get a dictionary made from "column names" and "row values" &mdash; which is <em>exactly</em> the shape a database result comes back in.</p>
+    <div class="code-block">
+      <pre class="code py">columns = ["id", "name", "gpa"]
+values = [3, "Mei", 3.9]
+
+row = dict(zip(columns, values))
+print(row)</pre>
+      <button class="reveal-btn" data-target="out-14">Show output</button>
+      <div class="output hidden" id="out-14"><span class="label">Output</span>{'id': 3, 'name': 'Mei', 'gpa': 3.9}</div>
+    </div>
+    <div class="note"><strong>Keep this in mind:</strong> the SQL Server section later uses this exact pattern to turn database rows into dictionaries.</div>
+  </div>
+
+  <div class="card">
+    <h3>Unpacking a dict into a function call</h3>
+    <div class="code-block">
+      <pre class="code py">def create_student(name, gpa, major="Undeclared"):
+    return {"name": name, "gpa": gpa, "major": major}
+
+info = {"name": "Kofi", "gpa": 3.2}
+new_student = create_student(**info)
+print(new_student)</pre>
+      <button class="reveal-btn" data-target="out-15">Show output</button>
+      <div class="output hidden" id="out-15"><span class="label">Output</span>{'name': 'Kofi', 'gpa': 3.2, 'major': 'Undeclared'}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Keys must be hashable</h3>
+    <p>Dictionary keys have to be immutable &mdash; strings, numbers, and tuples work. Lists don't, because they can change after being used as a key.</p>
+    <div class="code-block">
+      <pre class="code py">lookup = {}
+lookup[(40.7, -74.0)] = "New York"   # tuple key: fine
+lookup["NYC"] = "New York"           # string key: fine
+lookup[[1, 2]] = "oops"              # list key: crashes</pre>
+      <button class="reveal-btn" data-target="out-16">Show output</button>
+      <div class="output hidden" id="out-16"><span class="label">Output</span>Traceback (most recent call last):
+TypeError: unhashable type: 'list'</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Why dictionaries are fast</h3>
+    <p>Looking up a value by key in a dictionary takes roughly the same amount of time no matter how big the dictionary is &mdash; O(1) on average. Searching for something in a plain list means checking items one by one &mdash; O(n), slower as the list grows. This is part of why database drivers hand you rows as dictionaries: fast lookup by column name.</p>
+  </div>
+
+  <div class="card">
+    <h3>JSON and dictionaries are practically the same shape</h3>
+    <p>JSON (JavaScript Object Notation) is the format almost every web API speaks. Python's <code>json</code> module converts between a JSON string and a dictionary in one call &mdash; because a JSON "object" and a Python dict already look nearly identical.</p>
+    <div class="code-block">
+      <pre class="code py">import json
+
+student = {"name": "Kofi", "gpa": 3.2, "major": "Undeclared"}
+
+as_json = json.dumps(student)   # dict -> JSON string
+print(as_json)
+print(type(as_json))
+
+back_to_dict = json.loads(as_json)  # JSON string -> dict
+print(back_to_dict)
+print(type(back_to_dict))</pre>
+      <button class="reveal-btn" data-target="out-17">Show output</button>
+      <div class="output hidden" id="out-17"><span class="label">Output</span>{"name": "Kofi", "gpa": 3.2, "major": "Undeclared"}
+&lt;class 'str'&gt;
+{'name': 'Kofi', 'gpa': 3.2, 'major': 'Undeclared'}
+&lt;class 'dict'&gt;</div>
+    </div>
+    <div class="note"><strong>Keep this in mind too:</strong> the Airtable section relies entirely on this &mdash; every response from its API arrives as JSON, and Python turns it straight into a dict.</div>
+  </div>
+
+  <div class="quiz" id="quiz-advanced">
+    <h3 style="font-family:var(--serif);color:var(--blue-dark);">Check your understanding</h3>
+  </div>
+</section>
+<!-- ============================================================ -->
+<!-- 4. NO DATABASE -->
+<!-- ============================================================ -->
+<section id="tab-nodb" class="tab-panel">
+  <div class="stepper" aria-hidden="true">
+    <span class="step active">In-memory list</span><span class="arrow">&rarr;</span>
+    <span class="step">Airtable</span><span class="arrow">&rarr;</span>
+    <span class="step">SQL Server</span>
+  </div>
+  <span class="level-badge">Real World &middot; Part A</span>
+  <h2 class="section-title">Without a database: a library tracker in plain Python</h2>
+  <p class="section-intro">Before reaching for a real database, here's the same idea small tools start with: a list of dictionaries held entirely in memory, acting as a stand-in for a "Books" table.</p>
+
+  <div class="card">
+    <h3>The in-memory "table"</h3>
+    <div class="code-block">
+      <pre class="code py">library = []
+
+def add_book(book_id, title, author, available=True):
+    library.append({
+        "id": book_id,
+        "title": title,
+        "author": author,
+        "available": available
+    })
+
+add_book(1, "Dune", "Frank Herbert")
+add_book(2, "1984", "George Orwell")
+
+print(library)</pre>
+      <button class="reveal-btn" data-target="out-18">Show output</button>
+      <div class="output hidden" id="out-18"><span class="label">Output</span>[{'id': 1, 'title': 'Dune', 'author': 'Frank Herbert', 'available': True}, {'id': 2, 'title': '1984', 'author': 'George Orwell', 'available': True}]</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Finding and updating a record</h3>
+    <p>Without a database, "querying" just means looping through the list and checking each dictionary.</p>
+    <div class="code-block">
+      <pre class="code py">def find_book(book_id):
+    for book in library:
+        if book["id"] == book_id:
+            return book
+    return None
+
+def checkout_book(book_id):
+    book = find_book(book_id)
+    if book and book["available"]:
+        book["available"] = False
+        return f"You checked out {book['title']}"
+    return "Book not available"
+
+print(checkout_book(1))
+print(library)</pre>
+      <button class="reveal-btn" data-target="out-19">Show output</button>
+      <div class="output hidden" id="out-19"><span class="label">Output</span>You checked out Dune
+[{'id': 1, 'title': 'Dune', 'author': 'Frank Herbert', 'available': False}, {'id': 2, 'title': '1984', 'author': 'George Orwell', 'available': True}]</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Where this approach breaks down</h3>
+    <p>This works fine for a script or a classroom demo, but it has real limits:</p>
+    <p>&bull; <strong>Nothing is saved.</strong> The moment the program ends, <code>library</code> is gone &mdash; there's no file, no server, nothing to reopen tomorrow.<br>
+    &bull; <strong>No sharing.</strong> Two people running the program at the same time each get their own private copy; neither sees the other's changes.<br>
+    &bull; <strong>Doesn't scale.</strong> Looping through a list to find one record is fine for a dozen books, painfully slow for a million.</p>
+    <div class="note"><strong>The fix isn't a new data structure</strong> &mdash; it's the same dictionaries and the same shape, just handed to us by something that remembers: a real database. The next two sections show two very different kinds of "real": a cloud API (Airtable) and a traditional relational server (MS SQL Server).</div>
+  </div>
+
+  <div class="quiz" id="quiz-nodb">
+    <h3 style="font-family:var(--serif);color:var(--blue-dark);">Check your understanding</h3>
+  </div>
+</section>
+<!-- ============================================================ -->
+<!-- 5. AIRTABLE -->
+<!-- ============================================================ -->
+<section id="tab-airtable" class="tab-panel">
+  <div class="stepper" aria-hidden="true">
+    <span class="step">In-memory list</span><span class="arrow">&rarr;</span>
+    <span class="step active">Airtable</span><span class="arrow">&rarr;</span>
+    <span class="step">SQL Server</span>
+  </div>
+  <span class="level-badge">Real World &middot; Part B</span>
+  <h2 class="section-title">With a database: Airtable</h2>
+  <p class="section-intro">Airtable is a cloud spreadsheet that behaves like a lightweight database, reachable over a web API. Every response it sends back is JSON &mdash; and as you saw in the advanced section, <code>json.loads()</code> turns JSON straight into a Python dictionary. That's the whole trick to this section.</p>
+
+  <div class="card">
+    <h3>Reading records</h3>
+    <p>The <code>requests</code> library fetches the data; <code>.json()</code> parses it into a dict for you automatically.</p>
+    <div class="code-block">
+      <pre class="code py">import requests
+
+BASE_ID = "appXXXXXXXXXXXXXX"
+TABLE_NAME = "Books"
+API_KEY = "your_personal_access_token"
+
+headers = {"Authorization": f"Bearer {API_KEY}"}
+url = f"https://api.airtable.com/v0/{BASE_ID}/{TABLE_NAME}"
+
+response = requests.get(url, headers=headers)
+data = response.json()   # <-- already a dict, no extra work needed
+print(type(data))
+print(data)</pre>
+      <button class="reveal-btn" data-target="out-20">Show output</button>
+      <div class="output hidden" id="out-20"><span class="label">Output</span>&lt;class 'dict'&gt;
+{'records': [{'id': 'recA1B2C3D4E5F6', 'createdTime': '2026-01-15T10:00:00.000Z', 'fields': {'Title': 'Dune', 'Author': 'Frank Herbert', 'Available': True}}, {'id': 'recG7H8I9J0K1L2', 'createdTime': '2026-01-15T10:01:00.000Z', 'fields': {'Title': '1984', 'Author': 'George Orwell', 'Available': True}}]}</div>
+    </div>
+    <div class="note">Notice the shape: a dict with a <code>"records"</code> key holding a <em>list</em> of dicts &mdash; and each of those has its own nested <code>"fields"</code> dict. Nested dictionaries from Level 2, right where you'd expect them.</div>
+  </div>
+
+  <div class="card">
+    <h3>Reshaping the response into plain records</h3>
+    <p>Airtable's raw format has some extra wrapping (<code>id</code>, <code>createdTime</code>, <code>fields</code>). It's common to flatten it into simpler dictionaries your own code can work with.</p>
+    <div class="code-block">
+      <pre class="code py">books = []
+for record in data["records"]:
+    books.append({
+        "id": record["id"],
+        "title": record["fields"]["Title"],
+        "author": record["fields"]["Author"],
+        "available": record["fields"].get("Available", True)
+    })
+
+print(books)</pre>
+      <button class="reveal-btn" data-target="out-21">Show output</button>
+      <div class="output hidden" id="out-21"><span class="label">Output</span>[{'id': 'recA1B2C3D4E5F6', 'title': 'Dune', 'author': 'Frank Herbert', 'available': True}, {'id': 'recG7H8I9J0K1L2', 'title': '1984', 'author': 'George Orwell', 'available': True}]</div>
+    </div>
+    <p>This should look familiar &mdash; it's the exact same list-of-dictionaries shape as the in-memory <code>library</code> list from the previous section. Same shape, except now it's backed by a server that remembers it after your program ends.</p>
+  </div>
+
+  <div class="card">
+    <h3>Creating a record</h3>
+    <p>To create a record, you build the dictionary yourself and send it &mdash; the dict becomes the request body.</p>
+    <div class="code-block">
+      <pre class="code py">new_book = {
+    "fields": {
+        "Title": "Brave New World",
+        "Author": "Aldous Huxley",
+        "Available": True
+    }
+}
+
+response = requests.post(url, headers=headers, json=new_book)
+created = response.json()
+print(created["fields"])</pre>
+      <button class="reveal-btn" data-target="out-22">Show output</button>
+      <div class="output hidden" id="out-22"><span class="label">Output</span>{'Title': 'Brave New World', 'Author': 'Aldous Huxley', 'Available': True}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Updating and deleting</h3>
+    <div class="code-block">
+      <pre class="code py">record_id = "recA1B2C3D4E5F6"
+record_url = f"{url}/{record_id}"
+
+# update just the fields you name -- PATCH only touches what you send
+requests.patch(record_url, headers=headers, json={"fields": {"Available": False}})
+
+# delete removes the whole record
+requests.delete(record_url, headers=headers)</pre>
+    </div>
+  </div>
+
+  <div class="quiz" id="quiz-airtable">
+    <h3 style="font-family:var(--serif);color:var(--blue-dark);">Check your understanding</h3>
+  </div>
+</section>
+<!-- ============================================================ -->
+<!-- 6. SQL SERVER -->
+<!-- ============================================================ -->
+<section id="tab-sqlserver" class="tab-panel">
+  <div class="stepper" aria-hidden="true">
+    <span class="step">In-memory list</span><span class="arrow">&rarr;</span>
+    <span class="step">Airtable</span><span class="arrow">&rarr;</span>
+    <span class="step active">SQL Server</span>
+  </div>
+  <span class="level-badge">Real World &middot; Part C</span>
+  <h2 class="section-title">With a database: MS SQL Server</h2>
+  <p class="section-intro">MS SQL Server speaks SQL, not JSON. When you run a query with <code>pyodbc</code>, each row comes back as a plain <strong>tuple</strong> &mdash; not a dictionary. So this time, instead of a library doing the conversion for you like Airtable's <code>.json()</code> did, you build the dict yourself. And you already know exactly how: <code>zip()</code>.</p>
+
+  <div class="card">
+    <h3>Connecting and querying</h3>
+    <div class="code-block">
+      <pre class="code py">import pyodbc
+
+conn = pyodbc.connect(
+    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "SERVER=localhost;"
+    "DATABASE=Library;"
+    "UID=your_username;"
+    "PWD=your_password;"
+)
+cursor = conn.cursor()
+cursor.execute("SELECT BookID, Title, Author, Available FROM Books")
+
+raw_rows = cursor.fetchall()
+print(raw_rows[0])
+print(type(raw_rows[0]))</pre>
+      <button class="reveal-btn" data-target="out-23">Show output</button>
+      <div class="output hidden" id="out-23"><span class="label">Output</span>(1, 'Dune', 'Frank Herbert', True)
+&lt;class 'pyodbc.Row'&gt;</div>
+    </div>
+    <p>A row prints like a tuple, and you access fields by position (<code>row[0]</code>, <code>row[1]</code>&hellip;) unless you turn it into a dictionary yourself.</p>
+  </div>
+
+  <div class="card">
+    <h3>Turning rows into dictionaries</h3>
+    <p><code>cursor.description</code> holds the column names from your query. Zip those names together with each row's values, and <code>dict()</code> does the rest &mdash; the exact pattern from the advanced section.</p>
+    <div class="code-block">
+      <pre class="code py">columns = [column[0] for column in cursor.description]
+print(columns)
+
+books = []
+for row in cursor.fetchall():
+    books.append(dict(zip(columns, row)))
+
+print(books)</pre>
+      <button class="reveal-btn" data-target="out-24">Show output</button>
+      <div class="output hidden" id="out-24"><span class="label">Output</span>['BookID', 'Title', 'Author', 'Available']
+[{'BookID': 1, 'Title': 'Dune', 'Author': 'Frank Herbert', 'Available': True}, {'BookID': 2, 'Title': '1984', 'Author': 'George Orwell', 'Available': True}]</div>
+    </div>
+    <div class="note">Same shape again &mdash; a list of dictionaries, one per book. Whether the data came from a Python list, Airtable's JSON, or a SQL Server table, it always lands in your code the same way: as dictionaries.</div>
+  </div>
+
+  <div class="card">
+    <h3>Inserting and updating</h3>
+    <p>Use <code>?</code> placeholders with the actual values, never string-formatting them directly into the SQL &mdash; that avoids SQL injection.</p>
+    <div class="code-block">
+      <pre class="code py">new_book = {"Title": "Brave New World", "Author": "Aldous Huxley", "Available": 1}
+
+cursor.execute(
+    "INSERT INTO Books (Title, Author, Available) VALUES (?, ?, ?)",
+    new_book["Title"], new_book["Author"], new_book["Available"]
+)
+conn.commit()
+
+# mark BookID 1 as checked out
+cursor.execute("UPDATE Books SET Available = ? WHERE BookID = ?", 0, 1)
+conn.commit()</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Comparing all three approaches</h3>
+    <table class="compare">
+      <tr><th>&nbsp;</th><th>In-memory list</th><th>Airtable</th><th>MS SQL Server</th></tr>
+      <tr><td class="label">Persists after program ends?</td><td>No</td><td>Yes</td><td>Yes</td></tr>
+      <tr><td class="label">How rows arrive in Python</td><td>Already a dict &mdash; you wrote it</td><td>JSON parsed into a dict via <code>.json()</code></td><td>Tuples &mdash; you build the dict with <code>zip()</code></td></tr>
+      <tr><td class="label">Good for</td><td>Scripts, demos, prototypes</td><td>Small teams, quick cloud-hosted data, no server to manage</td><td>Larger structured data, complex queries, enterprise systems</td></tr>
+      <tr><td class="label">Access method</td><td>Direct Python</td><td>HTTPS + REST API</td><td>ODBC driver + SQL</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz" id="quiz-sqlserver">
+    <h3 style="font-family:var(--serif);color:var(--blue-dark);">Check your understanding</h3>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 7. FINAL CHALLENGE -->
+<!-- ============================================================ -->
+<section id="tab-challenge" class="tab-panel">
+  <span class="level-badge">Final Challenge</span>
+  <h2 class="section-title">Bringing it all together</h2>
+  <p class="section-intro">These questions mix ideas from every section &mdash; if you can answer them, you've got a solid grip on Python dictionaries and how they connect to real data sources.</p>
+
+  <div class="card">
+    <h3>One more thing to try on your own</h3>
+    <p>Take the <code>library</code> list from the "No Database" section and write a function <code>average_availability(books)</code> that returns what percentage of books are currently available, using nothing but a loop and dictionary key access. Then imagine the same function working unchanged on the <code>books</code> list built from Airtable or SQL Server &mdash; because the shape never changed, it still would.</p>
+  </div>
+
+  <div class="quiz" id="quiz-challenge">
+    <h3 style="font-family:var(--serif);color:var(--blue-dark);">Final challenge quiz</h3>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Python Dictionaries: From First Principles to Real Databases &middot; Built for interactive, self-paced study
+</footer>
+
+<script>
+/* ================= TAB SWITCHING ================= */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected','true');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+
+/* ================= OUTPUT REVEAL ================= */
+document.querySelectorAll('.reveal-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = document.getElementById(btn.dataset.target);
+    const nowHidden = target.classList.toggle('hidden');
+    btn.textContent = nowHidden ? 'Show output' : 'Hide output';
+  });
+});
+
+/* ================= SYNTAX HIGHLIGHTING ================= */
+function highlightPython(code) {
+  let escaped = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const pattern = /(#.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(True|False|None)\b|\b(def|return|for|in|if|elif|else|import|from|class|while|not|and|or|is|as|try|except|finally|with|lambda|pass|break|continue|global|yield|raise|async|await)\b|\b(print|len|dict|list|zip|sorted|range|int|str|float|bool|type|isinstance|enumerate)\b(?=\()|\b(\d+\.?\d*)\b/gm;
+  return escaped.replace(pattern, (m, comment, str, boolNone, keyword, builtin, num) => {
+    if (comment) return '<span class="tok-comment">' + comment + '</span>';
+    if (str) return '<span class="tok-string">' + str + '</span>';
+    if (boolNone) return '<span class="tok-const">' + boolNone + '</span>';
+    if (keyword) return '<span class="tok-keyword">' + keyword + '</span>';
+    if (builtin) return '<span class="tok-builtin">' + builtin + '</span>';
+    if (num) return '<span class="tok-number">' + num + '</span>';
+    return m;
+  });
+}
+document.querySelectorAll('pre.code.py').forEach(el => {
+  el.innerHTML = highlightPython(el.textContent);
+});
+
+/* ================= DICTIONARY BUILDER PLAYGROUND ================= */
+(function(){
+  let pgDict = {};
+  const display = document.getElementById('pg-display');
+  const log = document.getElementById('pg-log');
+  const keyInput = document.getElementById('pg-key');
+  const valInput = document.getElementById('pg-value');
+
+  function pyRepr(value){
+    if (typeof value === 'boolean') return value ? 'True' : 'False';
+    if (value === null) return 'None';
+    if (typeof value === 'number') return String(value);
+    return "'" + String(value).replace(/'/g, "\\'") + "'";
+  }
+
+  function parseValue(raw){
+    if (raw.trim() === '') return '';
+    if (/^-?\d+\.\d+$/.test(raw.trim())) return parseFloat(raw.trim());
+    if (/^-?\d+$/.test(raw.trim())) return parseInt(raw.trim(), 10);
+    if (/^true$/i.test(raw.trim())) return true;
+    if (/^false$/i.test(raw.trim())) return false;
+    if (/^none$/i.test(raw.trim())) return null;
+    return raw;
+  }
+
+  function render(){
+    const parts = Object.keys(pgDict).map(k => "'" + k + "': " + pyRepr(pgDict[k]));
+    display.textContent = '{' + parts.join(', ') + '}';
+  }
+
+  function addLog(line){
+    const div = document.createElement('div');
+    div.textContent = '>>> ' + line;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  document.getElementById('pg-add-btn').addEventListener('click', () => {
+    const key = keyInput.value.trim();
+    if (!key) return;
+    const value = parseValue(valInput.value);
+    pgDict[key] = value;
+    addLog("d['" + key + "'] = " + pyRepr(value));
+    render();
+    keyInput.value = '';
+    valInput.value = '';
+    keyInput.focus();
+  });
+
+  document.getElementById('pg-del-btn').addEventListener('click', () => {
+    const key = keyInput.value.trim();
+    if (!key) return;
+    if (key in pgDict) {
+      delete pgDict[key];
+      addLog("del d['" + key + "']");
+      render();
+    } else {
+      addLog("del d['" + key + "']  # KeyError: '" + key + "' not found");
+    }
+    keyInput.value = '';
+  });
+
+  document.getElementById('pg-clear-btn').addEventListener('click', () => {
+    pgDict = {};
+    addLog('d.clear()');
+    render();
+  });
+
+  render();
+})();
+
+/* ================= QUIZ DATA ================= */
+const quizData = {
+  'quiz-basics': [
+    {q:'Which pair of symbols creates a dictionary literal?', options:['[ ]','{ }','( )','< >'], correct:1,
+      explain:'Curly braces hold key: value pairs. Square brackets are for lists, parentheses for tuples.'},
+    {q:'What does student.get("gpa", "N/A") return if "gpa" is not a key in student?', options:['Raises a KeyError','None','"N/A"','0'], correct:2,
+      explain:'.get(key, default) returns the default you supply instead of crashing.'},
+    {q:'Since Python 3.7, dictionaries...', options:['Are always sorted alphabetically by key','Preserve the order items were inserted in','Store items in random order','Sort by value size'], correct:1,
+      explain:'Insertion order is preserved and guaranteed as of Python 3.7.'},
+    {q:'Accessing a missing key with square brackets (like d["x"]) raises...', options:['IndexError','TypeError','KeyError','ValueError'], correct:2,
+      explain:'Square-bracket access raises KeyError on a missing key; .get() is the safe alternative.'},
+    {q:'Which method removes and returns the most recently inserted key-value pair?', options:['.pop()','.popitem()','.clear()','.remove()'], correct:1,
+      explain:'.popitem() removes the last-inserted pair and returns it as a (key, value) tuple.'}
+  ],
+  'quiz-intermediate': [
+    {q:'If a and b share a key, what does {**a, **b} do with that key?', options:["Keeps a's value","Keeps b's value","Raises an error","Keeps both as a list"], correct:1,
+      explain:'In every merge method shown, the later dictionary wins when keys collide.'},
+    {q:'Which standard library module provides defaultdict?', options:['itertools','functools','collections','typing'], correct:2,
+      explain:'from collections import defaultdict.'},
+    {q:'If "x" already exists in d, what does d.setdefault("x", 0) do?', options:['Overwrites it with 0','Returns the existing value, unchanged','Deletes the key','Raises a KeyError'], correct:1,
+      explain:'setdefault only sets the default when the key is missing; on an existing key it just returns the current value.'},
+    {q:'What is the general shape of a dict comprehension?', options:['{value for key in iterable}','{key: value for item in iterable}','[key: value for item in iterable]','(key, value) for item in iterable'], correct:1,
+      explain:'It mirrors a list comprehension, but produces key: value pairs.'},
+    {q:'In Python 3.9+, which operator merges two dicts into a new one?', options:['&','+','|','^'], correct:2,
+      explain:'dict1 | dict2 returns a new merged dictionary (later values win on key collisions).'}
+  ],
+  'quiz-advanced': [
+    {q:"Why can't a list be used as a dictionary key?", options:['Lists are too slow','Lists are mutable, so they are not hashable','Lists can only hold numbers','There is no real reason, it just is not allowed'], correct:1,
+      explain:'Dictionary keys must be hashable, and hashability requires immutability. Lists can change, so they are excluded.'},
+    {q:'What does dict(zip(columns, values)) do?', options:['Sorts columns alphabetically','Pairs each column name with its matching value into a dict','Converts values into a list','Removes duplicate columns'], correct:1,
+      explain:'zip() pairs the two sequences item by item; dict() turns those pairs into key: value entries.'},
+    {q:'json.loads() on a JSON object string returns a Python...', options:['list','tuple','dict','str'], correct:2,
+      explain:'A JSON object maps directly onto a Python dict.'},
+    {q:'What is the average time complexity of looking up a value by key in a dict?', options:['O(n)','O(log n)','O(1)','O(n^2)'], correct:2,
+      explain:'Dictionaries use hashing internally, giving near-constant-time lookups on average.'},
+    {q:'Which symbol unpacks a dictionary into keyword arguments in a function call?', options:['*','**','&','...'], correct:1,
+      explain:'** unpacks a dict so each key becomes a keyword argument name.'}
+  ],
+  'quiz-nodb': [
+    {q:'In the in-memory library example, what happens to the data when the program stops running?', options:['It is automatically saved to a file','It is lost completely','It is emailed to the developer','It is cached for 24 hours'], correct:1,
+      explain:'A plain Python list only exists in memory while the program runs; nothing about it is saved anywhere.'},
+    {q:'What is the main problem with two people running the in-memory script at the same time?', options:['It runs twice as slow','Each gets a separate, private copy of the data', 'Python does not allow this', 'The program will crash'], correct:1,
+      explain:'Without a shared external store, each running program has its own isolated copy of "library" in memory.'}
+  ],
+  'quiz-airtable': [
+    {q:'When you call response.json() on an Airtable API response, what Python type do you get back?', options:['A string of raw JSON text','A dict','A list of strings','A tuple'], correct:1,
+      explain:'.json() parses the response body and returns a Python dict (here, one with a "records" key).'},
+    {q:"In Airtable's response, where do a record's actual column values live?", options:['Directly on the record', 'Inside a nested "fields" dictionary', 'In a separate API call', 'In the "createdTime" field'], correct:1,
+      explain:'Each record has an id, a createdTime, and a nested "fields" dict holding the actual data.'},
+    {q:'To update only one field on an Airtable record without touching the rest, which HTTP method is used?', options:['GET','POST','PATCH','DELETE'], correct:2,
+      explain:'PATCH updates just the fields you include in the request body, leaving everything else untouched.'}
+  ],
+  'quiz-sqlserver': [
+    {q:'By default, what type does pyodbc return for each row of a query result?', options:['A dict','A tuple-like pyodbc.Row','A JSON string','A pandas DataFrame'], correct:1,
+      explain:'Rows come back as pyodbc.Row objects that behave like tuples, accessed by position unless you convert them.'},
+    {q:'Where do you get the column names needed to build a dict from a row?', options:['cursor.description', 'cursor.columns()', 'They must be typed in manually every time', 'conn.schema'], correct:0,
+      explain:'cursor.description lists metadata for each selected column, including its name, in query order.'},
+    {q:'Why use "?" placeholders instead of inserting values directly into the SQL string?', options:['It runs faster', 'It prevents SQL injection', 'It is required by Python syntax', 'It makes the query shorter'], correct:1,
+      explain:'Parameterized queries keep user-supplied values separate from the SQL command itself, which is the standard defense against SQL injection.'}
+  ],
+  'quiz-challenge': [
+    {q:'Across the in-memory, Airtable, and SQL Server examples, what stayed the same the whole time?', options:['The programming language used to query them', 'The shape of the data once it reached Python: dictionaries (and lists of them)', 'The need for an internet connection', 'Nothing, they are all completely different'], correct:1,
+      explain:"That's the throughline of this whole tutorial: no matter where data comes from, it tends to land in Python as dictionaries."},
+    {q:'Which of the three approaches loses its data when the program restarts?', options:['Only SQL Server', 'Only Airtable', 'Only the in-memory list', 'All three'], correct:2,
+      explain:'The in-memory list has no persistence layer; Airtable and SQL Server both store data outside your running program.'},
+    {q:'What do .json() (Airtable) and zip(columns, row) (SQL Server) have in common?', options:['They are both SQL keywords', 'They are both ways of turning external data into a Python dict', 'They both require a database license', 'Neither is used in real projects'], correct:1,
+      explain:'Different mechanisms, same job: converting incoming data (JSON or a raw row) into the dict shape your code expects.'},
+    {q:'True or false: a Python dictionary is essentially an in-memory version of a single JSON object or database row.', options:['True','False'], correct:0,
+      explain:'That is the core idea this tutorial builds toward -- dicts, JSON objects, and database rows are all the same underlying concept.'}
+  ]
+};
+
+function renderQuiz(containerId, questions){
+  const container = document.getElementById(containerId);
+  let correctCount = 0;
+  const scoreEl = document.createElement('div');
+  scoreEl.className = 'quiz-score';
+  scoreEl.setAttribute('aria-live','polite');
+
+  questions.forEach((item, qIndex) => {
+    const qDiv = document.createElement('div');
+    qDiv.className = 'quiz-q';
+
+    const qText = document.createElement('p');
+    qText.className = 'q-text';
+    qText.textContent = (qIndex + 1) + '. ' + item.q;
+    qDiv.appendChild(qText);
+
+    const optWrap = document.createElement('div');
+    optWrap.className = 'quiz-options';
+
+    const feedback = document.createElement('div');
+    feedback.className = 'quiz-feedback';
+    feedback.setAttribute('aria-live','polite');
+
+    let answered = false;
+
+    item.options.forEach((optText, optIndex) => {
+      const optBtn = document.createElement('button');
+      optBtn.className = 'quiz-option';
+      optBtn.textContent = optText;
+      optBtn.addEventListener('click', () => {
+        if (answered) return;
+        answered = true;
+        const buttons = optWrap.querySelectorAll('.quiz-option');
+        buttons.forEach((b, i) => {
+          b.disabled = true;
+          if (i === item.correct) b.classList.add('correct');
+          else if (i === optIndex) b.classList.add('incorrect');
+        });
+        feedback.textContent = (optIndex === item.correct ? 'Correct. ' : 'Not quite. ') + item.explain;
+        feedback.classList.add('show');
+        if (optIndex === item.correct) correctCount++;
+        updateScore();
+      });
+      optWrap.appendChild(optBtn);
+    });
+
+    qDiv.appendChild(optWrap);
+    qDiv.appendChild(feedback);
+    container.appendChild(qDiv);
+  });
+
+  container.appendChild(scoreEl);
+
+  function updateScore(){
+    const answeredCount = container.querySelectorAll('.quiz-feedback.show').length;
+    scoreEl.textContent = 'Score: ' + correctCount + ' / ' + answeredCount + ' answered (' + questions.length + ' total)';
+  }
+}
+
+Object.keys(quizData).forEach(id => renderQuiz(id, quizData[id]));
+</script>
+</body>
+</html>
