@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hands-On Lab — Fetching Data from Airtable with Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF;
+  --surface:#FFFFFF;
+  --surface2:#F3F5FF;
+  --surface3:#F8F9FF;
+  --border:#DDE3F5;
+  --border2:#C5CEEE;
+  --ink:#13203B;
+  --ink-soft:#516080;
+  --blue:#1E4EBF;
+  --blue-dim:#EAF0FD;
+  --blue-mid:#B8CBFA;
+  --green:#0F6B45;
+  --green-dim:#E2F5EC;
+  --coral:#B0250A;
+  --coral-dim:#FCECEA;
+  --amber:#7A4A00;
+  --amber-dim:#FEF4E0;
+  --purple:#5018C0;
+  --purple-dim:#EEE9FF;
+  --teal:#0A6060;
+  --teal-dim:#E0F4F4;
+  --term-bg:#0B0E17;
+  --term-prompt:#4F8EF7;
+  --term-green:#3EC97A;
+  --term-orange:#F5A623;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.68;overflow-x:hidden}
+.wrap{max-width:900px;margin:0 auto;padding:0 24px;min-width:0}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;line-height:1.1}
+code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:var(--surface2);padding:2px 7px;border-radius:5px;color:var(--blue)}
+kbd{font-family:'JetBrains Mono',monospace;font-size:.85em;background:var(--surface2);border:1px solid var(--border2);border-bottom:2px solid var(--border2);border-radius:5px;padding:2px 8px;color:var(--ink)}
+
+/* progress */
+#bar{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--blue),var(--green));width:0%;z-index:200;transition:width .15s}
+
+/* header */
+header{padding:72px 0 52px;border-bottom:2px solid var(--border)}
+.lab-badge{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-mid);border-radius:8px;padding:6px 14px;margin-bottom:22px}
+h1{font-size:clamp(34px,6.5vw,58px);font-weight:800;letter-spacing:-.025em;margin-bottom:16px;line-height:1.06}
+h1 em{font-style:normal;color:var(--blue)}
+.lede{font-size:17px;color:var(--ink-soft);max-width:660px;line-height:1.72;margin-bottom:28px}
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:0}
+.meta-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px}
+.meta-card strong{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px}
+.meta-card span{font-size:14px;font-weight:600}
+
+/* step nav */
+.step-nav{display:flex;gap:0;margin:32px 0 8px;border:1px solid var(--border);border-radius:12px;overflow:hidden;flex-wrap:wrap;min-width:0}
+.snav{flex:1;min-width:90px;padding:10px 6px;font-size:12.5px;font-weight:600;color:var(--ink-soft);text-align:center;text-decoration:none;border-right:1px solid var(--border);background:var(--bg);transition:all .12s;cursor:pointer}
+.snav:last-child{border-right:none}
+.snav:hover{background:var(--blue-dim);color:var(--blue)}
+.snav.active{background:var(--blue);color:#fff}
+.snav.done{background:var(--green-dim);color:var(--green)}
+.snav.done::after{content:" ✓"}
+.snav-num{display:block;font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:1px}
+
+/* steps */
+.step{padding:56px 0 32px;border-bottom:1px solid var(--border)}
+.step:last-of-type{border-bottom:none}
+.step-eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.step-num{font-family:'Syne',sans-serif;font-weight:800;font-size:13px;background:var(--blue);color:#fff;border-radius:8px;padding:4px 12px;letter-spacing:.04em}
+.step-tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+h2{font-size:clamp(24px,4vw,34px);font-weight:800;letter-spacing:-.015em;margin-bottom:14px}
+h3{font-size:20px;font-weight:700;margin:28px 0 10px}
+h4{font-size:16px;font-weight:700;margin:20px 0 8px;color:var(--blue)}
+p{margin-bottom:14px;font-size:16px}
+p:last-child{margin-bottom:0}
+ul,ol{margin:0 0 14px 22px}
+li{margin-bottom:8px;font-size:16px}
+
+/* callouts */
+.analogy{background:var(--purple-dim);border-left:4px solid var(--purple);border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0}
+.analogy::before{content:"🧩  MENTAL MODEL";display:block;font-size:10px;letter-spacing:.15em;color:var(--purple);font-weight:700;margin-bottom:8px}
+.analogy p{font-size:15px;color:var(--ink);margin:0}
+
+.box{border-radius:12px;padding:15px 20px;margin:18px 0;font-size:15px;line-height:1.65}
+.box-blue{background:var(--blue-dim);border:1px solid var(--blue-mid)}
+.box-green{background:var(--green-dim);border:1px solid #9FDCC0}
+.box-amber{background:var(--amber-dim);border:1px solid #F0CD88}
+.box-coral{background:var(--coral-dim);border:1px solid #F5ADAD}
+.box-purple{background:var(--purple-dim);border:1px solid #C4AAFF}
+.box-teal{background:var(--teal-dim);border:1px solid #80CCCC}
+.box b:first-child{display:block;margin-bottom:5px}
+.box-blue b{color:var(--blue)} .box-green b{color:var(--green)}
+.box-amber b{color:var(--amber)} .box-coral b{color:var(--coral)}
+.box-purple b{color:var(--purple)} .box-teal b{color:var(--teal)}
+
+/* code blocks */
+.cb{margin:18px 0;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:0 2px 8px rgba(19,32,59,.06);min-width:0;max-width:100%}
+.cb-head{background:var(--surface2);padding:9px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.cb-fname{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:600}
+.cb-tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-soft);background:var(--border);border-radius:4px;padding:2px 8px}
+.copy-btn{background:var(--bg);color:var(--ink-soft);border:1px solid var(--border2);border-radius:6px;padding:3px 12px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600}
+.copy-btn:hover{background:var(--blue-dim);color:var(--blue);border-color:var(--blue)}
+pre{background:var(--term-bg);padding:18px 20px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.75;color:#CDD9F0;margin:0;min-width:0;max-width:100%}
+pre .p{color:var(--term-prompt)}
+pre .c{color:#3E4F72}
+pre .o{color:var(--term-green)}
+pre .e{color:#FF7070}
+pre .kw{color:#C792EA}
+pre .st{color:#C3E88D}
+pre .num{color:#F78C6C}
+pre .fn{color:#82AAFF}
+pre .key{color:#89DDFF}
+pre .hi{background:rgba(79,142,247,.18);display:block;padding:0 4px;border-left:3px solid var(--term-prompt);margin-left:-4px}
+pre .hi-green{background:rgba(62,201,122,.12);display:block;padding:0 4px;border-left:3px solid var(--term-green);margin-left:-4px}
+pre .hi-orange{background:rgba(245,166,35,.12);display:block;padding:0 4px;border-left:3px solid var(--term-orange);margin-left:-4px}
+
+/* annotated code */
+.ann-code{background:var(--term-bg);border-radius:0 0 12px 12px;padding:0;overflow-x:hidden}
+.ann-line{display:flex;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.04);min-width:0}
+.ann-line:last-child{border-bottom:none}
+.ann-src{flex:1;min-width:0;padding:6px 20px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#CDD9F0;white-space:pre-wrap;word-break:break-all;line-height:1.7}
+.ann-note{flex-shrink:0;width:220px;padding:6px 14px 6px 12px;font-size:11.5px;color:#4E6090;font-style:italic;white-space:normal;line-height:1.6;border-left:1px solid rgba(255,255,255,.06)}
+@media(max-width:680px){.ann-note{display:none}}
+.ann-line.hl .ann-src{background:rgba(79,142,247,.15);border-left:3px solid var(--term-prompt)}
+.ann-line.hl .ann-note{color:#7BA8F0}
+
+/* http anatomy */
+.http-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:20px 0;box-shadow:0 2px 8px rgba(19,32,59,.05)}
+.http-row{display:grid;grid-template-columns:140px 1fr;border-bottom:1px solid var(--border)}
+.http-row:last-child{border-bottom:none}
+.http-lbl{background:var(--surface2);padding:13px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);display:flex;align-items:flex-start;padding-top:15px}
+.http-val{padding:13px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink);line-height:1.6;word-break:break-all;min-width:0;overflow-wrap:break-word}
+.http-val .em{color:var(--coral);font-weight:700}
+.http-val .bl{color:var(--blue);font-weight:700}
+.http-val .gr{color:var(--green);font-weight:700}
+.http-val .note{font-family:'Inter',sans-serif;font-size:12.5px;color:var(--ink-soft);display:block;margin-top:4px;font-style:italic}
+@media(max-width:600px){.http-row{grid-template-columns:1fr}.http-lbl{padding-bottom:4px}}
+
+/* JSON tree */
+.json-tree{background:var(--term-bg);border-radius:12px;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;margin:18px 0;overflow-x:auto;color:#CDD9F0}
+.json-tree .jk{color:#89DDFF}
+.json-tree .jv{color:var(--term-green)}
+.json-tree .jn{color:#F78C6C}
+.json-tree .js{color:#C3E88D}
+.json-tree .ji{color:#3E4F72;font-style:italic}
+.json-tree .hl-row{background:rgba(62,201,122,.12);display:block;padding:0 4px;border-left:3px solid var(--term-green);margin-left:-4px}
+.json-tree .hi-row{background:rgba(79,142,247,.15);display:block;padding:0 4px;border-left:3px solid var(--term-prompt);margin-left:-4px}
+
+/* live status ticker */
+.status-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
+@media(max-width:600px){.status-flow{grid-template-columns:1fr 1fr}}
+.sf-node{border-radius:10px;padding:12px 14px;border:1.5px solid var(--border);background:var(--bg);text-align:center;position:relative}
+.sf-node.active{border-color:var(--blue);background:var(--blue-dim)}
+.sf-node.done{border-color:var(--green);background:var(--green-dim)}
+.sf-node.error{border-color:var(--coral);background:var(--coral-dim)}
+.sf-icon{font-size:22px;margin-bottom:4px}
+.sf-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft)}
+.sf-node.done .sf-label{color:var(--green)}
+.sf-node.active .sf-label{color:var(--blue)}
+.sf-arrow{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--border2)}
+
+/* interactive demo */
+.demo-panel{background:var(--surface2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:22px 0}
+.demo-head{background:var(--surface);padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.demo-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}
+.demo-btn{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .1s}
+.demo-btn:hover{opacity:.88}
+.demo-btn.green{background:var(--green)}
+.demo-btn.amber{background:var(--amber)}
+.demo-body{padding:18px}
+.demo-screen{background:var(--term-bg);border-radius:10px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;min-height:80px;color:#9FB8D8;overflow-x:auto;word-break:break-word}
+.demo-screen .line{display:block;margin-bottom:2px;white-space:pre-wrap;word-break:break-word}
+.demo-screen .prompt{color:var(--term-prompt)}
+.demo-screen .success{color:var(--term-green)}
+.demo-screen .error{color:#FF7070}
+.demo-screen .info{color:var(--term-orange)}
+.demo-screen .data{color:#CDD9F0}
+
+/* status code grid */
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:18px 0}
+.sc-card{border-radius:10px;padding:14px 16px;border:1px solid var(--border)}
+.sc-code{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;margin-bottom:4px}
+.sc-name{font-size:14px;font-weight:700;margin-bottom:4px}
+.sc-desc{font-size:13px;color:var(--ink-soft);line-height:1.5}
+.sc-200{border-left:4px solid var(--green)} .sc-200 .sc-code{color:var(--green)}
+.sc-401{border-left:4px solid var(--coral)} .sc-401 .sc-code{color:var(--coral)}
+.sc-403{border-left:4px solid var(--amber)} .sc-403 .sc-code{color:var(--amber)}
+.sc-404{border-left:4px solid var(--blue)}  .sc-404 .sc-code{color:var(--blue)}
+.sc-429{border-left:4px solid var(--purple)}.sc-429 .sc-code{color:var(--purple)}
+
+/* expected output */
+.expected{background:#F7F9FF;border:1px dashed var(--border2);border-radius:10px;padding:14px 18px;margin:12px 0;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+.expected::before{content:"EXPECTED OUTPUT";display:block;font-size:9.5px;letter-spacing:.13em;color:var(--blue);font-weight:700;font-family:'Inter',sans-serif;margin-bottom:8px}
+
+/* step children (cb blocks inside exercises) */
+.step-list li > .cb,.step-list li > div > .cb{min-width:0;overflow:hidden}
+
+/* quiz */
+.quiz{margin:28px 0}
+.quiz h3{font-size:17px;font-family:'Syne',sans-serif;font-weight:700;margin-bottom:12px}
+.quiz-opts{display:grid;gap:9px}
+.qopt{background:var(--bg);border:1.5px solid var(--border2);border-radius:10px;padding:12px 16px;font-size:15px;cursor:pointer;text-align:left;color:var(--ink);font-family:'Inter',sans-serif;transition:all .1s}
+.qopt:hover{border-color:var(--blue);background:var(--blue-dim)}
+.qopt.right{border-color:var(--green);background:var(--green-dim);color:var(--green);font-weight:600}
+.qopt.wrong{border-color:var(--coral);background:var(--coral-dim);color:var(--coral)}
+.qexpl{display:none;font-size:14px;color:var(--ink-soft);margin-top:10px;padding:12px 16px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--blue);line-height:1.65}
+.qexpl.show{display:block}
+
+/* exercise */
+.exercise{background:var(--bg);border:2px solid var(--blue-mid);border-radius:14px;padding:24px 28px;margin:28px 0;min-width:0;overflow:hidden}
+.exercise .cb{max-width:100%;overflow:hidden}
+.ex-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:10px;font-weight:700}
+.ex-title{font-size:18px;font-family:'Syne',sans-serif;font-weight:700;margin-bottom:16px}
+.step-list{counter-reset:step;list-style:none;margin:0;padding:0}
+.step-list li{counter-increment:step;position:relative;display:block;padding-left:44px;margin-bottom:20px;font-size:15px;min-width:0}
+.step-list li::before{content:counter(step);position:absolute;left:0;top:2px;background:var(--blue);color:#fff;border-radius:50%;width:27px;height:27px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;font-family:'Syne',sans-serif}
+.verify{background:var(--green-dim);border:1px solid #9FDCC0;border-radius:8px;padding:9px 14px;font-size:14px;margin-top:8px;color:var(--green);line-height:1.5}
+.verify::before{content:"✅  Verify: ";font-weight:700}
+.hint{background:var(--amber-dim);border:1px solid #F0CD88;border-radius:8px;padding:8px 14px;font-size:14px;margin-top:8px;color:var(--amber)}
+.hint::before{content:"💡  Hint: ";font-weight:700}
+
+/* checklist */
+.checklist{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin:24px 0}
+.checklist h3{font-size:16px;font-family:'Syne',sans-serif;margin-bottom:14px;color:var(--green)}
+.chk{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;font-size:15px;cursor:pointer}
+.chk input{margin-top:3px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0}
+.chk.done{color:var(--ink-soft);text-decoration:line-through}
+
+/* table */
+.tbl{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+.tbl th{text-align:left;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);font-family:'Syne',sans-serif;font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em}
+.tbl td{padding:10px 14px;border:1px solid var(--border);background:var(--bg);vertical-align:top;line-height:1.5}
+.tbl tr:hover td{background:var(--blue-dim)}
+
+/* finish */
+.finish{background:linear-gradient(135deg,var(--green-dim),var(--blue-dim));border:1.5px solid #9FDCC0;border-radius:16px;padding:40px;margin:56px 0 80px;text-align:center}
+.finish h2{font-size:30px;margin-bottom:10px}
+.finish p{color:var(--ink-soft);font-size:17px;margin-bottom:0}
+.finish-btn{display:inline-block;margin-top:22px;background:var(--green);color:#fff;font-weight:700;font-family:'Syne',sans-serif;padding:14px 30px;border-radius:10px;text-decoration:none;font-size:16px}
+
+footer{text-align:center;padding:20px 0 48px;color:var(--ink-soft);font-size:13px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header class="wrap">
+  <div class="lab-badge">🧪 Hands-On Lab · AI II Course</div>
+  <h1>Fetching data from<br><em>Airtable with Python</em></h1>
+  <p class="lede">By the end of this lab, 8 lines of Python will reach across the internet, authenticate with Airtable, and retrieve 30 student records as structured data. Every line of the code is explained — what it does, why it's there, and what happens if it goes wrong.</p>
+  <div class="meta-grid">
+    <div class="meta-card"><strong>Difficulty</strong><span>Beginner</span></div>
+    <div class="meta-card"><strong>Time</strong><span>~90 minutes</span></div>
+    <div class="meta-card"><strong>Technologies</strong><span>Python · venv · HTTP · JSON · Airtable</span></div>
+    <div class="meta-card"><strong>Result</strong><span>30 records fetched and printed</span></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="step-nav" id="stepNav">
+    <a class="snav" href="#s0"><span class="snav-num">0</span>The Problem</a>
+    <a class="snav" href="#s1"><span class="snav-num">1</span>How the Internet Works</a>
+    <a class="snav" href="#s1b"><span class="snav-num">2</span>Python &amp; venv</a>
+    <a class="snav" href="#s2"><span class="snav-num">3</span>Airtable Setup</a>
+    <a class="snav" href="#s3"><span class="snav-num">4</span>The Code, Line by Line</a>
+    <a class="snav" href="#s4"><span class="snav-num">5</span>Reading the Response</a>
+    <a class="snav" href="#s5"><span class="snav-num">6</span>Navigating JSON</a>
+    <a class="snav" href="#s6"><span class="snav-num">7</span>When Things Go Wrong</a>
+    <a class="snav" href="#s7"><span class="snav-num">8</span>The Full Lab</a>
+  </div>
+</div>
+
+<!-- ══════════════ STEP 0 ══════════════ -->
+<div class="wrap">
+<section class="step" id="s0">
+  <div class="step-eyebrow"><span class="step-num">STEP 0</span><span class="step-tag">The Problem</span></div>
+  <h2>Why does this need to exist?</h2>
+
+  <p>The ML project trains a model to predict student exam scores. The training data — 30 student records with study hours, sleep, attendance, and final scores — lives in an <strong>Airtable database in the cloud</strong>.</p>
+
+  <p>The Python script lives on a laptop. The question is: <strong>how does a Python program on a laptop reach into a database in the cloud and pull out rows of data?</strong></p>
+
+  <p>The answer is the same mechanism your browser uses to load any webpage — an <strong>HTTP request</strong>. Instead of a browser asking a server for an HTML page, Python asks Airtable's server for data.</p>
+
+  <div class="analogy">
+    <p>Think of Airtable as a library. The data is books. You can walk in and browse the shelves yourself (using the Airtable website). But you can also call the library on the phone, ask for a specific book, and they read it to you. The phone call is the API request. The Python <code>requests</code> library is the phone. The Airtable API is the library's phone number.</p>
+  </div>
+
+  <h3>What the final code looks like</h3>
+  <p>Here is the complete script being built in this lab. Read through it once — it won't all make sense yet. That's the point: by Step 7 every single character will be explained.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — the complete script</span><button class="copy-btn">Copy</button></div>
+<pre><span class="kw">import</span> requests
+<span class="kw">import</span> os
+
+response = requests.get(
+    <span class="st">"https://api.airtable.com/v0/appjAX8yLYxmpL971/Students"</span>,
+    headers={
+        <span class="st">"Authorization"</span>: <span class="st">f"Bearer {os.environ['AIRTABLE_API_KEY']}"</span>
+    }
+)
+
+print(response.status_code)
+print(response.text)
+
+data = response.json()
+
+records = data[<span class="st">"records"</span>]
+print(len(records))</pre>
+  </div>
+
+  <h3>Technologies used in this script</h3>
+  <table class="tbl">
+    <tr><th>Technology</th><th>What it is</th><th>Its role in this script</th></tr>
+    <tr>
+      <td><code>requests</code></td>
+      <td>A Python library for making HTTP calls over the internet</td>
+      <td>Sends the GET request to Airtable's server and receives the response</td>
+    </tr>
+    <tr>
+      <td><code>os</code></td>
+      <td>A built-in Python module for interacting with the operating system</td>
+      <td>Reads the API token from an environment variable (keeps it out of the code)</td>
+    </tr>
+    <tr>
+      <td>HTTP</td>
+      <td>The protocol browsers and programs use to request and receive data over the internet</td>
+      <td>The underlying communication mechanism — GET method, URL, headers, response</td>
+    </tr>
+    <tr>
+      <td>JSON</td>
+      <td>A text format for structured data — looks like Python dicts and lists</td>
+      <td>The format Airtable uses to send back the records</td>
+    </tr>
+    <tr>
+      <td>Airtable API</td>
+      <td>Airtable's service entrance — a set of URLs that accept requests and return data</td>
+      <td>The endpoint being called: the Students table in the ML demo base</td>
+    </tr>
+    <tr>
+      <td>Virtual environment</td>
+      <td>An isolated, per-project copy of Python and its packages (the <code>.venv</code> folder)</td>
+      <td>Keeps this project's packages (requests) separate from every other project on the machine</td>
+    </tr>
+    <tr>
+      <td>Environment variable</td>
+      <td>A named value stored in the terminal session, not in any file</td>
+      <td>Stores the API token safely so it's never pasted into code</td>
+    </tr>
+  </table>
+
+  <div class="checklist"><h3>✅ Step 0 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I can describe the problem in one sentence: "Python on a laptop needs to get data from a cloud database"</label>
+    <label class="chk"><input type="checkbox"> I've read the complete script once, even without understanding it fully</label>
+    <label class="chk"><input type="checkbox"> I can name all 7 technologies and what each one does</label>
+  </div>
+</section>
+
+<!-- ══════════════ STEP 1 ══════════════ -->
+<section class="step" id="s1">
+  <div class="step-eyebrow"><span class="step-num">STEP 1</span><span class="step-tag">How the Internet Works</span></div>
+  <h2>HTTP: the language of the web</h2>
+
+  <p>Every time a browser loads a page, it sends an <strong>HTTP request</strong> to a server and receives an <strong>HTTP response</strong>. APIs use the exact same mechanism — just the content of the response changes (data instead of HTML).</p>
+
+  <p>An HTTP request has four parts. Here is the exact request the script sends to Airtable, broken apart:</p>
+
+  <div class="http-card">
+    <div class="http-row">
+      <div class="http-lbl">Method</div>
+      <div class="http-val">
+        <span class="gr">GET</span>
+        <span class="note">GET = "give me data, don't change anything." Other methods: POST = "create something," PATCH = "update something," DELETE = "remove something." This script reads data, so it uses GET.</span>
+      </div>
+    </div>
+    <div class="http-row">
+      <div class="http-lbl">URL</div>
+      <div class="http-val">
+        https://api.airtable.com/v0/<span class="em">appjAX8yLYxmpL971</span>/<span class="bl">Students</span>
+        <span class="note">The address of the specific resource. <span class="em">red</span> = base ID (which database). <span class="bl">blue</span> = table name. Change either and you get a different (or non-existent) table.</span>
+      </div>
+    </div>
+    <div class="http-row">
+      <div class="http-lbl">Headers</div>
+      <div class="http-val">
+        Authorization: Bearer <span class="em">pat_your_token_here</span>
+        <span class="note">Extra information sent alongside the request. The Authorization header is the "membership card" — it proves this code has permission to read this base. Without it, Airtable returns 401 Unauthorized.</span>
+      </div>
+    </div>
+    <div class="http-row">
+      <div class="http-lbl">Body</div>
+      <div class="http-val">
+        <span style="color:#3E4F72;font-style:italic">(empty for GET requests)</span>
+        <span class="note">GET requests don't send a body — they only ask. POST and PATCH requests include a body with the data to create or update.</span>
+      </div>
+    </div>
+  </div>
+
+  <p>When Airtable receives the request, it checks the token, finds the table, and sends back an <strong>HTTP response</strong>:</p>
+
+  <div class="http-card">
+    <div class="http-row">
+      <div class="http-lbl">Status Code</div>
+      <div class="http-val">
+        <span class="gr">200</span>
+        <span class="note">A 3-digit number: the server's instant verdict. 200 = success. 401 = bad token. 403 = not allowed. 404 = not found. The script prints this first so you immediately know if the request worked.</span>
+      </div>
+    </div>
+    <div class="http-row">
+      <div class="http-lbl">Body</div>
+      <div class="http-val">
+        {"records": [ {"id": "recXXX", "fields": {...}}, ... ]}
+        <span class="note">The actual data — 30 student records in JSON format. This is what <code>response.text</code> prints and <code>response.json()</code> parses into a Python dict.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>The flow visualised</h3>
+  <div class="status-flow">
+    <div class="sf-node done" id="flow1">
+      <div class="sf-icon">💻</div>
+      <div class="sf-label">Python script</div>
+    </div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-node done" id="flow2">
+      <div class="sf-icon">📡</div>
+      <div class="sf-label">HTTP GET request</div>
+    </div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-node done" id="flow3">
+      <div class="sf-icon">🏢</div>
+      <div class="sf-label">Airtable server</div>
+    </div>
+    <div class="sf-arrow">→</div>
+    <div class="sf-node done" id="flow4">
+      <div class="sf-icon">📦</div>
+      <div class="sf-label">JSON response</div>
+    </div>
+  </div>
+
+  <h3>Interactive: what would happen?</h3>
+  <div class="demo-panel">
+    <div class="demo-head">
+      <div class="demo-title">Simulate different request scenarios</div>
+    </div>
+    <div class="demo-body">
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:14px">Click a scenario to see what Airtable would return and why:</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="demo-btn" onclick="showScenario('ok')">✅ Valid token + correct URL</button>
+        <button class="demo-btn amber" onclick="showScenario('no_token')">⚠️ Missing token</button>
+        <button class="demo-btn amber" onclick="showScenario('bad_token')">⚠️ Wrong token</button>
+        <button class="demo-btn" style="background:var(--coral)" onclick="showScenario('bad_url')">❌ Wrong table name</button>
+      </div>
+      <div class="demo-screen" id="scenarioOut">
+        <span class="line info">← Click a scenario above</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sc-grid">
+    <div class="sc-card sc-200">
+      <div class="sc-code">200</div>
+      <div class="sc-name">OK</div>
+      <div class="sc-desc">Request succeeded. Data is in the response body.</div>
+    </div>
+    <div class="sc-card sc-401">
+      <div class="sc-code">401</div>
+      <div class="sc-name">Unauthorized</div>
+      <div class="sc-desc">Token is missing or malformed. Check the Authorization header.</div>
+    </div>
+    <div class="sc-card sc-403">
+      <div class="sc-code">403</div>
+      <div class="sc-name">Forbidden</div>
+      <div class="sc-desc">Token is valid but lacks permission. Check token scopes.</div>
+    </div>
+    <div class="sc-card sc-404">
+      <div class="sc-code">404</div>
+      <div class="sc-name">Not Found</div>
+      <div class="sc-desc">Base ID or table name is wrong. Check spelling and capitalisation.</div>
+    </div>
+    <div class="sc-card sc-429">
+      <div class="sc-code">429</div>
+      <div class="sc-name">Rate Limited</div>
+      <div class="sc-desc">Too many requests too fast. Wait and retry. Max 5/second per base.</div>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <h3>The script prints <code>response.status_code</code> first, before doing anything with the data. Why is this a good practice?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q1" data-i="0">Because status_code is the only thing the response contains</button>
+      <button class="qopt" data-q="q1" data-i="1" data-correct>It immediately reveals whether the request succeeded or failed — so if the next lines crash, you already know the request was the problem</button>
+      <button class="qopt" data-q="q1" data-i="2">It makes the script run faster</button>
+    </div>
+    <div class="qexpl" id="q1-expl">Printing the status code first is a debugging habit. If you skip it and the next line crashes with "KeyError: records", you don't know if the request failed (400-level status) or if the JSON structure was unexpected. 200 printed first means "the request worked, the problem is elsewhere." Non-200 means "fix the request first."</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 1 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I know the 4 parts of an HTTP request: method, URL, headers, body</label>
+    <label class="chk"><input type="checkbox"> I know what each status code means (200, 401, 403, 404, 429)</label>
+    <label class="chk"><input type="checkbox"> I clicked all 4 scenarios and understand what causes each response</label>
+    <label class="chk"><input type="checkbox"> I know the difference between 401 (missing/bad token) and 403 (wrong permissions)</label>
+  </div>
+</section>
+
+<!-- ══════════════ STEP 2: PYTHON & VENV ══════════════ -->
+<section class="step" id="s1b">
+  <div class="step-eyebrow"><span class="step-num">STEP 2</span><span class="step-tag">Python &amp; Virtual Environment</span></div>
+  <h2>Setting up Python and the virtual environment</h2>
+
+  <p>Before any code runs, two things must exist on the machine: <strong>Python itself</strong>, and a <strong>virtual environment</strong> for this project. This step covers both from zero — including why the virtual environment matters and every error that can happen during setup.</p>
+
+  <h3>Part A — Verify Python is installed</h3>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">terminal — check Python</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># Windows — try these in order until one works:</span>
+<span class="p">C:\Users\you&gt;</span> python --version
+<span class="o">Python 3.12.4</span>
+
+<span class="c"># If "python" isn't recognised, try the launcher:</span>
+<span class="p">C:\Users\you&gt;</span> py --version
+<span class="o">Python 3.12.4</span>
+
+<span class="c"># Mac/Linux:</span>
+<span class="p">~$</span> python3 --version
+<span class="o">Python 3.12.4</span></pre>
+  </div>
+
+  <div class="box box-amber"><b>⚠️ If Python is not installed (or the version is below 3.9)</b>Download it from <strong>python.org/downloads</strong> and run the installer. On Windows, <strong>tick the checkbox "Add python.exe to PATH"</strong> on the very first installer screen — missing this checkbox is the #1 cause of "python is not recognized" errors. After installing, <strong>close and reopen the terminal</strong> (the PATH change only applies to new terminal windows), then run <code>python --version</code> again.</div>
+
+  <div class="box box-coral"><b>❌ "python is not recognized as an internal or external command"</b>Windows can't find Python because it's not on the PATH. Three fixes, in order of preference: (1) try <code>py --version</code> — the Python launcher usually works even when PATH is broken; (2) reinstall Python from python.org with the "Add to PATH" checkbox ticked; (3) if the Microsoft Store opens when typing <code>python</code>, type <code>python</code> in Settings → search "app execution aliases" and turn OFF the python.exe aliases, then reinstall from python.org.</div>
+
+  <h3>Part B — Why a virtual environment?</h3>
+
+  <p>Python installs packages (like <code>requests</code>) into a shared location by default. Every project on the machine uses that same shared pile of packages. This causes two real problems:</p>
+
+  <ul>
+    <li><strong>Version conflicts:</strong> Project A needs <code>requests 2.28</code>, Project B needs <code>requests 2.31</code>. With one shared install, upgrading for B silently breaks A. With 10 projects this becomes unmanageable.</li>
+    <li><strong>Unknown dependencies:</strong> after months of installing packages globally, nobody knows which packages this specific project actually needs. Sharing the project with someone else becomes guesswork — "it works on my machine" but not theirs.</li>
+  </ul>
+
+  <p>A <strong>virtual environment (venv)</strong> solves both: it's a private, isolated copy of Python inside the project folder. Packages installed there exist only for this project. Delete the folder, and the environment is gone — the system Python is untouched.</p>
+
+  <div class="analogy">
+    <p>The system Python is a shared kitchen in an apartment building — everyone's ingredients get mixed together, and someone else's expired milk breaks your recipe. A virtual environment is your own kitchenette: your ingredients, your versions, nobody else can touch them. And when the project ends, you just remove the kitchenette — the building is unaffected.</p>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">what the venv actually is — a folder structure</span><button class="copy-btn">Copy</button></div>
+<pre>score-predictor/              <span class="c">← the project folder</span>
+├── .venv/                    <span class="c">← the virtual environment (created by python -m venv)</span>
+│   ├── Scripts/              <span class="c">← Windows: activate script + python.exe live here</span>
+│   │   ├── activate          <span class="c">← running this "switches on" the environment</span>
+│   │   ├── python.exe        <span class="c">← a private copy of Python for this project</span>
+│   │   └── pip.exe           <span class="c">← installs packages INTO this venv only</span>
+│   └── Lib/site-packages/    <span class="c">← packages installed for this project (requests goes here)</span>
+└── fetch_students.py         <span class="c">← the code (written in Step 8)</span>
+
+<span class="c"># On Mac/Linux the layout is .venv/bin/ instead of .venv/Scripts/</span></pre>
+  </div>
+
+  <div class="box box-blue"><b>💡 What "activating" actually does</b>Activation is not magic — it temporarily edits the terminal's PATH so that typing <code>python</code> or <code>pip</code> uses the copies inside <code>.venv</code> instead of the system ones. The <code>(.venv)</code> prefix in the prompt is the visual confirmation. Closing the terminal ends the activation; the venv folder itself persists and can be re-activated any time.</div>
+
+  <h3>Part C — Create and activate the environment</h3>
+
+  <div class="exercise">
+    <div class="ex-label">🔧 Setup Exercise</div>
+    <div class="ex-title">Project folder + virtual environment + requests, from zero</div>
+    <ol class="step-list">
+      <li>
+        Create a project folder and move into it:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal — Windows</span><button class="copy-btn">Copy</button></div>
+<pre><span class="p">C:\Users\you&gt;</span> mkdir score-predictor
+<span class="p">C:\Users\you&gt;</span> cd score-predictor
+<span class="p">C:\Users\you\score-predictor&gt;</span></pre>
+        </div>
+        <div class="verify">The prompt now ends with <code>score-predictor&gt;</code> — the terminal is inside the project folder</div>
+      </li>
+      <li>
+        Create the virtual environment. This takes ~15 seconds and creates the <code>.venv</code> folder:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal — all platforms</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># Windows:</span>
+<span class="p">C:\...\score-predictor&gt;</span> python -m venv .venv
+
+<span class="c"># Mac/Linux:</span>
+<span class="p">~/score-predictor$</span> python3 -m venv .venv
+
+<span class="c"># Breaking the command down:
+#   python -m venv   → run the built-in "venv" module
+#   .venv            → the folder name to create (the dot is just a naming convention)</span></pre>
+        </div>
+        <div class="verify">Running <code>dir</code> (Windows) or <code>ls -a</code> (Mac) shows a <code>.venv</code> folder</div>
+      </li>
+      <li>
+        Activate it. The command differs by platform and shell:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal — activation per platform</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># Windows — Command Prompt (cmd):</span>
+<span class="p">C:\...\score-predictor&gt;</span> .venv\Scripts\activate
+<span class="o">(.venv) C:\...\score-predictor&gt;</span>
+
+<span class="c"># Windows — PowerShell (default in VS Code):</span>
+<span class="p">PS C:\...\score-predictor&gt;</span> .venv\Scripts\Activate.ps1
+<span class="o">(.venv) PS C:\...\score-predictor&gt;</span>
+
+<span class="c"># Mac/Linux:</span>
+<span class="p">~/score-predictor$</span> source .venv/bin/activate
+<span class="o">(.venv) ~/score-predictor$</span></pre>
+        </div>
+        <div class="verify">The prompt now starts with <code>(.venv)</code> — this prefix is the proof activation worked</div>
+        <div class="hint">The <code>(.venv)</code> prefix must be visible before every pip install and every python command in this lab. No prefix = not activated = packages go to the wrong place.</div>
+      </li>
+      <li>
+        <strong>PowerShell only:</strong> if activation fails with a red error about "running scripts is disabled on this system", run this once, answer <kbd>Y</kbd>, then retry activation:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">PowerShell — fix execution policy (one-time)</span><button class="copy-btn">Copy</button></div>
+<pre><span class="p">PS C:\...\score-predictor&gt;</span> Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+<span class="o">Execution Policy Change ... Do you want to change the execution policy? [Y] Yes ...: Y</span>
+
+<span class="c"># What this does: allows locally-created scripts (like activate.ps1) to run.
+# -Scope CurrentUser means it only affects your account — no admin needed.
+# Alternative: use Command Prompt (cmd) instead of PowerShell — cmd never has this issue.</span></pre>
+        </div>
+        <div class="verify">Re-running <code>.venv\Scripts\Activate.ps1</code> now succeeds and shows <code>(.venv)</code></div>
+      </li>
+      <li>
+        Confirm the terminal is using the venv's Python, not the system one:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal — verify which python is active</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># Windows:</span>
+<span class="p">(.venv) C:\...\score-predictor&gt;</span> where python
+<span class="o">C:\...\score-predictor\.venv\Scripts\python.exe</span>   <span class="c">← venv copy listed FIRST = correct</span>
+<span class="o">C:\Program Files\Python312\python.exe</span>
+
+<span class="c"># Mac/Linux:</span>
+<span class="p">(.venv) ~/score-predictor$</span> which python
+<span class="o">/Users/you/score-predictor/.venv/bin/python</span></pre>
+        </div>
+        <div class="verify">The first path printed points inside <code>.venv</code></div>
+      </li>
+      <li>
+        Install <code>requests</code> — the only package this lab needs:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal — install and verify</span><button class="copy-btn">Copy</button></div>
+<pre><span class="p">(.venv) C:\...\score-predictor&gt;</span> pip install requests
+<span class="o">Collecting requests
+  Downloading requests-2.32.3-py3-none-any.whl (64 kB)
+...
+Successfully installed certifi-... charset-normalizer-... idna-... requests-2.32.3 urllib3-...</span>
+
+<span class="c"># Verify it's importable:</span>
+<span class="p">(.venv) C:\...\score-predictor&gt;</span> python -c "import requests; print(requests.__version__)"
+<span class="o">2.32.3</span>
+
+<span class="c"># See everything installed in this venv:</span>
+<span class="p">(.venv) C:\...\score-predictor&gt;</span> pip list
+<span class="o">Package            Version
+------------------ --------
+certifi            2024.x
+charset-normalizer 3.x
+idna               3.x
+pip                24.x
+requests           2.32.3
+urllib3            2.x</span></pre>
+        </div>
+        <div class="verify">The import prints a version number with no error. Note requests pulled in 4 helper packages automatically — that's normal dependency resolution.</div>
+      </li>
+    </ol>
+  </div>
+
+  <div class="box box-teal"><b>🔄 Daily workflow from now on</b>The venv is created <em>once</em>. But activation is <em>per terminal session</em>: every time a new terminal opens, run the activate command again before doing anything else. To switch off the venv without closing the terminal, type <code>deactivate</code>. To delete the environment entirely, just delete the <code>.venv</code> folder — nothing else on the machine is affected.</div>
+
+  <div class="quiz">
+    <h3>A script fails with <code>ModuleNotFoundError: No module named 'requests'</code> — but <code>pip install requests</code> was definitely run yesterday. What is the most likely cause?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="qv1" data-i="0">The requests library was deleted overnight</button>
+      <button class="qopt" data-q="qv1" data-i="1" data-correct>This is a new terminal session and the venv was never activated — so python is the system copy, which doesn't have requests installed</button>
+      <button class="qopt" data-q="qv1" data-i="2">requests needs to be reinstalled every day</button>
+    </div>
+    <div class="qexpl" id="qv1-expl">Packages installed inside a venv persist — but activation doesn't. A new terminal starts deactivated, so <code>python</code> points at the system Python, which never had requests installed. The check: is <code>(.venv)</code> in the prompt? No → run the activate command, then re-run the script. This exact mistake accounts for the majority of ModuleNotFoundError reports in practice.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 2 complete when:</h3>
+    <label class="chk"><input type="checkbox"> <code>python --version</code> prints 3.9 or higher</label>
+    <label class="chk"><input type="checkbox"> I can explain in one sentence why a venv exists (isolation of per-project packages)</label>
+    <label class="chk"><input type="checkbox"> The <code>.venv</code> folder exists inside <code>score-predictor</code></label>
+    <label class="chk"><input type="checkbox"> Activation works and <code>(.venv)</code> shows in the prompt</label>
+    <label class="chk"><input type="checkbox"> <code>where python</code> / <code>which python</code> points inside .venv</label>
+    <label class="chk"><input type="checkbox"> <code>requests</code> is installed and importable</label>
+    <label class="chk"><input type="checkbox"> I know activation is per-terminal-session, but installation is one-time</label>
+  </div>
+</section>
+
+<!-- ══════════════ STEP 3: AIRTABLE SETUP ══════════════ -->
+<section class="step" id="s2">
+  <div class="step-eyebrow"><span class="step-num">STEP 3</span><span class="step-tag">Airtable Setup</span></div>
+  <h2>Setting up the API token</h2>
+
+  <p>Airtable uses <strong>personal access tokens</strong> to control who can read or write to a base. The token is a long string (starts with <code>pat</code>) that proves the code's identity. Without it, every request returns 401.</p>
+
+  <h3>Create an API token — step by step</h3>
+
+  <div class="exercise">
+    <div class="ex-label">🔑 Setup Exercise</div>
+    <div class="ex-title">Get a working API token in under 5 minutes</div>
+    <ol class="step-list">
+      <li>
+        Go to <strong>airtable.com/create/tokens</strong> in a browser (must be logged into Airtable). Click <strong>Create new token</strong>.
+        <div class="verify">A dialog appears with Name, Scopes, and Access fields</div>
+      </li>
+      <li>
+        Name it <code>ml-lab-token</code> (any name works — it's just a label so you remember which project it's for).
+      </li>
+      <li>
+        Under <strong>Scopes</strong>, click <strong>Add a scope</strong> and add both:
+        <ul style="margin-top:8px">
+          <li><code>data.records:read</code> — allows reading records (needed for this lab)</li>
+          <li><code>data.records:write</code> — allows creating records (needed for the prediction logging later)</li>
+        </ul>
+        <div class="verify">Both scopes appear in the list</div>
+      </li>
+      <li>
+        Under <strong>Access</strong>, click <strong>Add a base</strong> and select <strong>Student Score Predictor (ML Demo)</strong>.
+        <div class="verify">The base appears under Access — the token is now limited to only this base</div>
+      </li>
+      <li>
+        Click <strong>Create token</strong>. <strong>Copy the token immediately</strong> — Airtable shows it only once.
+        <div class="verify">The token starts with <code>pat</code> and is a long string of letters and numbers</div>
+      </li>
+      <li>
+        Set the token as an environment variable in the terminal. This keeps it out of code:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal — Windows</span><button class="copy-btn">Copy</button></div>
+<pre><span class="p">(.venv) C:\...\score-predictor&gt;</span> set AIRTABLE_API_KEY=pat_PASTE_YOUR_TOKEN_HERE</pre>
+        </div>
+        <div class="cb">
+          <div class="cb-head"><span class="cb-fname">terminal — Mac/Linux</span><button class="copy-btn">Copy</button></div>
+<pre><span class="p">(.venv) ~/score-predictor$</span> export AIRTABLE_API_KEY=pat_PASTE_YOUR_TOKEN_HERE</pre>
+        </div>
+        <div class="verify">Running <code>echo %AIRTABLE_API_KEY%</code> (Windows) or <code>echo $AIRTABLE_API_KEY</code> (Mac) prints the token back</div>
+        <div class="hint">This only lasts for the current terminal session. Every time you open a new terminal, re-run the set/export command.</div>
+      </li>
+    </ol>
+  </div>
+
+  <div class="box box-coral"><b>❌ Never paste the token directly into the .py file</b>Code gets shared on GitHub, screenshotted in presentations, sent in messages. Tokens inside code get exposed. Bots scan GitHub for API tokens within minutes of a commit and use them immediately. The environment variable approach keeps the token in the terminal session — invisible to anyone looking at the code files.</div>
+
+  <h3>Why <code>os.environ["AIRTABLE_API_KEY"]</code> works</h3>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">how Python reads the environment variable</span><button class="copy-btn">Copy</button></div>
+<pre><span class="kw">import</span> os
+
+<span class="c"># os.environ is a dict-like object of all environment variables</span>
+token = os.environ[<span class="st">"AIRTABLE_API_KEY"</span>]
+<span class="c"># → "pat_your_token_here"
+
+# If the variable is NOT set, this crashes with KeyError:
+# KeyError: 'AIRTABLE_API_KEY'
+# That's a deliberate design choice — a clear error is better
+# than a silent empty string that causes a confusing 401 later.
+
+# Safer version that gives a clear default:</span>
+token = os.environ.get(<span class="st">"AIRTABLE_API_KEY"</span>, <span class="st">"NOT_SET"</span>)
+<span class="kw">if</span> token == <span class="st">"NOT_SET"</span>:
+    print(<span class="st">"ERROR: Set the AIRTABLE_API_KEY environment variable first"</span>)</pre>
+  </div>
+
+  <div class="quiz">
+    <h3>The script crashes with <code>KeyError: 'AIRTABLE_API_KEY'</code> before even making the request. What is the most likely cause?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q2" data-i="0">The token value is wrong</button>
+      <button class="qopt" data-q="q2" data-i="1" data-correct>The environment variable was never set in this terminal session — the <code>set</code> or <code>export</code> command was not run</button>
+      <button class="qopt" data-q="q2" data-i="2">The Airtable base doesn't exist</button>
+    </div>
+    <div class="qexpl" id="q2-expl">KeyError from os.environ means Python looked for "AIRTABLE_API_KEY" in the environment variables dict and didn't find it. The variable doesn't exist — it was either never set, or set in a different terminal window that's now closed. Fix: run the set/export command in this terminal, then run the script again.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 3 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I created an Airtable token with both read and write scopes on the ML demo base</label>
+    <label class="chk"><input type="checkbox"> I set AIRTABLE_API_KEY in the terminal and verified it with echo</label>
+    <label class="chk"><input type="checkbox"> I understand why the token is stored in an environment variable, not in the code</label>
+    <label class="chk"><input type="checkbox"> I know what KeyError: 'AIRTABLE_API_KEY' means and how to fix it</label>
+  </div>
+</section>
+
+<!-- ══════════════ STEP 3 ══════════════ -->
+<section class="step" id="s3">
+  <div class="step-eyebrow"><span class="step-num">STEP 4</span><span class="step-tag">The Code, Line by Line</span></div>
+  <h2>Every line explained</h2>
+
+  <p>The script is 12 lines. Each one has a specific job. Read each annotation carefully — this is the mental model that makes all future API code readable.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — fully annotated</span><span class="cb-tag">hover/tap each section</span><button class="copy-btn">Copy</button></div>
+    <div class="ann-code">
+      <div class="ann-line hl" onclick="explain('e1')">
+        <div class="ann-src"><span class="kw">import</span> requests</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line" onclick="explain('e2')">
+        <div class="ann-src"><span class="kw">import</span> os</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line" onclick="explain('e3')">
+        <div class="ann-src"> </div>
+        <div class="ann-note"></div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e4')">
+        <div class="ann-src">response = requests.get(</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e5')">
+        <div class="ann-src">    <span class="st">"https://api.airtable.com/v0/appjAX8yLYxmpL971/Students"</span>,</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e6')">
+        <div class="ann-src">    headers={</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e7')">
+        <div class="ann-src">        <span class="st">"Authorization"</span>: <span class="st">f"Bearer {os.environ['AIRTABLE_API_KEY']}"</span></div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line" onclick="explain('e8')">
+        <div class="ann-src">    }</div>
+        <div class="ann-note"></div>
+      </div>
+      <div class="ann-line" onclick="explain('e8')">
+        <div class="ann-src">)</div>
+        <div class="ann-note"></div>
+      </div>
+      <div class="ann-line" onclick="explain('e3')">
+        <div class="ann-src"> </div>
+        <div class="ann-note"></div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e9')">
+        <div class="ann-src">print(response.status_code)</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e10')">
+        <div class="ann-src">print(response.text)</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line" onclick="explain('e3')">
+        <div class="ann-src"> </div>
+        <div class="ann-note"></div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e11')">
+        <div class="ann-src">data = response.json()</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line" onclick="explain('e3')">
+        <div class="ann-src"> </div>
+        <div class="ann-note"></div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e12')">
+        <div class="ann-src">records = data[<span class="st">"records"</span>]</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+      <div class="ann-line hl" onclick="explain('e13')">
+        <div class="ann-src">print(len(records))</div>
+        <div class="ann-note">← click for explanation</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="explainBox" class="box box-blue" style="display:none">
+    <b id="explainTitle"></b>
+    <span id="explainText"></span>
+  </div>
+
+  <p style="margin-top:20px">Click any highlighted line above to see its detailed explanation here.</p>
+
+  <h3>The <code>requests</code> library in detail</h3>
+  <p><code>requests</code> is a third-party Python library (install with <code>pip install requests</code>) that makes HTTP calls simple. Without it, making an HTTP request in Python requires 30+ lines of raw socket code. With it, a GET request is one line.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">without requests vs. with requests</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># WITHOUT requests — 30+ lines of raw socket code</span>
+<span class="kw">import</span> socket, ssl
+context = ssl.create_default_context()
+sock = context.wrap_socket(socket.socket(), server_hostname=<span class="st">"api.airtable.com"</span>)
+sock.connect((<span class="st">"api.airtable.com"</span>, 443))
+request = <span class="st">b"GET /v0/appjAX8yLYxmpL971/Students HTTP/1.1\r\nHost: ..."</span>
+<span class="c"># ... 25 more lines</span>
+
+<span class="c"># WITH requests — one line</span>
+response = requests.get(url, headers={...})</pre>
+  </div>
+
+  <h3>Understanding the <code>headers</code> dict</h3>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">the Authorization header — broken down</span><button class="copy-btn">Copy</button></div>
+<pre>headers = {
+    <span class="st">"Authorization"</span>: <span class="st">f"Bearer {os.environ['AIRTABLE_API_KEY']}"</span>
+}
+
+<span class="c"># What this evaluates to at runtime (assuming token is "pat_abc123"):</span>
+headers = {
+    <span class="st">"Authorization"</span>: <span class="st">"Bearer pat_abc123"</span>
+}
+
+<span class="c"># Breaking it down:
+# "Authorization" → the header name. Airtable looks for this specific name.
+# "Bearer "       → the authentication scheme. Space after Bearer is required.
+# pat_abc123      → the actual token value from the environment variable.
+
+# What Airtable checks:
+# 1. Is the Authorization header present? No → 401
+# 2. Is the scheme "Bearer"? No → 401
+# 3. Is the token valid and not expired? No → 401
+# 4. Does this token have read access to this base? No → 403
+# 5. All good → 200, here is the data.</span></pre>
+  </div>
+
+  <div class="quiz">
+    <h3>The authorization header is <code>"Bearer pat_abc123"</code>. What is the role of the word "Bearer"?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q3" data-i="0">It is the username — Airtable accounts are called "Bearers"</button>
+      <button class="qopt" data-q="q3" data-i="1" data-correct>It is the authentication scheme — it tells the server what type of credential is being sent (a token, not a username/password)</button>
+      <button class="qopt" data-q="q3" data-i="2">It is a typo — the correct word is "Bearer's"</button>
+    </div>
+    <div class="qexpl" id="q3-expl">HTTP supports multiple authentication schemes. "Bearer" means "the holder of this token is authenticated." It tells the server: what follows the space is a token string, not a username or anything else. If you omit "Bearer " (including the space), the server won't recognise the credential format and returns 401. This is a web standard — not Airtable-specific.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 4 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I clicked every highlighted line in the annotated code and read each explanation</label>
+    <label class="chk"><input type="checkbox"> I know what requests.get() does and why requests exists as a library</label>
+    <label class="chk"><input type="checkbox"> I understand what the Authorization header contains and the role of "Bearer"</label>
+    <label class="chk"><input type="checkbox"> I understand why there is a space after "Bearer" in the header value</label>
+  </div>
+</section>
+
+<!-- ══════════════ STEP 4 ══════════════ -->
+<section class="step" id="s4">
+  <div class="step-eyebrow"><span class="step-num">STEP 5</span><span class="step-tag">Reading the Response</span></div>
+  <h2>What the response object contains</h2>
+
+  <p><code>requests.get()</code> returns a <strong>Response object</strong> — a Python object with several attributes and methods. The script uses three of them:</p>
+
+  <table class="tbl">
+    <tr><th>Attribute / Method</th><th>What it contains</th><th>Type returned</th><th>Used for</th></tr>
+    <tr>
+      <td><code>response.status_code</code></td>
+      <td>The 3-digit HTTP status number</td>
+      <td>int</td>
+      <td>Checking if the request succeeded before touching the data</td>
+    </tr>
+    <tr>
+      <td><code>response.text</code></td>
+      <td>The raw response body as a string</td>
+      <td>str</td>
+      <td>Printing or debugging — seeing the raw JSON text Airtable sent</td>
+    </tr>
+    <tr>
+      <td><code>response.json()</code></td>
+      <td>Parses the JSON text into a Python dict/list</td>
+      <td>dict or list</td>
+      <td>Actually working with the data — this is what the code uses</td>
+    </tr>
+  </table>
+
+  <h3>Interactive: explore the response object</h3>
+
+  <div class="demo-panel">
+    <div class="demo-head">
+      <div class="demo-title">Response object explorer</div>
+      <button class="demo-btn" onclick="simulateRequest()">▶ Simulate request</button>
+    </div>
+    <div class="demo-body">
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:14px">Click "Simulate request" to see a mock response, then click each attribute to see what it returns:</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="respBtns" style="display:none">
+        <button class="demo-btn" style="background:var(--surface2);color:var(--ink-soft);border:1px solid var(--border2);font-size:13px" onclick="showRespAttr('status')">response.status_code</button>
+        <button class="demo-btn" style="background:var(--surface2);color:var(--ink-soft);border:1px solid var(--border2);font-size:13px" onclick="showRespAttr('text')">response.text</button>
+        <button class="demo-btn" style="background:var(--surface2);color:var(--ink-soft);border:1px solid var(--border2);font-size:13px" onclick="showRespAttr('json')">response.json()</button>
+        <button class="demo-btn" style="background:var(--surface2);color:var(--ink-soft);border:1px solid var(--border2);font-size:13px" onclick="showRespAttr('headers')">response.headers</button>
+      </div>
+      <div class="demo-screen" id="respOut">
+        <span class="line info">Click "Simulate request" first</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Why print both <code>response.text</code> and <code>response.json()</code>?</h3>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">text vs json() — what's the difference</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># response.text → raw string (what Airtable literally sent)</span>
+print(response.text)
+<span class="o">'{"records":[{"id":"recABC","fields":{"Student ID":"S001",...}},...]}'</span>
+<span class="c"># This is a STRING — Python can't do df["records"] on a string</span>
+
+<span class="c"># response.json() → parsed Python dict (usable data)</span>
+data = response.json()
+print(type(data))
+<span class="o">&lt;class 'dict'&gt;</span>
+print(data.keys())
+<span class="o">dict_keys(['records'])</span>
+<span class="c"># NOW Python can navigate the structure: data["records"][0]["fields"]</span></pre>
+  </div>
+
+  <div class="box box-blue"><b>💡 Why does .json() work?</b><code>response.json()</code> is a shortcut for <code>import json; json.loads(response.text)</code>. It takes the JSON string from the response body and converts it into native Python objects: JSON objects become dicts, JSON arrays become lists, JSON numbers become ints/floats, JSON true/false become True/False, JSON null becomes None.</div>
+
+  <div class="checklist"><h3>✅ Step 5 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I know the 3 response attributes the script uses and what type each returns</label>
+    <label class="chk"><input type="checkbox"> I understand why response.text is a string and response.json() is a dict</label>
+    <label class="chk"><input type="checkbox"> I clicked all attributes in the response explorer</label>
+  </div>
+</section>
+
+<!-- ══════════════ STEP 5 ══════════════ -->
+<section class="step" id="s5">
+  <div class="step-eyebrow"><span class="step-num">STEP 6</span><span class="step-tag">Navigating JSON</span></div>
+  <h2>The structure of what Airtable sends back</h2>
+
+  <p>After a successful request, <code>response.json()</code> returns a dict with a specific structure. Understanding this structure is essential — the data doesn't sit at the top level; it's nested three levels deep.</p>
+
+  <div class="json-tree">
+<span class="hi-row">{                                         <span class="ji">← data = response.json() returns this dict</span></span>
+  <span class="jk">"records"</span>: [                             <span class="ji">← "records" key contains a list</span>
+    {                                       <span class="ji">← each list item is one record dict</span>
+      <span class="jk">"id"</span>: <span class="js">"recpYSiKeZTCu9ML1"</span>,          <span class="ji">← Airtable's internal row ID</span>
+      <span class="jk">"createdTime"</span>: <span class="js">"2026-07-21T..."</span>,   <span class="ji">← when it was added</span>
+<span class="hl-row">      <span class="jk">"fields"</span>: {                       <span class="ji">← THE ACTUAL DATA IS HERE</span></span>
+<span class="hl-row">        <span class="jk">"Student ID"</span>: <span class="js">"S001"</span>,          </span>
+<span class="hl-row">        <span class="jk">"Study Hours"</span>: <span class="jn">8</span>,             </span>
+<span class="hl-row">        <span class="jk">"Sleep Hours"</span>: <span class="jn">7</span>,             </span>
+<span class="hl-row">        <span class="jk">"Attendance"</span>: <span class="jn">0.95</span>,           </span>
+<span class="hl-row">        <span class="jk">"Final Score"</span>: <span class="jn">88</span>            </span>
+<span class="hl-row">      }                                  </span>
+    },
+    {
+      <span class="jk">"id"</span>: <span class="js">"recXYZ456..."</span>,
+      <span class="jk">"fields"</span>: { <span class="jk">"Student ID"</span>: <span class="js">"S002"</span>, <span class="jk">"Study Hours"</span>: <span class="jn">2</span>, ... }
+    },
+    <span class="ji">... 28 more record dicts ...</span>
+  ]
+}
+  </div>
+
+  <h3>Interactive: navigate the JSON structure step by step</h3>
+  <div class="demo-panel">
+    <div class="demo-head"><div class="demo-title">JSON navigation explorer</div></div>
+    <div class="demo-body">
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:14px">Click each navigation step in order — watch the code and output update:</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="demo-btn" style="font-size:13px" onclick="navStep(0)">① data</button>
+        <button class="demo-btn" style="font-size:13px" onclick="navStep(1)">② data["records"]</button>
+        <button class="demo-btn" style="font-size:13px" onclick="navStep(2)">③ data["records"][0]</button>
+        <button class="demo-btn" style="font-size:13px" onclick="navStep(3)">④ data["records"][0]["fields"]</button>
+        <button class="demo-btn" style="font-size:13px" onclick="navStep(4)">⑤ len(data["records"])</button>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--blue);background:var(--blue-dim);padding:8px 14px;border-radius:8px;margin-bottom:10px" id="navCode">Click a step above</div>
+      <div class="demo-screen" id="navOut">
+        <span class="line info">Click any step above to see what that expression returns</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>The key line: extracting records from the response</h3>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">the last two lines of the script — explained</span><button class="copy-btn">Copy</button></div>
+<pre>data = response.json()
+<span class="c"># data is now a Python dict:
+# {"records": [ {id, createdTime, fields}, {id, createdTime, fields}, ... ]}
+
+</span>records = data[<span class="st">"records"</span>]
+<span class="c"># records is now a list of 30 dicts:
+# [ {id, createdTime, fields}, {id, createdTime, fields}, ... ]
+# records[0] is the first student's full dict
+# records[0]["fields"] is just the actual data for that student
+
+</span>print(len(records))
+<span class="c"># → 30
+# Confirms we got all 30 rows, not a partial response
+
+# Going further (what train_model.py does next):
+</span>rows = [r[<span class="st">"fields"</span>] <span class="kw">for</span> r <span class="kw">in</span> records]
+<span class="c"># rows = [{"Student ID":"S001","Study Hours":8,...}, ...]
+# Now rows is a clean list of dicts without the id/createdTime wrapper
+# → ready to pass to pd.DataFrame(rows)</span></pre>
+  </div>
+
+  <div class="quiz">
+    <h3>After <code>data = response.json()</code> and <code>records = data["records"]</code>, what does <code>records[2]["fields"]["Study Hours"]</code> return?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q4" data-i="0">The string "Study Hours"</button>
+      <button class="qopt" data-q="q4" data-i="1">A list of all Study Hours values across all 30 students</button>
+      <button class="qopt" data-q="q4" data-i="2" data-correct>The Study Hours value for the 3rd student (index 2) — the number 5</button>
+    </div>
+    <div class="qexpl" id="q4-expl">Reading it left to right: records[2] → the 3rd record dict (index 2) → ["fields"] → the fields dict for that student → ["Study Hours"] → the value at that key, which is 5 (student S003 studied 5 hours). This three-level navigation appears everywhere when processing Airtable API responses.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 6 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I can draw the JSON structure from memory: dict → "records" → list → each item has "id", "createdTime", "fields"</label>
+    <label class="chk"><input type="checkbox"> I know why the actual data is inside "fields" and not at the top level</label>
+    <label class="chk"><input type="checkbox"> I clicked all 5 JSON navigation steps and understood each output</label>
+    <label class="chk"><input type="checkbox"> I can explain what [r["fields"] for r in records] does in one sentence</label>
+  </div>
+</section>
+
+<!-- ══════════════ STEP 6 ══════════════ -->
+<section class="step" id="s6">
+  <div class="step-eyebrow"><span class="step-num">STEP 7</span><span class="step-tag">When Things Go Wrong</span></div>
+  <h2>Debugging the most common errors</h2>
+
+  <p>Every error that can happen when running this script has a specific, fixable cause. Here are all of them, with the exact fix for each:</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">ERROR 1 — KeyError: 'AIRTABLE_API_KEY'</span><button class="copy-btn">Copy</button></div>
+<pre><span class="e">Traceback (most recent call last):
+  File "fetch_students.py", line 7, in &lt;module&gt;
+    "Authorization": f"Bearer {os.environ['AIRTABLE_API_KEY']}"
+KeyError: 'AIRTABLE_API_KEY'</span>
+
+<span class="c"># Cause: the environment variable is not set in this terminal.
+# Fix (Windows):  set AIRTABLE_API_KEY=pat_your_token
+# Fix (Mac/Linux): export AIRTABLE_API_KEY=pat_your_token
+# Then re-run the script — don't restart VS Code, just re-run.</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">ERROR 2 — status 401, request fails</span><button class="copy-btn">Copy</button></div>
+<pre><span class="o">401</span>
+<span class="e">{"error":{"type":"AUTHENTICATION_REQUIRED","message":"Authentication required"}}</span>
+
+<span class="c"># Cause: the token in AIRTABLE_API_KEY is wrong, expired, or the
+#         Authorization header format is broken.
+# Debug: print the exact header being sent:
+print(f"Bearer {os.environ['AIRTABLE_API_KEY']}")
+# Does it look like: Bearer pat_XXXXXXXXXXXXXXXXXXXXXXXX ?
+# If not, the token was set incorrectly.</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">ERROR 3 — status 403, records empty</span><button class="copy-btn">Copy</button></div>
+<pre><span class="o">403</span>
+<span class="e">{"error":{"type":"NOT_AUTHORIZED","message":"You are not authorized..."}}</span>
+
+<span class="c"># Cause: the token is valid but doesn't have access to THIS base,
+#         or is missing the data.records:read scope.
+# Fix: go to airtable.com/create/tokens → edit your token →
+#       confirm "Student Score Predictor" is in Access and
+#       data.records:read is in Scopes.</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">ERROR 4 — status 404, table not found</span><button class="copy-btn">Copy</button></div>
+<pre><span class="o">404</span>
+<span class="e">{"error":{"type":"TABLE_NOT_FOUND","message":"Could not find table"}}</span>
+
+<span class="c"># Cause: the URL has a wrong table name or base ID.
+# Check: the URL in the script should be exactly:
+#  https://api.airtable.com/v0/appjAX8yLYxmpL971/Students
+#                              ↑ base ID          ↑ table (capital S, exact match)
+# Common mistake: "students" (lowercase) or "Student" (missing s)</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">ERROR 5 — ModuleNotFoundError: requests</span><button class="copy-btn">Copy</button></div>
+<pre><span class="e">ModuleNotFoundError: No module named 'requests'</span>
+
+<span class="c"># Cause: requests is not installed in the active virtual environment.
+# Fix: make sure (.venv) is in the prompt, then:
+(.venv) &gt; pip install requests
+# Then re-run the script.</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">ERROR 6 — JSONDecodeError (rare)</span><button class="copy-btn">Copy</button></div>
+<pre><span class="e">json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</span>
+
+<span class="c"># Cause: response.json() failed because the response body is NOT JSON.
+# This happens when status is not 200 and the error body is HTML.
+# Debug: always check status_code FIRST:
+if response.status_code == 200:
+    data = response.json()
+else:
+    print(f"Request failed: {response.status_code}")
+    print(response.text)  # show the raw error</span></pre>
+  </div>
+
+  <h3>Defensive version of the script</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students_safe.py — with error handling</span><button class="copy-btn">Copy</button></div>
+<pre><span class="kw">import</span> requests
+<span class="kw">import</span> os
+
+<span class="c"># Step 1: verify the token is set before making the request</span>
+token = os.environ.get(<span class="st">"AIRTABLE_API_KEY"</span>)
+<span class="kw">if not</span> token:
+    print(<span class="st">"ERROR: Set AIRTABLE_API_KEY environment variable first."</span>)
+    exit()
+
+<span class="c"># Step 2: make the request</span>
+response = requests.get(
+    <span class="st">"https://api.airtable.com/v0/appjAX8yLYxmpL971/Students"</span>,
+    headers={<span class="st">"Authorization"</span>: <span class="st">f"Bearer {token}"</span>}
+)
+
+<span class="c"># Step 3: check status before touching the body</span>
+print(f<span class="st">f"Status: {response.status_code}"</span>)
+<span class="kw">if</span> response.status_code != <span class="num">200</span>:
+    print(<span class="st">f"Request failed. Response: {response.text}"</span>)
+    exit()
+
+<span class="c"># Step 4: parse JSON (safe because we confirmed 200)</span>
+data = response.json()
+records = data[<span class="st">"records"</span>]
+print(f<span class="st">f"Fetched {len(records)} records"</span>)
+
+<span class="c"># Step 5: inspect the first record's structure</span>
+print(<span class="st">"\nFirst record (raw):"</span>)
+print(records[<span class="num">0</span>])
+
+print(<span class="st">"\nFirst record fields only:"</span>)
+print(records[<span class="num">0</span>][<span class="st">"fields"</span>])
+
+<span class="c"># Step 6: unwrap all records to just their fields</span>
+rows = [r[<span class="st">"fields"</span>] <span class="kw">for</span> r <span class="kw">in</span> records]
+print(<span class="st">f"\nReady to use: {len(rows)} rows of student data"</span>)
+print(f<span class="st">f"Fields available: {list(rows[0].keys())}"</span>)</pre>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 7 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I can identify what causes each of the 6 errors without looking them up</label>
+    <label class="chk"><input type="checkbox"> I know to always check status_code before calling response.json()</label>
+    <label class="chk"><input type="checkbox"> I understand what the defensive script does differently from the original</label>
+  </div>
+</section>
+
+<!-- ══════════════ STEP 7 ══════════════ -->
+<section class="step" id="s7">
+  <div class="step-eyebrow"><span class="step-num">STEP 8</span><span class="step-tag">The Full Lab</span></div>
+  <h2>Build and run the complete script</h2>
+
+  <p>Time to run the actual code. This exercise builds the script in three versions — starting minimal, then adding safety checks, then adding data exploration — so the progression is clear.</p>
+
+  <div class="exercise">
+    <div class="ex-label">🔨 Lab Exercise — Complete</div>
+    <div class="ex-title">From zero to 30 fetched records</div>
+    <ol class="step-list">
+      <li>
+        Confirm the environment is ready (everything here was set up in Steps 2–3 — if any check fails, go back to that step):
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># Check venv is active</span>
+<span class="p">(.venv) C:\...\score-predictor&gt;</span>
+
+<span class="c"># Check requests is installed</span>
+<span class="p">(.venv) &gt;</span> python -c "import requests; print('requests OK')"
+<span class="o">requests OK</span>
+
+<span class="c"># Check token is set (Windows)</span>
+<span class="p">(.venv) &gt;</span> echo %AIRTABLE_API_KEY%
+<span class="o">pat_your_token_here</span></pre>
+        </div>
+        <div class="verify">All three checks pass before moving to step 2</div>
+      </li>
+      <li>
+        Create <code>fetch_students.py</code> in the project root (right-click project root in VS Code Explorer → New File). Write the minimal version:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">fetch_students.py — Version 1: the original script</span><button class="copy-btn">Copy</button></div>
+<pre><span class="kw">import</span> requests
+<span class="kw">import</span> os
+
+response = requests.get(
+    <span class="st">"https://api.airtable.com/v0/appjAX8yLYxmpL971/Students"</span>,
+    headers={
+        <span class="st">"Authorization"</span>: <span class="st">f"Bearer {os.environ['AIRTABLE_API_KEY']}"</span>
+    }
+)
+
+print(response.status_code)
+print(response.text)
+
+data = response.json()
+
+records = data[<span class="st">"records"</span>]
+print(len(records))</pre>
+        </div>
+        <div class="verify">File appears at the project root level, same level as app.py</div>
+      </li>
+      <li>
+        Run it:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal</span><button class="copy-btn">Copy</button></div>
+<pre><span class="p">(.venv) C:\...\score-predictor&gt;</span> python fetch_students.py</pre>
+        </div>
+        <div class="expected">200
+{"records":[{"id":"recpYSiKeZTCu9ML1","createdTime":"2026-07-21T14:59:13.000Z","fields":{"Student ID":"S001","Study Hours":8,"Sleep Hours":7,"Attendance":0.95,"Final Score":88}},{"id":"recXYZ...
+30</div>
+        <div class="verify">First line is <code>200</code> (not 401/403/404). Last line is <code>30</code>. The middle line is a long JSON string.</div>
+        <div class="hint">If you see 401, the token isn't set correctly. Run <code>echo %AIRTABLE_API_KEY%</code> to check. If you see ModuleNotFoundError, run <code>pip install requests</code>.</div>
+      </li>
+      <li>
+        Update the file to Version 2 — add exploration after <code>records = data["records"]</code>:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">fetch_students.py — Version 2: explore the data</span><button class="copy-btn">Copy</button></div>
+<pre><span class="kw">import</span> requests
+<span class="kw">import</span> os
+
+response = requests.get(
+    <span class="st">"https://api.airtable.com/v0/appjAX8yLYxmpL971/Students"</span>,
+    headers={<span class="st">"Authorization"</span>: <span class="st">f"Bearer {os.environ['AIRTABLE_API_KEY']}"</span>}
+)
+
+print(f<span class="st">f"Status: {response.status_code}"</span>)
+
+data    = response.json()
+records = data[<span class="st">"records"</span>]
+
+print(f<span class="st">f"\nTotal records: {len(records)}"</span>)
+print(<span class="st">"\n--- First record (raw structure) ---"</span>)
+print(records[<span class="num">0</span>])
+
+print(<span class="st">"\n--- First record fields only ---"</span>)
+print(records[<span class="num">0</span>][<span class="st">"fields"</span>])
+
+print(<span class="st">"\n--- All student IDs ---"</span>)
+<span class="kw">for</span> r <span class="kw">in</span> records[:5]:        <span class="c"># first 5 only</span>
+    fields = r[<span class="st">"fields"</span>]
+    print(f<span class="st">f"  {fields['Student ID']}: score={fields['Final Score']}, study={fields['Study Hours']}h"</span>)
+
+print(<span class="st">"\n--- Unwrapped rows (ready for pandas) ---"</span>)
+rows = [r[<span class="st">"fields"</span>] <span class="kw">for</span> r <span class="kw">in</span> records]
+print(f<span class="st">f"rows[0] = {rows[0]}"</span>)
+print(f<span class="st">f"Type: {type(rows[0])}"</span>)</pre>
+        </div>
+      </li>
+      <li>
+        Run Version 2:
+        <div class="cb" style="margin-top:8px">
+          <div class="cb-head"><span class="cb-fname">terminal</span><button class="copy-btn">Copy</button></div>
+<pre><span class="p">(.venv) C:\...\score-predictor&gt;</span> python fetch_students.py</pre>
+        </div>
+        <div class="expected">Status: 200
+
+Total records: 30
+
+--- First record (raw structure) ---
+{'id': 'recpYSiKeZTCu9ML1', 'createdTime': '2026-07-21T...', 'fields': {'Student ID': 'S001', 'Study Hours': 8, 'Sleep Hours': 7, 'Attendance': 0.95, 'Final Score': 88}}
+
+--- First record fields only ---
+{'Student ID': 'S001', 'Study Hours': 8, 'Sleep Hours': 7, 'Attendance': 0.95, 'Final Score': 88}
+
+--- All student IDs ---
+  S001: score=88, study=8h
+  S002: score=45, study=2h
+  S003: score=67, study=5h
+  S004: score=94, study=10h
+  S005: score=51, study=3h
+
+--- Unwrapped rows (ready for pandas) ---
+rows[0] = {'Student ID': 'S001', 'Study Hours': 8, 'Sleep Hours': 7, 'Attendance': 0.95, 'Final Score': 88}
+Type: &lt;class 'dict'&gt;</div>
+        <div class="verify">All 5 sections print with the correct data. The unwrapped row is a plain dict — no "id" or "createdTime" wrapper.</div>
+      </li>
+      <li>
+        Clean up — delete the test file when done:
+        <div class="verify">Right-click <code>fetch_students.py</code> in VS Code Explorer → Delete. The file is gone.</div>
+      </li>
+    </ol>
+  </div>
+
+  <h3>How this connects to the rest of the project</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">how fetch_students.py feeds into train_model.py</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># fetch_students.py ends here:</span>
+rows = [r[<span class="st">"fields"</span>] <span class="kw">for</span> r <span class="kw">in</span> records]
+<span class="c"># rows = [{"Student ID":"S001","Study Hours":8,...}, ...]
+
+# train_model.py picks up exactly here:</span>
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+df = pd.DataFrame(rows)        <span class="c"># list of dicts → DataFrame</span>
+df = df.dropna()               <span class="c"># remove incomplete rows</span>
+X  = df[[<span class="st">"Study Hours"</span>, <span class="st">"Sleep Hours"</span>, <span class="st">"Attendance"</span>]]
+y  = df[<span class="st">"Final Score"</span>]
+<span class="c"># → ready for scikit-learn</span></pre>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 8 — Lab complete when ALL boxes are checked:</h3>
+    <label class="chk"><input type="checkbox"> Version 1 ran and printed 200 then 30</label>
+    <label class="chk"><input type="checkbox"> Version 2 ran and I saw the raw record structure and the unwrapped version</label>
+    <label class="chk"><input type="checkbox"> I can explain every line of the script from memory</label>
+    <label class="chk"><input type="checkbox"> I understand where this script's output goes next (pandas → sklearn)</label>
+  </div>
+
+  <div class="checklist" style="border-color:var(--green);margin-top:24px"><h3>✅ Complete lab checklist — all 9 steps:</h3>
+    <label class="chk"><input type="checkbox"> Step 0: I know the 7 technologies and their roles</label>
+    <label class="chk"><input type="checkbox"> Step 1: I know HTTP request parts and all 5 status codes</label>
+    <label class="chk"><input type="checkbox"> Step 2: Python verified, venv created and activated, requests installed</label>
+    <label class="chk"><input type="checkbox"> Step 3: Token created, set as env variable, echo confirms it</label>
+    <label class="chk"><input type="checkbox"> Step 4: Every line of the script explained including "Bearer " format</label>
+    <label class="chk"><input type="checkbox"> Step 5: response.status_code, .text, .json() differences understood</label>
+    <label class="chk"><input type="checkbox"> Step 6: JSON structure navigated 3 levels deep to reach fields</label>
+    <label class="chk"><input type="checkbox"> Step 7: All 6 errors identified with their causes and fixes</label>
+    <label class="chk"><input type="checkbox"> Step 8: Both script versions ran, 30 records fetched, data explored</label>
+  </div>
+</section>
+</div>
+
+<!-- FINISH -->
+<div class="wrap">
+  <div class="finish">
+    <h2>🎉 Lab complete.</h2>
+    <p>8 lines of Python now reach across the internet, authenticate with a remote database, and return 30 structured records. That's the foundation of every data-driven application — a skill that transfers directly to any API, not just Airtable.</p>
+    <p style="margin-top:12px">The next step: pass <code>rows</code> to <code>pd.DataFrame()</code> and begin the pandas pipeline that feeds the ML model.</p>
+    <a class="finish-btn" href="#">Continue to pandas →</a>
+  </div>
+</div>
+
+<footer class="wrap">Hands-On Lab · Fetching Airtable Data with Python · AI II Course</footer>
+
+<script>
+// progress bar
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  document.getElementById('bar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+});
+
+// copy buttons
+document.querySelectorAll('.copy-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    const pre=btn.closest('.cb').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(()=>{
+      btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);
+    });
+  };
+});
+
+// quiz
+document.querySelectorAll('.qopt').forEach(btn=>{
+  btn.onclick=function(){
+    const q=this.dataset.q;
+    const container=this.closest('.quiz-opts');
+    if(container.querySelector('.right,.wrong'))return;
+    const correct=this.hasAttribute('data-correct');
+    this.classList.add(correct?'right':'wrong');
+    if(!correct){
+      const correctBtn=[...container.querySelectorAll('.qopt')].find(b=>b.hasAttribute('data-correct'));
+      if(correctBtn)correctBtn.classList.add('right');
+    }
+    document.getElementById(q+'-expl').classList.add('show');
+  };
+});
+
+// checklists
+document.querySelectorAll('.chk input').forEach(cb=>{
+  cb.onchange=function(){this.closest('.chk').classList.toggle('done',this.checked);};
+});
+
+// ── STEP SCENARIOS ──
+const SCENARIOS={
+  ok:{
+    lines:[
+      {cls:'prompt',t:'(.venv) C:\\...\\score-predictor> python fetch_students.py'},
+      {cls:'success',t:'200'},
+      {cls:'data',t:'{"records":[{"id":"recpYSi...","fields":{"Student ID":"S001","Study Hours":8,...}},{"id":"recXYZ...'},
+      {cls:'success',t:'30'},
+    ],
+    msg:'✅ 200 OK — request succeeded. The response body contains 30 records in JSON format. len(records) = 30.'
+  },
+  no_token:{
+    lines:[
+      {cls:'prompt',t:'(.venv) C:\\...\\score-predictor> python fetch_students.py'},
+      {cls:'error',t:'Traceback (most recent call last):'},
+      {cls:'error',t:'  File "fetch_students.py", line 7'},
+      {cls:'error',t:"    \"Authorization\": f\"Bearer {os.environ['AIRTABLE_API_KEY']}\""},
+      {cls:'error',t:"KeyError: 'AIRTABLE_API_KEY'"},
+    ],
+    msg:"❌ KeyError — Python tried to read AIRTABLE_API_KEY from os.environ but it doesn't exist. Fix: run 'set AIRTABLE_API_KEY=pat_...' in the terminal first."
+  },
+  bad_token:{
+    lines:[
+      {cls:'prompt',t:'(.venv) C:\\...\\score-predictor> python fetch_students.py'},
+      {cls:'error',t:'401'},
+      {cls:'error',t:'{"error":{"type":"AUTHENTICATION_REQUIRED","message":"Authentication required"}}'},
+      {cls:'error',t:'KeyError: \'records\''},
+    ],
+    msg:"⚠️ 401 Unauthorized — the token value is wrong or expired. The response has no 'records' key, so data['records'] crashes. Fix: verify the token at airtable.com/create/tokens."
+  },
+  bad_url:{
+    lines:[
+      {cls:'prompt',t:'(.venv) C:\\...\\score-predictor> python fetch_students.py'},
+      {cls:'error',t:'404'},
+      {cls:'error',t:'{"error":{"type":"TABLE_NOT_FOUND","message":"Could not find table students"}}'},
+      {cls:'error',t:"KeyError: 'records'"},
+    ],
+    msg:"❌ 404 Not Found — the table name in the URL is wrong. 'students' (lowercase) is not the same as 'Students'. Table names are case-sensitive. Fix: change the URL to use 'Students'."
+  }
+};
+
+function showScenario(key){
+  const s=SCENARIOS[key];
+  const out=document.getElementById('scenarioOut');
+  out.innerHTML=s.lines.map(l=>`<span class="line ${l.cls}">${escHtml(l.t)}</span>`).join('');
+  const note=document.createElement('div');
+  note.style.cssText='margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.06);border-radius:8px;color:#A0B4D0;font-family:Inter,sans-serif;font-size:13px;line-height:1.5';
+  note.textContent=s.msg;
+  out.appendChild(note);
+}
+
+// ── RESPONSE EXPLORER ──
+let reqSimulated=false;
+function simulateRequest(){
+  reqSimulated=true;
+  document.getElementById('respBtns').style.display='flex';
+  document.getElementById('respOut').innerHTML=`<span class="line success">✅ Request complete — status 200. Click an attribute below to inspect it.</span>`;
+}
+const RESP_ATTRS={
+  status:{
+    out:'200',
+    note:'An integer. 200 = success. The script should always check this before calling response.json().'
+  },
+  text:{
+    out:'\'{"records":[{"id":"recpYSiKeZTCu9ML1","createdTime":"2026-07-21T14:59:13.000Z","fields":{"Student ID":"S001","Study Hours":8,"Sleep Hours":7,"Attendance":0.95,"Final Score":88}},{"id":"recXYZ456...\'',
+    note:'A long Python string containing the raw JSON text exactly as Airtable sent it. Python cannot navigate this as a dict — it\'s text. Use .json() to convert it.'
+  },
+  json:{
+    out:'{"records": [\n  {"id": "recpYSi...", "createdTime": "...", "fields": {"Student ID": "S001", ...}},\n  {"id": "recXYZ...", ...},\n  ... (28 more)\n]}',
+    note:'A Python dict — the JSON text parsed into native Python objects. Now data["records"] works. This is what the code uses.'
+  },
+  headers:{
+    out:'Content-Type: application/json; charset=utf-8\nX-RateLimit-Limit: 5\nX-RateLimit-Remaining: 4\nX-Airtable-Version: 0.1.0',
+    note:'The response headers — metadata from the server. X-RateLimit-Remaining tells how many more requests can be made per second (limit is 5).'
+  }
+};
+function showRespAttr(key){
+  if(!reqSimulated){alert('Click "Simulate request" first');return;}
+  const a=RESP_ATTRS[key];
+  document.getElementById('respOut').innerHTML=
+    `<span class="line info">response.${key}${key==='json'?'()':''}</span>\n`+
+    `<span class="line data" style="color:#CDD9F0">${escHtml(a.out)}</span>\n`+
+    `<span class="line" style="color:#4E6090;font-family:Inter,sans-serif;font-size:12px;margin-top:8px;display:block">${a.note}</span>`;
+}
+
+// ── JSON NAVIGATOR ──
+const NAV_STEPS=[
+  {
+    code:'data',
+    out:'{\n  "records": [ ...30 items... ]\n}',
+    note:'The top-level object — a dict with one key: "records". You cannot access any student data yet. You must go deeper.'
+  },
+  {
+    code:'data["records"]',
+    out:'[\n  {"id": "recpYSi...", "createdTime": "...", "fields": {...}},\n  {"id": "recXYZ...", "fields": {...}},\n  ... 28 more items\n]',
+    note:'A Python list of 30 items. Each item is one student\'s record dict. To get one student, index into it: [0], [1], etc.'
+  },
+  {
+    code:'data["records"][0]',
+    out:'{\n  "id": "recpYSiKeZTCu9ML1",\n  "createdTime": "2026-07-21T14:59:13.000Z",\n  "fields": {\n    "Student ID": "S001",\n    "Study Hours": 8,\n    "Sleep Hours": 7,\n    "Attendance": 0.95,\n    "Final Score": 88\n  }\n}',
+    note:'The first student\'s full record dict. Three keys: "id" (Airtable row ID), "createdTime", "fields" (the actual data). We need to go one level deeper to get the data.'
+  },
+  {
+    code:'data["records"][0]["fields"]',
+    out:'{\n  "Student ID": "S001",\n  "Study Hours": 8,\n  "Sleep Hours": 7,\n  "Attendance": 0.95,\n  "Final Score": 88\n}',
+    note:'The actual student data — a clean dict with just the field values. This is what we want. The list comprehension [r["fields"] for r in records] extracts this for all 30 records at once.'
+  },
+  {
+    code:'len(data["records"])',
+    out:'30',
+    note:'30 — confirms all records were returned. Airtable paginates responses over 100 records, but with 30 students we get everything in one response. Always print this to confirm you got the expected count.'
+  }
+];
+function navStep(i){
+  const s=NAV_STEPS[i];
+  document.getElementById('navCode').textContent=s.code;
+  document.getElementById('navOut').innerHTML=
+    `<span class="line data" style="color:#CDD9F0;white-space:pre">${escHtml(s.out)}</span>`+
+    `<span class="line" style="color:#4E6090;font-family:Inter,sans-serif;font-size:12px;margin-top:10px;display:block;white-space:normal">${s.note}</span>`;
+}
+
+// ── ANNOTATED CODE EXPLANATIONS ──
+const EXPL={
+  e1:{title:'import requests',text:'Downloads and makes available the "requests" library — a third-party package that turns HTTP calls into one-line Python. Must be installed first: pip install requests. Without this line, Python has no idea what "requests.get()" means.'},
+  e2:{title:'import os',text:'"os" is a built-in module (no installation needed) that gives Python access to the operating system. The only part used here: os.environ — a dict-like object of all environment variables in the current terminal session.'},
+  e3:{title:'(blank line)',text:'Blank lines are just whitespace — they have no effect on the code. PEP 8 (Python\'s style guide) recommends blank lines between logical sections.'},
+  e4:{title:'response = requests.get(...)',text:'"requests.get()" sends an HTTP GET request to the given URL and waits for the server to respond. The function call doesn\'t return until the server replies — usually a few hundred milliseconds. The whole response (status code + headers + body) is stored in "response".'},
+  e5:{title:'The URL',text:'"https://api.airtable.com/v0/appjAX8yLYxmpL971/Students" — this is the endpoint address. Breaking it down:\n• api.airtable.com = Airtable\'s API server\n• /v0 = API version 0 (current)\n• /appjAX8yLYxmpL971 = the base ID (from the Airtable URL)\n• /Students = the table name (case-sensitive!)'},
+  e6:{title:'headers={...}',text:'"headers" is a dict of extra information sent alongside the request. HTTP headers are metadata — they don\'t carry the main content but tell the server how to interpret the request or prove identity. The requests.get() function accepts headers as a keyword argument and formats them correctly for HTTP.'},
+  e7:{title:'"Authorization": f"Bearer {os.environ[...]}',text:'This constructs the authorization header value:\n• "Authorization" is the header name — Airtable specifically looks for this.\n• "Bearer " is the scheme — tells the server a token follows. Space after Bearer is required by the HTTP spec.\n• os.environ[\'AIRTABLE_API_KEY\'] reads the token from the environment variable set in the terminal.\n• The f-string inserts the token value at runtime.'},
+  e8:{title:'Closing braces and parenthesis',text:'The headers dict is closed with } and the requests.get() call is closed with ). Python uses indentation and matching brackets — the dict {} is nested inside the function call (). Everything indented inside "response = requests.get(" is an argument to that function.'},
+  e9:{title:'print(response.status_code)',text:'response.status_code is an integer — the HTTP status number. Printing it first is a debugging habit: 200 means "everything worked, safe to proceed." Anything else means "fix the request before touching the data." Without this, a 401 failure later shows up as a confusing KeyError instead of a clear auth error.'},
+  e10:{title:'print(response.text)',text:'response.text is the raw response body as a Python string — exactly what Airtable sent, character for character. It\'s valid JSON text but Python can\'t navigate it as a dict yet. Useful for debugging — you can see the structure before parsing. In production code you\'d remove this print (30 records is a lot of text).'},
+  e11:{title:'data = response.json()',text:'response.json() parses the JSON text into native Python objects. It\'s equivalent to: import json; json.loads(response.text). After this line, "data" is a Python dict and you can use normal dict operations: data["records"], data.keys(), etc. This is the moment the raw text becomes usable data.'},
+  e12:{title:'records = data["records"]',text:'"data" is a dict with one key: "records". Its value is a list of 30 record dicts. This line extracts that list. After this, records[0] is the first student, records[0]["fields"] is their data. The "records" key name comes from the Airtable API specification — it always uses this key for GET responses.'},
+  e13:{title:'print(len(records))',text:'len(records) counts how many items are in the list. Printing it confirms you got all 30 records. If you got 0, the request succeeded (200) but the table might be empty or a filter was applied. If you got 100, Airtable paginated — there are more records that need a second request (pyairtable handles this automatically with .all()).'},
+};
+function explain(key){
+  const e=EXPL[key];
+  if(!e)return;
+  document.getElementById('explainTitle').textContent=e.title;
+  document.getElementById('explainText').textContent=e.text;
+  document.getElementById('explainBox').style.display='block';
+  document.getElementById('explainBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
