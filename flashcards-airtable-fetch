@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards — Fetching Data from Airtable with Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFFFFF;
+  --surface:#FFFFFF;
+  --surface2:#F3F5FF;
+  --border:#DDE3F5;
+  --border2:#C5CEEE;
+  --ink:#13203B;
+  --ink-soft:#516080;
+  --blue:#1E4EBF;
+  --blue-dim:#EAF0FD;
+  --blue-mid:#B8CBFA;
+  --green:#0F6B45;
+  --green-dim:#E2F5EC;
+  --coral:#B0250A;
+  --coral-dim:#FCECEA;
+  --amber:#7A4A00;
+  --amber-dim:#FEF4E0;
+  --purple:#5018C0;
+  --purple-dim:#EEE9FF;
+  --teal:#0A6060;
+  --teal-dim:#E0F4F4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.6;min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+.site-header{padding:32px 24px 0;max-width:860px;margin:0 auto;width:100%}
+.badge{display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.13em;text-transform:uppercase;background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue-mid);border-radius:7px;padding:5px 12px;margin-bottom:16px}
+h1{font-family:'Syne',sans-serif;font-size:clamp(22px,5vw,38px);font-weight:800;letter-spacing:-.02em;margin-bottom:6px;line-height:1.05}
+h1 em{font-style:normal;color:var(--blue)}
+.subtitle{font-size:15px;color:var(--ink-soft);margin-bottom:24px}
+
+/* STATS ROW */
+.stats{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:110px}
+.stat-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;display:block}
+.stat-lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);font-family:'JetBrains Mono',monospace}
+.stat-num.blue{color:var(--blue)} .stat-num.green{color:var(--green)} .stat-num.amber{color:var(--amber)}
+
+/* FILTER PILLS */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.pill{border:1.5px solid var(--border2);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;background:var(--bg);color:var(--ink-soft);transition:all .12s;font-family:'Inter',sans-serif}
+.pill:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pill.cat-http.active{background:var(--coral);border-color:var(--coral)}
+.pill.cat-venv.active{background:var(--green);border-color:var(--green)}
+.pill.cat-token.active{background:var(--amber);border-color:var(--amber)}
+.pill.cat-code.active{background:var(--purple);border-color:var(--purple)}
+.pill.cat-json.active{background:var(--teal);border-color:var(--teal)}
+.pill.cat-errors.active{background:var(--coral);border-color:var(--coral)}
+
+/* CARD ARENA */
+.arena{flex:1;max-width:860px;margin:0 auto;width:100%;padding:0 24px 40px;display:flex;flex-direction:column;align-items:center}
+
+/* PROGRESS BAR */
+.progress-track{width:100%;height:6px;background:var(--border);border-radius:999px;margin-bottom:24px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:999px;transition:width .3s ease}
+
+/* THE CARD */
+.card-wrap{width:100%;max-width:680px;perspective:1400px;margin-bottom:24px}
+.card{width:100%;height:460px;position:relative;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.4,0,.2,1);cursor:pointer}
+.card.flipped{transform:rotateY(180deg)}
+ .card-face{position:absolute;width:100%;height:460px;overflow-y:auto;overflow-x:hidden;backface-visibility:hidden;border-radius:20px;padding:36px 40px;display:flex;flex-direction:column;border:1.5px solid var(--border2);box-shadow:0 4px 24px rgba(19,32,59,.08)}
+.card-front{background:var(--bg)}
+.card-back{background:var(--surface2);transform:rotateY(180deg)}
+.card-face:not(.card-back){cursor:pointer}
+
+/* category stripe */
+.card-cat{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;font-weight:700;margin-bottom:20px;display:block;gap:8px}
+.cat-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0}
+.cat-http .cat-dot{background:var(--coral)} .cat-http{color:var(--coral)}
+.cat-venv .cat-dot{background:var(--green)} .cat-venv{color:var(--green)}
+.cat-token .cat-dot{background:var(--amber)} .cat-token{color:var(--amber)}
+.cat-code .cat-dot{background:var(--purple)} .cat-code{color:var(--purple)}
+.cat-json .cat-dot{background:var(--teal)} .cat-json{color:var(--teal)}
+.cat-errors .cat-dot{background:var(--coral)} .cat-errors{color:var(--coral)}
+.cat-concepts .cat-dot{background:var(--blue)} .cat-concepts{color:var(--blue)}
+
+/* question / answer */
+.card-q{font-family:'Syne',sans-serif;font-size:clamp(17px,3vw,22px);font-weight:700;line-height:1.3;flex:1;display:block}
+.card-a{font-size:15px;line-height:1.7;flex:1}
+.card-a code,.card-q code,.card-a code{font-family:'JetBrains Mono',monospace;font-size:.88em;background:rgba(30,78,191,.1);padding:2px 6px;border-radius:5px;color:var(--blue);display:inline;white-space:normal;word-break:break-word}
+.card-back .card-a code{background:rgba(30,78,191,.12)}
+.tap-hint{font-size:12px;color:var(--border2);text-align:center;margin-top:16px;letter-spacing:.04em;font-family:'JetBrains Mono',monospace}
+.card-front .tap-hint{color:var(--border2)}
+.card-back .tap-hint{color:var(--border2)}
+
+/* code block on card */
+.cblock{max-width:100%;overflow-x:auto;background:var(--ink);color:#C3E88D;font-family:'JetBrains Mono',monospace;font-size:12px;border-radius:10px;padding:14px 16px;margin:12px 0;line-height:1.7;white-space:pre;overflow-x:auto}
+.cblock .c{color:#3E4F72}
+.cblock .o{color:#82AAFF}
+.cblock .e{color:#FF7070}
+.cblock .st{color:#C3E88D}
+.cblock .kw{color:#C792EA}
+.cblock .num{color:#F78C6C}
+
+/* highlight box inside answer */
+.hl{border-radius:8px;padding:10px 14px;font-size:14px;margin:10px 0;line-height:1.6}
+.hl-blue{background:var(--blue-dim);border-left:3px solid var(--blue)}
+.hl-green{background:var(--green-dim);border-left:3px solid var(--green)}
+.hl-coral{background:var(--coral-dim);border-left:3px solid var(--coral)}
+.hl-amber{background:var(--amber-dim);border-left:3px solid var(--amber)}
+
+/* CONTROLS */
+.controls{display:block;gap:12px;margin-bottom:12px;width:100%;max-width:680px}
+.ctrl-btn{background:var(--bg);border:1.5px solid var(--border2);border-radius:12px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;color:var(--ink);transition:all .12s;display:block;gap:7px}
+.ctrl-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+.ctrl-btn:disabled{opacity:.35;cursor:default;pointer-events:none}
+.ctrl-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ctrl-btn.primary:hover{background:#163FA0}
+.ctrl-pos{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-soft);flex:1;text-align:center}
+
+/* MARK BUTTONS */
+.mark-row{display:flex;gap:10px;width:100%;max-width:680px;margin-bottom:8px}
+.mark-btn{flex:1;border:none;border-radius:12px;padding:12px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .12s;display:block;justify-content:center;gap:7px}
+.mark-know{background:var(--green-dim);color:var(--green);border:1.5px solid #9FDCC0}
+.mark-know:hover{background:var(--green);color:#fff}
+.mark-again{background:var(--coral-dim);color:var(--coral);border:1.5px solid #F5ADAD}
+.mark-again:hover{background:var(--coral);color:#fff}
+.mark-row{display:none}
+.card.flipped~.mark-row,.is-flipped .mark-row{display:flex}
+
+/* keyboard hint */
+.kbd-hints{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);justify-content:center;flex-wrap:wrap;margin-top:4px}
+.kh{display:block;gap:5px}
+kbd{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-bottom:2px solid var(--border2);border-radius:5px;padding:2px 7px}
+
+/* COMPLETE SCREEN */
+.complete{display:none;width:100%;max-width:680px;text-align:center;padding:40px 20px}
+.complete.show{display:block}
+.complete-emoji{font-size:56px;margin-bottom:16px}
+.complete h2{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;margin-bottom:10px}
+.complete p{color:var(--ink-soft);font-size:16px;margin-bottom:24px}
+.score-ring{width:120px;height:120px;border-radius:50%;border:6px solid var(--green);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 24px}
+.ring-num{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--green)}
+.ring-lbl{font-size:11px;color:var(--ink-soft);letter-spacing:.06em}
+.again-btn{background:var(--blue);color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;margin-right:10px}
+.again-btn:hover{background:#163FA0}
+
+/* empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--ink-soft)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div class="badge">📇 Flashcard Deck · AI II Course</div>
+  <h1>Fetching data from<br><em>Airtable with Python</em></h1>
+  <p class="subtitle">32 cards covering all 9 steps of the lab — HTTP, venv, tokens, code, JSON, and error handling</p>
+
+  <div class="stats">
+    <div class="stat"><span class="stat-num blue" id="statTotal">32</span><span class="stat-lbl">Total cards</span></div>
+    <div class="stat"><span class="stat-num green" id="statKnow">0</span><span class="stat-lbl">Know it</span></div>
+    <div class="stat"><span class="stat-num amber" id="statAgain">0</span><span class="stat-lbl">Review again</span></div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="pill active" data-cat="all">All (32)</button>
+    <button class="pill cat-concepts" data-cat="concepts">Concepts (5)</button>
+    <button class="pill cat-http" data-cat="http">HTTP (7)</button>
+    <button class="pill cat-venv" data-cat="venv">venv (6)</button>
+    <button class="pill cat-token" data-cat="token">Token (4)</button>
+    <button class="pill cat-code" data-cat="code">Code (5)</button>
+    <button class="pill cat-json" data-cat="json">JSON (3)</button>
+    <button class="pill cat-errors" data-cat="errors">Errors (2)</button>
+  </div>
+</div>
+
+<div class="arena" id="arena">
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+  <div class="card-wrap" id="cardWrap">
+    <div class="card" id="theCard" onclick="flipCard()">
+      <div class="card-face card-front" id="cardFront">
+        <div class="card-cat" id="frontCat"></div>
+        <div class="card-q" id="cardQ"></div>
+        <div class="tap-hint">tap or press Space to reveal answer</div>
+      </div>
+      <div class="card-face card-back" id="cardBack">
+        <div class="card-cat" id="backCat"></div>
+        <div class="card-a" id="cardA"></div>
+        <div class="tap-hint">tap again or press Space to flip back</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mark-row" id="markRow">
+    <button class="mark-btn mark-again" onclick="markCard(false)">✗ &nbsp;Review again</button>
+    <button class="mark-btn mark-know" onclick="markCard(true)">✓ &nbsp;Got it!</button>
+  </div>
+
+  <div class="controls" id="controls">
+    <button class="ctrl-btn" id="btnPrev" onclick="prevCard()">← Prev</button>
+    <span class="ctrl-pos" id="posLabel">1 / 32</span>
+    <button class="ctrl-btn primary" id="btnNext" onclick="nextCard()">Next →</button>
+  </div>
+
+  <div class="kbd-hints">
+    <span class="kh"><kbd>Space</kbd> flip</span>
+    <span class="kh"><kbd>←</kbd> previous</span>
+    <span class="kh"><kbd>→</kbd> next</span>
+    <span class="kh"><kbd>G</kbd> got it</span>
+    <span class="kh"><kbd>R</kbd> review again</span>
+  </div>
+
+  <div class="complete" id="completeScreen">
+    <div class="complete-emoji">🎉</div>
+    <div class="score-ring"><span class="ring-num" id="ringNum">0%</span><span class="ring-lbl">correct</span></div>
+    <h2>Deck complete!</h2>
+    <p id="completeMsg"></p>
+    <button class="again-btn" onclick="restartAll()">Start over</button>
+    <button class="again-btn" style="background:var(--amber)" onclick="restartWrong()">Review missed cards</button>
+  </div>
+</div>
+
+<script>
+const CARDS = [
+  // ── CONCEPTS (5) ──────────────────────────────────────────────────────────
+  {
+    cat: "concepts",
+    q: "What problem does this lab solve? Why can't the Python script read the Airtable data directly?",
+    a: `The script lives on a laptop; the data lives in a cloud database. There is no shared file path between them — the only way to bridge the two is a <strong>network request</strong>.\n\nThe solution is the same mechanism a browser uses to load any webpage: an <strong>HTTP request</strong>. Instead of asking for an HTML page, Python asks Airtable's server for data.`
+  },
+  {
+    cat: "concepts",
+    q: "What is an API, and how does Airtable's API relate to the Airtable website?",
+    a: `An <strong>API (Application Programming Interface)</strong> is a "service entrance" — a set of URLs a program can call to interact with an application without using the graphical UI.\n\n<div class="hl hl-blue">The Airtable <em>website</em> = walking into the library to browse shelves.<br>The Airtable <em>API</em> = calling the library on the phone and asking them to read you a specific book.</div>\n\nBoth access the same data; the API is designed for programs, the website for humans.`
+  },
+  {
+    cat: "concepts",
+    q: "Name the 7 technologies used in the fetch script and the role of each.",
+    a: `<strong>requests</strong> — Python library that sends HTTP calls (replaces 30+ lines of raw socket code)<br>
+<strong>os</strong> — built-in module; reads env variables<br>
+<strong>HTTP</strong> — the protocol; the underlying communication mechanism<br>
+<strong>JSON</strong> — text format Airtable uses to send records back<br>
+<strong>Airtable API</strong> — the endpoint (URL) being called<br>
+<strong>Virtual environment</strong> — isolates this project's packages<br>
+<strong>Environment variable</strong> — stores the API token safely outside code`
+  },
+  {
+    cat: "concepts",
+    q: "How does the fetch script connect to <code>train_model.py</code>? What does each file do?",
+    a: `<code>fetch_students.py</code> ends with a list of plain dicts:\n<div class="cblock">rows = [r[<span class="st">"fields"</span>] for r in records]
+<span class="c"># [{'Student ID':'S001','Study Hours':8,...}, ...]</span></div>\n<code>train_model.py</code> picks up exactly there:\n<div class="cblock">df = pd.DataFrame(rows)   <span class="c"># list of dicts → DataFrame</span>
+df = df.dropna()
+X  = df[["Study Hours","Sleep Hours","Attendance"]]</div>\nThe fetch script's output is <strong>the training data input</strong>.`
+  },
+  {
+    cat: "concepts",
+    q: "Why is <code>response.status_code</code> printed <em>first</em> before any data is touched?",
+    a: `It's a debugging habit. If you skip the status check and the next line crashes with <code>KeyError: 'records'</code>, you don't know whether the <em>request</em> failed (4xx status) or the JSON structure was unexpected.\n\n<div class="hl hl-green">200 printed first → "the request worked, the problem is elsewhere."<br>Non-200 first → "fix the request before debugging the data."</div>\n\nPrinting status first isolates the failure to the right layer immediately.`
+  },
+
+  // ── HTTP (7) ──────────────────────────────────────────────────────────────
+  {
+    cat: "http",
+    q: "What are the 4 parts of an HTTP request? Give the value of each for the Airtable fetch.",
+    a: `<strong>Method</strong> — <code>GET</code> (read data, don't change anything)<br>
+<strong>URL</strong> — <code>https://api.airtable.com/v0/appjAX8yLYxmpL971/Students</code><br>
+<strong>Headers</strong> — <code>Authorization: Bearer pat_your_token</code> (the "membership card")<br>
+<strong>Body</strong> — <em>empty</em> for GET; only POST/PATCH carry a body with data to create/update`
+  },
+  {
+    cat: "http",
+    q: "What does status code <strong>200</strong> mean? What are the other 4 codes the lab covers?",
+    a: `<strong>200</strong> — Success. Data is in the response body.<br>
+<strong>401</strong> — Unauthorized. Token missing, malformed, or expired.<br>
+<strong>403</strong> — Forbidden. Token is valid but lacks permission to this base.<br>
+<strong>404</strong> — Not Found. Base ID or table name is wrong.<br>
+<strong>429</strong> — Rate Limited. Too many requests (max 5/second per base).<div class="hl hl-blue">Key distinction: 401 = token problem, 403 = permission problem.</div>`
+  },
+  {
+    cat: "http",
+    q: "What is the difference between a <strong>401</strong> and a <strong>403</strong> error from Airtable?",
+    a: `<strong>401 Unauthorized</strong> — the token is missing, malformed, or expired. Airtable can't identify who is asking at all.\n\n<strong>403 Forbidden</strong> — the token is valid and Airtable knows who you are, but the token has NOT been granted access to this specific base or is missing the <code>data.records:read</code> scope.\n\n<div class="hl hl-coral">Fix 401: check the Authorization header format and token value.<br>Fix 403: go to airtable.com/create/tokens → edit token → add the base + scope.</div>`
+  },
+  {
+    cat: "http",
+    q: "What is the URL structure of the Airtable endpoint? What does each segment mean?",
+    a: `<div class="cblock">https://api.airtable.com/v0/<span class="o">appjAX8yLYxmpL971</span>/<span class="st">Students</span></div>\n<strong>api.airtable.com</strong> — Airtable's API server<br>\n<strong>/v0/</strong> — API version<br>\n<strong>appjAX8yLYxmpL971</strong> — the <strong>base ID</strong> (which database)<br>\n<strong>Students</strong> — the <strong>table name</strong> (exact, case-sensitive; <code>students</code> = 404)\n\nChange either the base ID or table name and you get a different or non-existent resource.`
+  },
+  {
+    cat: "http",
+    q: "What is the Authorization header? Break down the value <code>Bearer pat_abc123</code>.",
+    a: `The Authorization header is the "membership card" — it proves the code has permission to read the base.\n\n<div class="cblock"><span class="o">Authorization</span>: <span class="st">Bearer</span> <span class="num">pat_abc123</span></div>\n\n<strong>Bearer</strong> — the authentication <em>scheme</em> (tells the server: what follows is a token string)<br>\n<strong>space</strong> — required; omit it and the server can't parse the format → 401<br>\n<strong>pat_abc123</strong> — the actual token value from the environment variable\n\n<div class="hl hl-blue">Airtable checks: header present? → scheme "Bearer"? → token valid? → token has read access? Each check that fails returns 401 or 403.</div>`
+  },
+  {
+    cat: "http",
+    q: "What does the HTTP response from Airtable contain? Name the 3 things the script reads from it.",
+    a: `The response is a <strong>Response object</strong> returned by <code>requests.get()</code>:\n\n<strong><code>.status_code</code></strong> — int; the 3-digit verdict (200, 401, 403, 404…)<br>\n<strong><code>.text</code></strong> — string; the raw JSON text Airtable sent (for printing/debugging)<br>\n<strong><code>.json()</code></strong> — method; parses <code>.text</code> into a Python dict/list (for actual use)\n\n<div class="hl hl-amber">Important: .text is a STRING. Python can't do dict["records"] on it. Always call .json() to get a usable dict.</div>`
+  },
+  {
+    cat: "http",
+    q: "What does <code>requests.get(url, headers=HEADERS)</code> actually do? Why does <code>requests</code> exist?",
+    a: `<code>requests.get()</code> opens a network connection, sends the HTTP GET request to the URL with the given headers, waits for Airtable's reply, and returns the full response as a Python object.\n\n<strong>Why requests?</strong> Raw HTTP in Python requires 30+ lines of socket code:\n<div class="cblock"><span class="c"># WITHOUT requests:</span>
+sock = ssl.wrap_socket(socket.socket(), ...)
+sock.connect(("api.airtable.com", 443))
+sock.send(b"GET /v0/... HTTP/1.1\\r\\n...")
+<span class="c"># ... 25 more lines</span></div>\n<code>requests</code> is a third-party library that compresses all of this into one readable line.`
+  },
+
+  // ── VENV (6) ──────────────────────────────────────────────────────────────
+  {
+    cat: "venv",
+    q: "What is a virtual environment and what two problems does it solve?",
+    a: `A <strong>virtual environment (venv)</strong> is a private, isolated copy of Python and its packages inside the project folder. Packages installed there exist only for this project.\n\n<strong>Problem 1 — Version conflicts:</strong> Project A needs requests 2.28, Project B needs 2.31. One shared install means upgrading for B breaks A.\n\n<strong>Problem 2 — Unknown dependencies:</strong> after months of global installs, nobody knows which packages this specific project actually needs. Sharing it becomes "works on my machine" guesswork.`
+  },
+  {
+    cat: "venv",
+    q: "What does <strong>activating</strong> a venv actually do? What is the visual proof it worked?",
+    a: `Activation <strong>temporarily edits the terminal's PATH</strong> so that <code>python</code> and <code>pip</code> point at the copies inside <code>.venv</code> instead of the system-wide ones.\n\n<div class="hl hl-green">Visual proof: <code>(.venv)</code> appears at the start of the terminal prompt.</div>\n\nClosing the terminal ends the activation. The <code>.venv</code> folder persists and can be re-activated any time.\n\n<div class="hl hl-amber">No prefix = not activated = pip install goes to the system Python = wrong place.</div>`
+  },
+  {
+    cat: "venv",
+    q: "How do you create and activate a venv on Windows (Command Prompt and PowerShell)?",
+    a: `<strong>Create:</strong>\n<div class="cblock">python -m venv .venv</div>\n<strong>Activate — Command Prompt:</strong>\n<div class="cblock">.venv\\Scripts\\activate</div>\n<strong>Activate — PowerShell:</strong>\n<div class="cblock">.venv\\Scripts\\Activate.ps1</div>\n\nIf PowerShell shows "running scripts is disabled":\n<div class="cblock">Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser</div>\nRe-run <code>Activate.ps1</code> afterward. No admin required (<code>CurrentUser</code> scope).`
+  },
+  {
+    cat: "venv",
+    q: "A script fails with <code>ModuleNotFoundError: No module named 'requests'</code> even though you installed it yesterday. What is the most likely cause?",
+    a: `<div class="hl hl-coral">A <strong>new terminal session</strong> starts deactivated. The venv was never activated, so <code>python</code> is the system Python — which never had requests installed.</div>\n\nFix:\n1. Check if <code>(.venv)</code> is in the prompt. If not:\n2. Run the activate command for your platform\n3. Re-run the script\n\n<strong>Key rule:</strong> packages installed inside a venv <em>persist</em> — but activation is <em>per-terminal-session</em>.`
+  },
+  {
+    cat: "venv",
+    q: "How do you verify that <code>python</code> in the terminal is pointing at the venv's Python, not the system one?",
+    a: `<strong>Windows:</strong>\n<div class="cblock">where python</div>\nThe first path must be inside <code>.venv\\Scripts\\python.exe</code>. If the system Python is listed first, activate the venv.\n\n<strong>Mac/Linux:</strong>\n<div class="cblock">which python</div>\nMust return a path ending in <code>.venv/bin/python</code>.\n\nAlso: <code>(.venv)</code> in the prompt is the quick visual check.`
+  },
+  {
+    cat: "venv",
+    q: "On Windows, what is the #1 cause of <em>'python' is not recognized as an internal or external command</em>?",
+    a: `The <strong>"Add python.exe to PATH" checkbox was not ticked</strong> during installation.\n\n<strong>Three fixes in order of preference:</strong>\n1. Try <code>py --version</code> — the Python launcher usually works even when PATH is broken\n2. Reinstall Python from python.org with "Add to PATH" checked\n3. If Microsoft Store opens on <code>python</code>: Settings → App execution aliases → turn OFF python.exe aliases, then reinstall from python.org\n\n<div class="hl hl-amber">After installing, close and reopen the terminal — PATH changes only apply to new windows.</div>`
+  },
+
+  // ── TOKEN (4) ─────────────────────────────────────────────────────────────
+  {
+    cat: "token",
+    q: "What scopes must the Airtable token have for this lab? Where are they set?",
+    a: `Two scopes are required:\n\n<strong><code>data.records:read</code></strong> — allows reading records (needed for the fetch script)\n<strong><code>data.records:write</code></strong> — allows creating records (needed for prediction logging later)\n\n<div class="hl hl-blue">Set at: <strong>airtable.com/create/tokens</strong> → Create new token → Add scope → also add the base under <em>Access</em> (the token is limited to explicitly added bases).</div>\n\nMissing <code>data.records:read</code> → 403 Forbidden. Missing the base in Access → also 403.`
+  },
+  {
+    cat: "token",
+    q: "Why is the API token stored in an environment variable instead of directly in the Python file?",
+    a: `<div class="hl hl-coral">Code gets shared on GitHub, screenshotted in presentations, sent in messages. Tokens inside code get exposed. <strong>Bots scan GitHub for API tokens within minutes of a commit</strong> and use them immediately.</div>\n\nThe environment variable lives only in the terminal session — invisible to anyone looking at code files.\n\n<div class="cblock"><span class="c"># Never do this:</span>
+token = <span class="st">"pat_abc123"</span>
+
+<span class="c"># Always do this:</span>
+token = os.environ[<span class="st">"AIRTABLE_API_KEY"</span>]</div>`
+  },
+  {
+    cat: "token",
+    q: "How do you set and verify the API token environment variable on Windows and Mac/Linux?",
+    a: `<strong>Set — Windows (Command Prompt):</strong>\n<div class="cblock">set AIRTABLE_API_KEY=pat_PASTE_HERE</div>\n<strong>Set — Mac/Linux:</strong>\n<div class="cblock">export AIRTABLE_API_KEY=pat_PASTE_HERE</div>\n<strong>Verify — Windows:</strong>\n<div class="cblock">echo %AIRTABLE_API_KEY%</div>\n<strong>Verify — Mac/Linux:</strong>\n<div class="cblock">echo $AIRTABLE_API_KEY</div>\n<div class="hl hl-amber">This lasts only for the current terminal session. Every new terminal requires re-running the set/export command.</div>`
+  },
+  {
+    cat: "token",
+    q: "The script crashes with <code>KeyError: 'AIRTABLE_API_KEY'</code> before making the request. What happened?",
+    a: `<code>os.environ["AIRTABLE_API_KEY"]</code> looks up the key in the environment variables dict. A <code>KeyError</code> means the variable <strong>doesn't exist</strong> — it was never set, or was set in a different terminal window that is now closed.\n\n<div class="hl hl-green">Fix: run the <code>set</code> (Windows) or <code>export</code> (Mac/Linux) command in <em>this</em> terminal, then re-run the script.</div>\n\nThis crash is deliberate — a clear error is better than a silent empty string that would cause a confusing 401 later.`
+  },
+
+  // ── CODE (5) ──────────────────────────────────────────────────────────────
+  {
+    cat: "code",
+    q: "Write the complete 8-line fetch script from memory. What does each line do?",
+    a: `<div class="cblock"><span class="kw">import</span> requests          <span class="c"># HTTP library</span>
+<span class="kw">import</span> os               <span class="c"># reads env variables</span>
+
+url = <span class="st">"https://api.airtable.com/v0/appjAX8yLYxmpL971/Students"</span>
+headers = {<span class="st">"Authorization"</span>: <span class="st">f"Bearer {os.environ['AIRTABLE_API_KEY']}"</span>}
+
+response = requests.get(url, headers=headers)
+print(response.status_code)  <span class="c"># check first: 200 = OK</span>
+print(response.text)         <span class="c"># raw JSON string</span>
+
+data = response.json()       <span class="c"># text → Python dict</span>
+records = data[<span class="st">"records"</span>]   <span class="c"># list of 30 record dicts</span>
+print(len(records))          <span class="c"># confirms 30</span></div>`
+  },
+  {
+    cat: "code",
+    q: "What does <code>f\"Bearer {os.environ['AIRTABLE_API_KEY']}\"</code> produce at runtime?",
+    a: `It produces a string like:\n<div class="cblock">Bearer pat_abc123xyz...</div>\n\n<strong>Parts:</strong>\n<code>Bearer </code> — literal string (the authentication scheme, space is required)<br>\n<code>os.environ['AIRTABLE_API_KEY']</code> — fetches the token value set in the terminal<br>\n<code>f"..."</code> — f-string: embeds the expression result inside the string\n\n<div class="hl hl-amber">If the env variable is not set, this line throws <code>KeyError: 'AIRTABLE_API_KEY'</code> — before the request is even made.</div>`
+  },
+  {
+    cat: "code",
+    q: "What is the difference between <code>response.text</code> and <code>response.json()</code>? When do you use each?",
+    a: `<strong><code>response.text</code></strong> — a raw Python <em>string</em> containing the JSON text Airtable sent. Useful for printing or debugging — but you can't do <code>data["records"]</code> on a string.\n\n<strong><code>response.json()</code></strong> — calls <code>json.loads(response.text)</code> under the hood; returns a Python <em>dict</em> or <em>list</em> you can navigate.\n\n<div class="hl hl-green">Use <code>.text</code> to see what came back; use <code>.json()</code> to work with it.</div>`
+  },
+  {
+    cat: "code",
+    q: "What does <code>[r[\"fields\"] for r in records]</code> produce? Why is this the right format for pandas?",
+    a: `This is a <strong>list comprehension</strong> that unwraps each Airtable record dict, keeping only the <code>fields</code> portion:\n\n<div class="cblock">records = [{<span class="st">"id"</span>:<span class="st">"rec..."</span>, <span class="st">"createdTime"</span>:<span class="st">"..."</span>, <span class="st">"fields"</span>:{...}}, ...]
+rows =    [{<span class="st">"Student ID"</span>:<span class="st">"S001"</span>, <span class="st">"Study Hours"</span>:<span class="num">8</span>, ...}, ...]</div>\n\n<code>pd.DataFrame(rows)</code> expects a <strong>list of dicts</strong> where keys become column names and each dict is one row. The <code>id</code> and <code>createdTime</code> wrappers are not needed and would become extra columns.`
+  },
+  {
+    cat: "code",
+    q: "What does the <em>defensive</em> version of the script add that the minimal version lacks?",
+    a: `The defensive version adds explicit checks at each stage:\n\n1. <strong>Token check before request:</strong> <code>os.environ.get("AIRTABLE_API_KEY")</code> → clear error message instead of KeyError\n\n2. <strong>Status check before parsing:</strong>\n<div class="cblock">if response.status_code != <span class="num">200</span>:
+    print(response.text)  <span class="c"># show raw error</span>
+    exit()</div>\n\n3. <strong>Structured exploration</strong> of first record (raw), first record (fields only), all IDs, and unwrapped rows\n\n4. Prevents <code>JSONDecodeError</code> (which occurs when the body is HTML/error text and <code>.json()</code> is called on it).`
+  },
+
+  // ── JSON (3) ──────────────────────────────────────────────────────────────
+  {
+    cat: "json",
+    q: "What is the structure of Airtable's JSON response? How many levels deep is the actual data?",
+    a: `The data is <strong>three levels deep</strong>:\n\n<div class="cblock">data = {
+  <span class="st">"records"</span>: [            <span class="c">← list of record dicts</span>
+    {
+      <span class="st">"id"</span>: <span class="st">"recXXX"</span>,    <span class="c">← Airtable's internal ID</span>
+      <span class="st">"createdTime"</span>: <span class="st">"..."</span>,
+      <span class="st">"fields"</span>: {      <span class="c">← THE ACTUAL DATA IS HERE</span>
+        <span class="st">"Student ID"</span>: <span class="st">"S001"</span>,
+        <span class="st">"Final Score"</span>: <span class="num">88</span>
+      }
+    },
+    ...                   <span class="c">← 29 more</span>
+  ]
+}</div>\n\nNavigation: <code>data["records"][0]["fields"]["Final Score"]</code> → 88`
+  },
+  {
+    cat: "json",
+    q: "Given <code>records = data[\"records\"]</code>, what does <code>records[2][\"fields\"][\"Study Hours\"]</code> return?",
+    a: `<strong>5</strong> — the Study Hours value for student S003 (the 3rd student, index 2).\n\nReading left to right:\n<code>records[2]</code> → the 3rd record dict (index 2)\n<code>[\"fields\"]</code> → the data dict inside it\n<code>[\"Study Hours\"]</code> → the value at that key\n\n<div class="hl hl-blue">This three-level navigation appears everywhere when processing Airtable API responses. The pattern is: list index → key → key.</div>`
+  },
+  {
+    cat: "json",
+    q: "What does <code>response.json()</code> actually do internally? What type does it return?",
+    a: `<code>response.json()</code> is a shortcut for:\n<div class="cblock">import json
+json.loads(response.text)</div>\n\nIt takes the JSON string in the response body and converts it into native Python objects:\n\n<strong>JSON → Python mappings:</strong><br>\n<code>object {}</code> → <code>dict</code><br>\n<code>array []</code> → <code>list</code><br>\n<code>true/false</code> → <code>True/False</code><br>\n<code>null</code> → <code>None</code><br>\n<code>number</code> → <code>int</code> or <code>float</code>\n\nFor the Airtable response, the top level is a dict — so <code>response.json()</code> returns a <strong>dict</strong>.`
+  },
+
+  // ── ERRORS (2) ────────────────────────────────────────────────────────────
+  {
+    cat: "errors",
+    q: "List all 6 errors the script can throw. For each: symptom, cause, fix.",
+    a: `<strong>1. KeyError: 'AIRTABLE_API_KEY'</strong> — env var not set → run <code>set/export</code> command<br>
+<strong>2. Status 401</strong> — wrong/expired token or bad header format → check <code>Bearer [space] token</code> format<br>
+<strong>3. Status 403</strong> — valid token, wrong access/scope → edit token, add base + <code>data.records:read</code> scope<br>
+<strong>4. Status 404</strong> — wrong base ID or table name → check URL: <code>appjAX8yLYxmpL971/Students</code> (capital S)<br>
+<strong>5. ModuleNotFoundError: requests</strong> — venv not activated → check <code>(.venv)</code> prompt, then <code>pip install requests</code><br>
+<strong>6. JSONDecodeError</strong> — <code>.json()</code> called on non-JSON body → always check <code>status_code == 200</code> first`
+  },
+  {
+    cat: "errors",
+    q: "The terminal shows a 404. What are the two most likely causes, and how do you fix each?",
+    a: `A 404 from Airtable means the URL points at something that doesn't exist.\n\n<strong>Cause 1 — Wrong table name:</strong><br>The table name is case-sensitive and must match exactly. <code>students</code> or <code>Student</code> → 404. The correct value is <code>Students</code>.\n\n<strong>Cause 2 — Wrong base ID:</strong><br>The base ID (<code>appjAX8yLYxmpL971</code>) was mistyped or belongs to a different base.\n\n<div class="hl hl-blue">Check: the correct URL is exactly <code>https://api.airtable.com/v0/appjAX8yLYxmpL971/Students</code>.</div>`
+  }
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let deck = [...CARDS];
+let idx = 0;
+let isFlipped = false;
+let known = new Set();
+let again = new Set();
+let activeFilter = 'all';
+
+function buildDeck(filter) {
+  if (filter === 'all') deck = [...CARDS];
+  else deck = CARDS.filter(c => c.cat === filter);
+  idx = 0;
+  isFlipped = false;
+  known.clear();
+  again.clear();
+  if (deck.length === 0) { showEmpty(); return; }
+  document.getElementById('completeScreen').classList.remove('show');
+  document.querySelector('.card-wrap').style.display = '';
+  document.getElementById('controls').style.display = '';
+  document.getElementById('markRow').style.display = '';
+  renderCard();
+  updateStats();
+}
+
+const CAT_META = {
+  concepts: { label: 'Concepts', color: '#1E4EBF' },
+  http:     { label: 'HTTP', color: '#B0250A' },
+  venv:     { label: 'Virtual Environment', color: '#0F6B45' },
+  token:    { label: 'API Token', color: '#7A4A00' },
+  code:     { label: 'Code', color: '#5018C0' },
+  json:     { label: 'JSON', color: '#0A6060' },
+  errors:   { label: 'Error Handling', color: '#B0250A' },
+};
+
+function catHtml(cat) {
+  const m = CAT_META[cat] || { label: cat, color: '#516080' };
+  return `<span class="cat-${cat}"><span class="cat-dot"></span>${m.label}</span>`;
+}
+
+function renderCard() {
+  if (idx >= deck.length) { showComplete(); return; }
+  const card = deck[idx];
+  document.getElementById('frontCat').innerHTML = catHtml(card.cat);
+  document.getElementById('backCat').innerHTML = catHtml(card.cat);
+  document.getElementById('cardQ').innerHTML = card.q.replace(/\n/g, '<br>');
+  document.getElementById('cardA').innerHTML = card.a.replace(/\n/g, '<br>');
+
+  const el = document.getElementById('theCard');
+  el.classList.remove('flipped');
+  isFlipped = false;
+  document.getElementById('markRow').style.display = 'none';
+
+  document.getElementById('posLabel').textContent = `${idx + 1} / ${deck.length}`;
+  document.getElementById('btnPrev').disabled = idx === 0;
+  document.getElementById('btnNext').disabled = false;
+
+  const pct = ((idx + 1) / deck.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function flipCard() {
+  const el = document.getElementById('theCard');
+  isFlipped = !isFlipped;
+  el.classList.toggle('flipped', isFlipped);
+  if (isFlipped) {
+    document.getElementById('markRow').style.display = 'flex';
+  } else {
+    document.getElementById('markRow').style.display = 'none';
+  }
+}
+
+function nextCard() {
+  if (idx < deck.length - 1) { idx++; renderCard(); }
+  else if (idx === deck.length - 1) showComplete();
+}
+
+function prevCard() {
+  if (idx > 0) { idx--; renderCard(); }
+}
+
+function markCard(gotIt) {
+  const card = deck[idx];
+  if (gotIt) { known.add(card); again.delete(card); }
+  else { again.add(card); known.delete(card); }
+  updateStats();
+  nextCard();
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = deck.length;
+  document.getElementById('statKnow').textContent = known.size;
+  document.getElementById('statAgain').textContent = again.size;
+}
+
+function showComplete() {
+  document.getElementById('completeScreen').classList.add('show');
+  document.querySelector('.card-wrap').style.display = 'none';
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('markRow').style.display = 'none';
+  document.getElementById('progressFill').style.width = '100%';
+
+  const pct = deck.length > 0 ? Math.round((known.size / deck.length) * 100) : 0;
+  document.getElementById('ringNum').textContent = pct + '%';
+  const msg = pct === 100
+    ? "Perfect score! Every concept locked in. ✨"
+    : pct >= 75
+    ? `Strong result! ${again.size} card${again.size===1?'':'s'} to review again.`
+    : `${known.size} cards mastered. Focus the missed ones and re-run the deck.`;
+  document.getElementById('completeMsg').textContent = msg;
+}
+
+function showEmpty() {
+  document.querySelector('.card-wrap').style.display = 'none';
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('markRow').style.display = 'none';
+}
+
+function restartAll() {
+  document.getElementById('completeScreen').classList.remove('show');
+  document.querySelector('.card-wrap').style.display = '';
+  document.getElementById('controls').style.display = '';
+  buildDeck(activeFilter);
+}
+
+function restartWrong() {
+  if (again.size === 0) { restartAll(); return; }
+  deck = [...again];
+  idx = 0; isFlipped = false; known.clear(); again.clear();
+  document.getElementById('completeScreen').classList.remove('show');
+  document.querySelector('.card-wrap').style.display = '';
+  document.getElementById('controls').style.display = '';
+  renderCard(); updateStats();
+}
+
+// Filters
+document.getElementById('filters').addEventListener('click', e => {
+  const pill = e.target.closest('.pill');
+  if (!pill) return;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  activeFilter = pill.dataset.cat;
+  buildDeck(activeFilter);
+});
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); flipCard(); }
+  if (e.key === 'ArrowRight') nextCard();
+  if (e.key === 'ArrowLeft') prevCard();
+  if ((e.key === 'g' || e.key === 'G') && isFlipped) markCard(true);
+  if ((e.key === 'r' || e.key === 'R') && isFlipped) markCard(false);
+});
+
+// Touch swipe
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 60) { dx > 0 ? prevCard() : nextCard(); }
+});
+
+// Init
+buildDeck('all');
+</script>
+</body>
+</html>
