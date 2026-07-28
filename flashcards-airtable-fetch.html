@@ -427,11 +427,7 @@ rows =    [{<span class="st">"Student ID"</span>:<span class="st">"S001"</span>,
   ]
 }</div>\n\nNavigation: <code>data["records"][0]["fields"]["Final Score"]</code> → 88`
   },
-  {
-    cat: "json",
-    q: "Given <code>records = data[\"records\"]</code>, what does <code>records[2][\"fields\"][\"Study Hours\"]</code> return?",
-    a: `<strong>5</strong> — the Study Hours value for student S003 (the 3rd student, index 2).\n\nReading left to right:\n<code>records[2]</code> → the 3rd record dict (index 2)\n<code>[\"fields\"]</code> → the data dict inside it\n<code>[\"Study Hours\"]</code> → the value at that key\n\n<div class="hl hl-blue">This three-level navigation appears everywhere when processing Airtable API responses. The pattern is: list index → key → key.</div>`
-  },
+ 
   {
     cat: "json",
     q: "What does <code>response.json()</code> actually do internally? What type does it return?",
