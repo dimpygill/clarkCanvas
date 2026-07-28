@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards — Python Dictionaries</title>
+<link href="https://fonts.googleapis.com/css2?family=Georgia&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F9FB;
+  --card:#FFFFFF;
+  --ink:#1B2430;
+  --ink-soft:#51606E;
+  --border:#DEE6ED;
+  --blue:#2C5F8A;
+  --blue-dark:#1E4363;
+  --blue-soft:#EAF1F8;
+  --gold:#D98E2E;
+  --gold-soft:#FBF1DF;
+  --green:#1F8A5F;
+  --green-soft:#E7F5EE;
+  --red:#C0392B;
+  --red-soft:#FBEAE8;
+  --code-bg:#101A2B;
+  --code-text:#E7ECF3;
+  --serif:'Source Serif 4',Georgia,'Palatino Linotype',serif;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'JetBrains Mono',Consolas,'Liberation Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:40px 20px 80px}
+
+/* ---------- HEADER ---------- */
+header.top{margin-bottom:26px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.eyebrow .dictline{background:var(--blue-soft);border:1px solid var(--blue);border-radius:5px;padding:2px 8px;color:var(--blue-dark)}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(24px,4.5vw,34px);letter-spacing:-.01em;margin-bottom:8px;color:var(--blue-dark)}
+.sub{color:var(--ink-soft);font-size:14.5px;max-width:560px}
+
+/* ---------- STATS ---------- */
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:92px}
+.stat .num{font-family:var(--serif);font-weight:700;font-size:20px;line-height:1}
+.stat .lbl{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.stat.blue .num{color:var(--blue)}
+.stat.green .num{color:var(--green)}
+.stat.gold .num{color:#8A5A0E}
+
+/* ---------- FILTER PILLS ---------- */
+.filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px}
+.pill{appearance:none;border:1px solid var(--border);background:var(--card);color:var(--ink-soft);font-family:var(--sans);font-size:12.5px;font-weight:600;padding:6px 13px;border-radius:999px;cursor:pointer;transition:all .13s;white-space:nowrap}
+.pill:hover{border-color:var(--blue);color:var(--blue-dark)}
+.pill.active{background:var(--blue-dark);border-color:var(--blue-dark);color:#fff}
+
+/* ---------- CARD STAGE ---------- */
+.stage{display:flex;flex-direction:column;align-items:center;gap:18px}
+.progress-row{width:100%;display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);font-family:var(--mono)}
+.progress-track{flex:1;height:4px;background:var(--border);border-radius:99px;margin:0 14px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gold);border-radius:99px;transition:width .2s ease}
+
+.card-scene{width:100%;max-width:600px;perspective:1600px}
+.card3d{position:relative;width:100%;min-height:280px;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,.15,.2,1);cursor:pointer}
+.card3d.flipped{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;width:100%;min-height:280px;backface-visibility:hidden;border-radius:16px;border:1px solid var(--border);background:var(--card);padding:30px 32px;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(20,30,45,.05), 0 10px 30px rgba(20,30,45,.04)}
+.face.back{transform:rotateY(180deg);background:var(--blue-soft);border-color:var(--blue);}
+
+.cat-tag{display:inline-flex;align-self:flex-start;font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;padding:3px 10px;border-radius:999px;margin-bottom:16px}
+.cat-basics{background:var(--blue-soft);color:var(--blue-dark)}
+.cat-intermediate{background:var(--gold-soft);color:#8A5A0E}
+.cat-advanced{background:var(--green-soft);color:#146142}
+.cat-nodb{background:#F1EFFB;color:#5B4B9E}
+.cat-airtable{background:#FBEAE8;color:#9E3A2B}
+.cat-sqlserver{background:#E8F3F6;color:#1D6E7E}
+.cat-challenge{background:#1E4363;color:#fff}
+
+.face .key-line{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin-bottom:10px}
+.q-text{font-family:var(--serif);font-weight:600;font-size:19px;line-height:1.4;color:var(--ink);flex:1}
+.q-code{margin-top:14px;background:var(--code-bg);color:var(--code-text);border-radius:9px;padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.55;overflow-x:auto;white-space:pre}
+.flip-hint{margin-top:auto;padding-top:14px;font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
+.flip-hint svg{width:13px;height:13px;opacity:.6}
+
+.face.back .a-text{font-family:var(--serif);font-weight:600;font-size:19px;color:var(--blue-dark);margin-bottom:10px;line-height:1.4}
+.face.back .explain{color:var(--ink-soft);font-size:14px;line-height:1.55}
+.face.back .explain code{font-family:var(--mono);background:#fff;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:12.5px;color:var(--blue-dark)}
+
+/* ---------- CONTROLS ---------- */
+.nav-row{display:flex;align-items:center;gap:12px;width:100%;max-width:600px;justify-content:center}
+.nav-btn{appearance:none;border:1px solid var(--border);background:var(--card);color:var(--ink-soft);border-radius:9px;padding:11px 14px;font-size:14px;cursor:pointer;transition:all .13s;display:flex;align-items:center;justify-content:center}
+.nav-btn:hover{border-color:var(--blue);color:var(--blue-dark)}
+.nav-btn:disabled{opacity:.35;cursor:default}
+.rate-row{display:flex;gap:10px;flex:1}
+.rate-btn{flex:1;border:none;border-radius:9px;padding:11px 10px;font-family:var(--sans);font-size:13.5px;font-weight:700;cursor:pointer;transition:all .13s}
+.rate-again{background:var(--red-soft);color:var(--red)}
+.rate-again:hover{background:#F6D8D4}
+.rate-know{background:var(--green-soft);color:var(--green)}
+.rate-know:hover{background:#D3EFE0}
+
+.helper{margin-top:18px;font-size:12.5px;color:#A9B4C2;text-align:center}
+.helper kbd{font-family:var(--mono);background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:11px}
+
+/* ---------- EMPTY / DONE STATE ---------- */
+.done-panel{width:100%;max-width:600px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:44px 32px;text-align:center}
+.done-panel .big-num{font-family:var(--serif);font-weight:700;font-size:42px;color:var(--blue-dark)}
+.done-panel h2{font-family:var(--serif);font-size:21px;margin:8px 0 6px;color:var(--ink)}
+.done-panel p{color:var(--ink-soft);font-size:14px;margin-bottom:22px}
+.done-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.done-btn{border:none;border-radius:9px;padding:11px 20px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+.done-btn.primary{background:var(--blue-dark);color:#fff}
+.done-btn.primary:hover{background:var(--blue)}
+.done-btn.ghost{background:var(--card);border:1px solid var(--border);color:var(--ink-soft)}
+.done-btn.ghost:hover{border-color:var(--blue);color:var(--blue-dark)}
+
+@media(max-width:520px){
+  .face{padding:24px 22px}
+  .nav-row{flex-wrap:wrap}
+  .rate-row{order:3;width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow"><span class="dictline">{ key: value }</span> Python Dictionaries — Flashcards</p>
+    <h1>Study deck: from first principles to real databases</h1>
+    <p class="sub">Each card shows a key — the question. Flip it to reveal the value — the answer. Covers every section of the tutorial, from creating a dict to reading real API and database rows.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat blue"><div class="num" id="statTotal">0</div><div class="lbl">Cards</div></div>
+    <div class="stat green"><div class="num" id="statKnow">0</div><div class="lbl">Know it</div></div>
+    <div class="stat gold"><div class="num" id="statAgain">0</div><div class="lbl">Review again</div></div>
+  </div>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="stage" id="stage">
+    <div class="progress-row" style="max-width:600px;width:100%">
+      <span id="posLabel">1 / 1</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span id="deckLabel">All cards</span>
+    </div>
+
+    <div class="card-scene">
+      <div class="card3d" id="card3d">
+        <div class="face front" id="faceFront"></div>
+        <div class="face back" id="faceBack"></div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="nav-btn" id="prevBtn" title="Previous">‹</button>
+      <div class="rate-row">
+        <button class="rate-btn rate-again" id="againBtn">Review again</button>
+        <button class="rate-btn rate-know" id="knowBtn">Know it</button>
+      </div>
+      <button class="nav-btn" id="nextBtn" title="Next">›</button>
+    </div>
+
+    <p class="helper">Click the card or press <kbd>Space</kbd> to flip &nbsp;·&nbsp; <kbd>←</kbd> <kbd>→</kbd> to move &nbsp;·&nbsp; <kbd>1</kbd> review again &nbsp;<kbd>2</kbd> know it</p>
+  </div>
+</div>
+
+<script>
+/* ================= CARD DATA ================= */
+const CATS = [
+  {id:'basics',       label:'Basics',            cls:'cat-basics'},
+  {id:'intermediate', label:'Intermediate',      cls:'cat-intermediate'},
+  {id:'advanced',      label:'Advanced',          cls:'cat-advanced'},
+  {id:'nodb',          label:'No Database',      cls:'cat-nodb'},
+  {id:'airtable',      label:'Airtable',          cls:'cat-airtable'},
+  {id:'sqlserver',    label:'SQL Server',        cls:'cat-sqlserver'},
+  {id:'challenge',    label:'Challenge',          cls:'cat-challenge'},
+];
+
+const CARDS = [
+  // ---------- BASICS ----------
+  {cat:'basics', q:'What two symbols create a dictionary literal, and what do they hold?', a:'Curly braces { }', explain:'They hold comma-separated <code>key: value</code> pairs, e.g. <code>{"name": "Amara"}</code>.'},
+  {cat:'basics', q:'What type does <code>type({})</code> report?', a:"<class 'dict'>", explain:'Dictionaries created with either <code>{}</code> or <code>dict()</code> are always the built-in <code>dict</code> type.'},
+  {cat:'basics', q:'What happens when you access a missing key with square brackets, like <code>student["gpa"]</code>?', a:'It raises a KeyError', explain:'Square-bracket access is strict. Use <code>.get()</code> when a key might not exist.'},
+  {cat:'basics', q:'What does <code>student.get("gpa", "N/A")</code> return if "gpa" is missing?', a:'"N/A" — the default you supplied', explain:'<code>.get(key, default)</code> never raises an error; it just hands back the fallback value.'},
+  {cat:'basics', q:'Have dictionaries preserved insertion order since Python 3.7, or do they store items randomly?', a:'They preserve insertion order', explain:"This has been guaranteed language behavior since 3.7 — older claims that dicts are unordered describe pre-3.7 Python."},
+  {cat:'basics', q:'What is the difference between assigning to an existing key vs. a new key?', a:'Existing key → overwritten. New key → created.', explain:'Same syntax (<code>d[key] = value</code>) does either job depending on whether the key is already there.', code:'student["gpa"] = 3.8   # new -> added\nstudent["age"] = 22     # existing -> updated'},
+  {cat:'basics', q:'Name four ways to remove things from a dictionary, and how they differ.', a:'del, .pop(), .popitem(), .clear()', explain:'<code>del d[k]</code> removes silently. <code>.pop(k)</code> removes and returns the value. <code>.popitem()</code> removes the most-recently-inserted pair. <code>.clear()</code> empties it entirely.'},
+  {cat:'basics', q:'What do <code>.keys()</code>, <code>.values()</code>, and <code>.items()</code> return?', a:'Live "view" objects', explain:"They're windows onto the dictionary's current keys, values, or (key, value) pairs — not static copies."},
+
+  // ---------- INTERMEDIATE ----------
+  {cat:'intermediate', q:'Can a dictionary value be another dictionary?', a:'Yes — nested dictionaries', explain:'This is how structured records are represented, like <code>company["employee1"]["name"]</code>.'},
+  {cat:'intermediate', q:'What does <code>profile.setdefault("level", "Junior")</code> do if "level" already exists?', a:'Returns the existing value, unchanged', explain:'<code>setdefault</code> only sets the default when the key is missing. On an existing key, it just returns the current value without overwriting it.'},
+  {cat:'intermediate', q:'If two dicts share a key, which value wins when you merge them with <code>{**a, **b}</code>, <code>.update()</code>, or <code>|</code>?', a:"b's value — the later one wins", explain:'True for all three merge methods shown in the tutorial. Later values always overwrite earlier ones on a key collision.'},
+  {cat:'intermediate', q:'Which operator merges two dicts into a new one, as of Python 3.9+?', a:'The pipe operator: |', explain:'<code>dict1 | dict2</code> returns a new merged dictionary without mutating either original.'},
+  {cat:'intermediate', q:'Which standard library class makes counting occurrences easy, giving missing keys a default value automatically?', a:'defaultdict, from collections', explain:'<code>defaultdict(int)</code> starts every new key at 0, so you can write <code>word_count[word] += 1</code> without checking if the key exists first.'},
+  {cat:'intermediate', q:'Dictionaries have no <code>.sort()</code> method. How do you sort one by value?', a:"Sort .items(), then rebuild a dict", explain:'<code>dict(sorted(scores.items(), key=lambda item: item[1], reverse=True))</code> — sort the (key, value) pairs, then wrap the result back in <code>dict()</code>.'},
+
+  // ---------- ADVANCED ----------
+  {cat:'advanced', q:'What does a list of dictionaries represent, conceptually?', a:'A table', explain:'Each dictionary is a row; its keys are the column names. This shape shows up everywhere data comes from — APIs, files, databases.'},
+  {cat:'advanced', q:'What does <code>dict(zip(columns, values))</code> produce?', a:'A dict pairing each column name with its matching value', explain:"zip() pairs the two sequences item by item; dict() turns those pairs into key: value entries. This is exactly the shape a database row comes back in.", code:'columns = ["id", "name", "gpa"]\nvalues = [3, "Mei", 3.9]\nrow = dict(zip(columns, values))'},
+  {cat:'advanced', q:'What does <code>**</code> do when calling a function like <code>create_student(**info)</code>?', a:"Unpacks the dict into keyword arguments", explain:'Each key in <code>info</code> becomes a keyword argument name matching the function\'s parameters.'},
+  {cat:'advanced', q:'Why can\'t a list be used as a dictionary key?', a:"Lists are mutable, so they aren't hashable", explain:'Dictionary keys must be hashable, and hashability requires immutability. Strings, numbers, and tuples work fine as keys.'},
+  {cat:'advanced', q:'What is the average time complexity of a dictionary key lookup?', a:'O(1) — constant time on average', explain:'Dictionaries use hashing internally, so lookup speed barely changes as the dictionary grows. A plain list search is O(n) by comparison.'},
+  {cat:'advanced', q:'What Python type does <code>json.loads()</code> return when parsing a JSON object?', a:'A dict', explain:"A JSON object and a Python dict already have nearly identical shape, so json.loads() converts one straight into the other. json.dumps() does the reverse."},
+
+  // ---------- NO DATABASE ----------
+  {cat:'nodb', q:'In the in-memory library tracker, what happens to the data when the program stops running?', a:'It is lost completely', explain:'A plain Python list only exists in memory while the program runs — nothing is written anywhere, so there is nothing to reopen next time.'},
+  {cat:'nodb', q:'What happens if two people run the in-memory library script at the same time?', a:'Each gets a separate, private copy of the data', explain:'Without a shared external store, neither running program can see the other\'s changes — that\'s the core limitation a real database solves.'},
+
+  // ---------- AIRTABLE ----------
+  {cat:'airtable', q:'What Python type does <code>response.json()</code> return for an Airtable API response?', a:'A dict', explain:'.json() parses the response body automatically — no extra work needed to turn JSON text into a usable dict.'},
+  {cat:'airtable', q:"In Airtable's response, where do a record's actual column values live?", a:'Inside a nested "fields" dictionary', explain:'Each record has an id, a createdTime, and a nested "fields" dict holding the real data — a dict inside a dict inside a list.'},
+  {cat:'airtable', q:'Which HTTP method updates only the fields you name on a record, leaving the rest untouched?', a:'PATCH', explain:'PATCH only touches what you include in the request body. GET reads, POST creates, DELETE removes the whole record.'},
+
+  // ---------- SQL SERVER ----------
+  {cat:'sqlserver', q:'By default, what type does pyodbc return for each row of a query result?', a:'A tuple-like pyodbc.Row', explain:'Rows behave like tuples — accessed by position (row[0], row[1]…) unless you convert them into a dict yourself.'},
+  {cat:'sqlserver', q:'Where do you get the column names needed to build a dict from a pyodbc row?', a:'cursor.description', explain:'It lists metadata for every selected column, including its name, in query order — exactly what zip() needs to pair with each row.', code:'columns = [c[0] for c in cursor.description]\nrow_dict = dict(zip(columns, row))'},
+ 
+  // ---------- CHALLENGE ----------
+  {cat:'challenge', q:'Across the in-memory, Airtable, and SQL Server examples, what stayed exactly the same?', a:'The shape of the data once it reached Python: dictionaries', explain:"That's the throughline of the whole tutorial — no matter where data comes from, it tends to land in Python as dicts (and lists of them)."},
+  {cat:'challenge', q:'What do <code>.json()</code> (Airtable) and <code>zip(columns, row)</code> (SQL Server) have in common?', a:"They're both ways of turning external data into a Python dict", explain:'Different mechanisms, same job: converting incoming data — JSON text or a raw database row — into the dict shape your code expects.'},
+  {cat:'challenge', q:'True or false: a Python dictionary is essentially an in-memory version of a single JSON object or database row.', a:'True', explain:'That is the core idea the whole tutorial builds toward — dicts, JSON objects, and database rows are all the same underlying concept, just arriving from different places.'},
+];
+
+/* ================= STATE ================= */
+let activeCat = 'all';
+let order = [];       // indices into CARDS, filtered + not yet rated in this pass
+let pos = 0;
+let flipped = false;
+let ratings = {};      // index -> 'know' | 'again'
+
+function filteredIndices(){
+  return CARDS.map((c,i)=>i).filter(i => activeCat==='all' || CARDS[i].cat===activeCat);
+}
+
+function resetDeck(){
+  order = filteredIndices();
+  pos = 0;
+  flipped = false;
+  render();
+}
+
+/* ================= RENDER ================= */
+function catMeta(id){ return CATS.find(c=>c.id===id); }
+
+function renderFilters(){
+  const el = document.getElementById('filters');
+  const counts = {};
+  CARDS.forEach(c=>counts[c.cat]=(counts[c.cat]||0)+1);
+  let html = `<button class="pill ${activeCat==='all'?'active':''}" data-cat="all">All (${CARDS.length})</button>`;
+  CATS.forEach(c=>{
+    html += `<button class="pill ${activeCat===c.id?'active':''}" data-cat="${c.id}">${c.label} (${counts[c.id]||0})</button>`;
+  });
+  el.innerHTML = html;
+  el.querySelectorAll('.pill').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeCat = btn.dataset.cat;
+      resetDeck();
+    });
+  });
+}
+
+function renderStats(){
+  document.getElementById('statTotal').textContent = CARDS.length;
+  document.getElementById('statKnow').textContent = Object.values(ratings).filter(r=>r==='know').length;
+  document.getElementById('statAgain').textContent = Object.values(ratings).filter(r=>r==='again').length;
+}
+
+function faceHTML(card, isBack){
+  const meta = catMeta(card.cat);
+  if(!isBack){
+    return `<span class="cat-tag ${meta.cls}">${meta.label}</span>
+      <div class="key-line">key</div>
+      <div class="q-text">${card.q}</div>
+      ${card.code ? `<div class="q-code">${escCode(card.code)}</div>` : ''}
+      <div class="flip-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M4 10a8 8 0 0114-5.3M20 14a8 8 0 01-14 5.3"/></svg>
+        Tap to reveal the value
+      </div>`;
+  }
+  return `<div class="key-line">value</div>
+    <div class="a-text">${card.a}</div>
+    <div class="explain">${card.explain}</div>`;
+}
+function escCode(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function render(){
+  renderStats();
+  const stage = document.getElementById('stage');
+  const total = order.length;
+
+  if(total===0){
+    stage.querySelector('.card-scene').style.display='none';
+    stage.querySelector('.nav-row').style.display='none';
+    stage.querySelector('.progress-row').style.display='none';
+    stage.querySelector('.helper').style.display='none';
+    let done = document.getElementById('donePanel');
+    if(!done){
+      done = document.createElement('div');
+      done.className='done-panel'; done.id='donePanel';
+      stage.appendChild(done);
+    }
+    const know = Object.values(ratings).filter(r=>r==='know').length;
+    done.innerHTML = `<div class="big-num">${know} / ${CARDS.filter(c=>activeCat==='all'||c.cat===activeCat).length}</div>
+      <h2>Deck complete</h2>
+      <p>You've been through every card in this set. Review the ones marked "review again," or start over.</p>
+      <div class="done-actions">
+        <button class="done-btn primary" id="restartBtn">Study this deck again</button>
+        <button class="done-btn ghost" id="reviewAgainBtn">Review only missed cards</button>
+      </div>`;
+    document.getElementById('restartBtn').onclick = ()=>resetDeck();
+    document.getElementById('reviewAgainBtn').onclick = ()=>{
+      const missed = filteredIndices().filter(i=>ratings[i]==='again');
+      if(missed.length===0){ return; }
+      order = missed; pos=0; flipped=false;
+      stage.querySelector('.card-scene').style.display='';
+      stage.querySelector('.nav-row').style.display='';
+      stage.querySelector('.progress-row').style.display='';
+      stage.querySelector('.helper').style.display='';
+      done.remove();
+      render();
+    };
+    return;
+  }
+
+  stage.querySelector('.card-scene').style.display='';
+  stage.querySelector('.nav-row').style.display='';
+  stage.querySelector('.progress-row').style.display='';
+  stage.querySelector('.helper').style.display='';
+  const existingDone = document.getElementById('donePanel');
+  if(existingDone) existingDone.remove();
+
+  const idx = order[pos];
+  const card = CARDS[idx];
+  document.getElementById('faceFront').innerHTML = faceHTML(card,false);
+  document.getElementById('faceBack').innerHTML = faceHTML(card,true);
+  document.getElementById('card3d').classList.toggle('flipped', flipped);
+  document.getElementById('posLabel').textContent = `${pos+1} / ${total}`;
+  document.getElementById('deckLabel').textContent = activeCat==='all' ? 'All cards' : catMeta(activeCat).label;
+  document.getElementById('progressFill').style.width = ((pos)/total*100)+'%';
+  document.getElementById('prevBtn').disabled = pos===0;
+  document.getElementById('nextBtn').disabled = false;
+}
+
+/* ================= ACTIONS ================= */
+function flip(){ flipped = !flipped; document.getElementById('card3d').classList.toggle('flipped', flipped); }
+
+function goNext(){
+  if(order.length===0) return;
+  if(pos < order.length-1){ pos++; flipped=false; render(); }
+  else { advancePastEnd(); }
+}
+function advancePastEnd(){
+  // remove rated-and-passed cards from the working order to show completion
+  order = order.filter(i=>ratings[i]===undefined || ratings[i]==='again');
+  pos = Math.min(pos, Math.max(order.length-1,0));
+  flipped=false;
+  render();
+}
+function goPrev(){ if(pos>0){ pos--; flipped=false; render(); } }
+
+function rate(val){
+  if(order.length===0) return;
+  const idx = order[pos];
+  ratings[idx]=val;
+  renderStats();
+  // move to next; if it was the last card, drop known cards and re-render (may show done panel)
+  if(pos < order.length-1){ pos++; flipped=false; render(); }
+  else {
+    order = order.filter(i=>ratings[i]==='again' || ratings[i]===undefined);
+    pos = 0; flipped=false; render();
+  }
+}
+
+/* ================= EVENTS ================= */
+document.getElementById('card3d').addEventListener('click', flip);
+document.getElementById('nextBtn').addEventListener('click', goNext);
+document.getElementById('prevBtn').addEventListener('click', goPrev);
+document.getElementById('knowBtn').addEventListener('click', ()=>rate('know'));
+document.getElementById('againBtn').addEventListener('click', ()=>rate('again'));
+
+document.addEventListener('keydown', e=>{
+  if(e.code==='Space'){ e.preventDefault(); flip(); }
+  else if(e.code==='ArrowRight'){ goNext(); }
+  else if(e.code==='ArrowLeft'){ goPrev(); }
+  else if(e.code==='Digit1'){ rate('again'); }
+  else if(e.code==='Digit2'){ rate('know'); }
+});
+
+/* ================= INIT ================= */
+renderFilters();
+resetDeck();
+</script>
+</body>
+</html>
