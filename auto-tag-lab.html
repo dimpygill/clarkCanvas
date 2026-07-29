@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto-Tag — Hands-On Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F1; --card:#FFFFFF; --card-line:#E4E1D6;
+    --ink:#201F1B; --ink-soft:#6E6A60; --ink-faint:#A7A297;
+    --blue:#2954A6; --blue-soft:#EAF0FB;
+    --teal:#2F8A72; --teal-soft:#E7F4EF;
+    --brick:#C1443C; --brick-soft:#FBEAE8;
+    --amber-soft:#FBF4E7;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--blue); color:#fff; }
+  a{ color:var(--blue); }
+  h1,h2,h3{ font-family:'Space Grotesk',sans-serif; margin:0; letter-spacing:-0.01em; }
+  .mono{ font-family:'IBM Plex Mono',monospace; font-size:.94em; }
+  .wrap{ max-width:900px; margin:0 auto; padding:0 28px; }
+
+  .card{
+    background:var(--card); border:1px solid var(--card-line);
+    border-radius:10px; position:relative;
+  }
+  .card::before{
+    content:''; position:absolute; left:0; top:14px; bottom:14px; width:3px;
+    background:var(--ink-faint); opacity:.35; border-radius:2px;
+  }
+
+  header.top{
+    position:sticky; top:0; z-index:60;
+    background:rgba(247,246,241,.94); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--card-line);
+  }
+  .topbar{
+    max-width:900px; margin:0 auto; padding:11px 28px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .topbar .brand{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; white-space:nowrap;
+  }
+  .progress-track{ flex:1; height:8px; background:var(--card-line); border-radius:5px; overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--teal); width:0%; transition:width .3s; border-radius:5px; }
+  .progress-label{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft); white-space:nowrap;
+  }
+  .reset-btn{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 9px;
+    border-radius:5px; border:1px solid var(--card-line); background:#fff;
+    color:var(--ink-soft); cursor:pointer;
+  }
+  .reset-btn:hover{ background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  .hero{ padding:54px 0 34px; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--blue); margin-bottom:18px;
+  }
+  .eyebrow::before{ content:''; width:7px; height:7px; background:var(--blue); border-radius:50%; }
+  .hero h1{ font-size:clamp(31px,4.5vw,48px); line-height:1.09; max-width:740px; }
+  .hero p.lede{ margin-top:16px; max-width:620px; color:var(--ink-soft); font-size:16.5px; }
+
+  .obj-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:30px; }
+  .obj-card{ padding:16px 18px; }
+  .obj-card h3{ font-size:14px; margin-bottom:5px; }
+  .obj-card p{ font-size:13px; color:var(--ink-soft); margin:0; }
+
+  section.lab-section{ padding:48px 0; border-top:1px solid var(--card-line); }
+  .card-tab{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft);
+    letter-spacing:.06em; text-transform:uppercase; margin-bottom:14px;
+  }
+  .card-tab .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:6px; flex-shrink:0;
+    background:var(--ink); color:#fff; font-weight:600; font-size:12px;
+  }
+  section.lab-section h2{ font-size:26px; max-width:640px; }
+  section.lab-section p.intro{ color:var(--ink-soft); max-width:620px; margin-top:10px; font-size:15px; }
+  h3.file-head{ font-size:16px; margin-top:30px; }
+  p.file-note{ font-size:13.5px; color:var(--ink-soft); margin:4px 0 0; }
+
+  .flow{ display:flex; align-items:center; gap:11px; margin:30px 0; flex-wrap:wrap; justify-content:center; }
+  .flow-box{ padding:15px 17px; border-radius:10px; text-align:center; min-width:126px; }
+  .flow-box.blue{ background:var(--blue-soft); border:1px solid #c9d9f2; }
+  .flow-box.dark{ background:var(--ink); color:#fff; }
+  .flow-box.teal{ background:var(--teal-soft); border:1px solid #c5e4d9; }
+  .flow-box.coral{ background:var(--brick-soft); border:1px solid #f0cac6; }
+  .flow-box .k{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.06em; opacity:.7; display:block; margin-bottom:5px;
+  }
+  .flow-box .v{ font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; }
+  .flow-arrow{ font-size:18px; color:var(--ink-faint); }
+
+  .checklist{ display:flex; flex-direction:column; gap:2px; margin-top:18px; }
+  .check-item{
+    display:flex; align-items:flex-start; gap:12px; padding:11px 13px;
+    border-radius:8px; transition:background .15s;
+  }
+  .check-item:hover{ background:var(--blue-soft); }
+  .check-item input{ margin-top:3px; width:17px; height:17px; accent-color:var(--teal); cursor:pointer; flex-shrink:0; }
+  .check-item label{ cursor:pointer; font-size:14.5px; }
+  .check-item label .step-title{ font-weight:600; display:block; margin-bottom:2px; }
+  .check-item label .step-detail{ color:var(--ink-soft); font-size:13.5px; }
+  .check-item.checked label .step-title{ text-decoration:line-through; color:var(--ink-faint); }
+  .check-item.checked label .step-detail{ color:var(--ink-faint); }
+
+  .code-block{ margin-top:15px; border-radius:9px; overflow:hidden; border:1px solid var(--card-line); }
+  .code-label{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    background:#EFEDE4; padding:8px 13px; font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--ink-soft); border-bottom:1px solid var(--card-line);
+  }
+  .copy-btn{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:4px 10px;
+    border-radius:5px; border:1px solid var(--card-line); background:#fff;
+    color:var(--ink); cursor:pointer; white-space:nowrap;
+  }
+  .copy-btn:hover{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .code-block pre{
+    margin:0; padding:15px 17px; background:#FCFBF8; overflow:auto;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.6;
+    color:var(--ink); max-height:460px;
+  }
+
+  .callout{
+    margin-top:20px; padding:15px 17px; border-radius:9px;
+    background:var(--teal-soft); border:1px solid #c5e4d9; font-size:14px; color:#204b3f;
+  }
+  .callout.amber{ background:var(--amber-soft); border-color:#eadfc0; color:#5c491f; }
+  .callout.coral{ background:var(--brick-soft); border-color:#f0cac6; color:#7a2d26; }
+  .callout .mono{ background:rgba(255,255,255,.6); padding:1px 5px; border-radius:4px; }
+
+  .trouble{ display:flex; flex-direction:column; gap:11px; margin-top:22px; }
+  .trouble-item{ padding:15px 17px; }
+  .trouble-item .symptom{
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--brick);
+    background:var(--brick-soft); display:inline-block; padding:4px 9px;
+    border-radius:5px; margin-bottom:8px;
+  }
+  .trouble-item .fix{ font-size:14px; }
+  .trouble-item .fix .mono{
+    background:var(--blue-soft); color:var(--blue); padding:1px 5px; border-radius:4px;
+  }
+
+  .stretch-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin-top:22px; }
+  .stretch-card{ padding:16px 17px; }
+  .stretch-card .tag{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--blue); margin-bottom:8px; display:block;
+  }
+  .stretch-card h3{ font-size:14.5px; margin-bottom:6px; }
+  .stretch-card p{ font-size:13px; color:var(--ink-soft); margin:0; }
+
+  .tree{
+    font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.75;
+    background:#FCFBF8; border:1px solid var(--card-line); border-radius:9px;
+    padding:16px 18px; margin-top:18px; overflow-x:auto;
+  }
+  .tree .req{ color:var(--brick); }
+
+  .download-row{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    margin-top:20px; padding:18px 20px; border-radius:10px;
+    background:var(--blue-soft); border:1px solid #c9d9f2;
+  }
+  .download-btn{
+    font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:600;
+    padding:11px 20px; border-radius:8px; border:1.5px solid var(--ink);
+    background:var(--ink); color:#fff; cursor:pointer; white-space:nowrap;
+  }
+  .download-btn:hover{ background:#000; }
+  .download-note{ font-size:13.5px; color:#1f3a6b; }
+
+  footer.foot{
+    padding:28px 0 56px; font-family:'IBM Plex Mono',monospace;
+    font-size:12px; color:var(--ink-faint);
+  }
+
+  @media (max-width:720px){
+    .obj-grid,.stretch-grid{ grid-template-columns:1fr; }
+    .flow{ flex-direction:column; }
+    .flow-arrow{ transform:rotate(90deg); }
+    .topbar .brand{ display:none; }
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{ scroll-behavior:auto; }
+    .progress-fill{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="topbar">
+    <span class="brand">AUTO-TAG LAB</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-label" id="progressLabel">0 / 0 done</span>
+    <button class="reset-btn" id="resetBtn">reset</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div class="eyebrow">Hands-on lab</div>
+    <h1>Auto-Tag: build an AI-powered list, end to end.</h1>
+    <p class="lede">You'll build a small web app where a browser page talks to a Python backend, the backend asks an AI model to categorize whatever you typed, and the result gets stored in a real cloud database. Check off each step as you go — your progress is saved in this browser, so you can close the tab and come back.</p>
+
+    <div class="obj-grid">
+      <div class="card obj-card"><h3>Backend routing</h3><p>Flask routes that receive a request, do work, and return a response.</p></div>
+      <div class="card obj-card"><h3>REST APIs</h3><p>Reading, writing, and deleting records over HTTP with Airtable.</p></div>
+      <div class="card obj-card"><h3>Prompting an LLM</h3><p>Turning free text into one validated, constrained value.</p></div>
+      <div class="card obj-card"><h3>Secrets &amp; environments</h3><p>Keeping API keys out of your source code with <span class="mono">.env</span>.</p></div>
+    </div>
+  </section>
+
+  <section class="lab-section" id="architecture">
+    <div class="card-tab"><span class="num">01</span> What you're building</div>
+    <h2>The whole round trip, in four boxes</h2>
+    <p class="intro">Nothing here is magic — it's four ordinary programs talking over HTTP. Every "Add" click follows this exact path.</p>
+
+    <div class="flow">
+      <div class="flow-box blue"><span class="k">Browser</span><span class="v">HTML + JS</span></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box dark"><span class="k">Flask backend</span><span class="v">app.py</span></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box coral"><span class="k">Groq API</span><span class="v">categorize</span></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-box teal"><span class="k">Airtable</span><span class="v">cloud storage</span></div>
+    </div>
+
+    <div class="callout">
+      The browser sends your typed text to Flask. Flask asks Groq's model to guess a category. Flask writes the item <em>and</em> its category to Airtable as one row, then sends the result back so the page can re-render. Notice what the browser never does: it never talks to Groq or Airtable directly. Flask is the only thing holding your API keys — that's the whole reason the backend exists.
+    </div>
+
+    <h3 class="file-head">Project structure</h3>
+    <p class="file-note">Your folder should end up looking exactly like this.</p>
+    <div class="tree">Auto-Tag/
+├── .venv/                  <span style="color:var(--ink-faint);">(created in Part 05)</span>
+├── .env                    <span style="color:var(--ink-faint);">(created in Part 05 — your real secrets)</span>
+├── .env.example
+├── app.py
+├── requirements.txt
+└── <span class="req">templates/</span>
+    └── index.html</div>
+    <div class="callout coral">
+      <b><span class="mono">index.html</span> must live inside a folder named exactly <span class="mono">templates</span>.</b> That's a Flask convention, not a setting you can change — <span class="mono">render_template()</span> only looks there. If it sits next to <span class="mono">app.py</span> instead, the page will crash with <span class="mono">TemplateNotFound</span>.
+    </div>
+  </section>
+
+  <section class="lab-section" id="prereqs">
+    <div class="card-tab"><span class="num">02</span> Prerequisites</div>
+    <h2>Before you start</h2>
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="p1"><label for="p1"><span class="step-title">Python 3.10 or newer installed</span><span class="step-detail">Verify with <span class="mono">python --version</span> in a terminal.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="p2"><label for="p2"><span class="step-title">VS Code open on your project folder</span><span class="step-detail">File &rarr; Open Folder &rarr; your Auto-Tag directory.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="p3"><label for="p3"><span class="step-title">A free Airtable account</span><span class="step-detail">Sign up at <a href="https://airtable.com" target="_blank" rel="noopener">airtable.com</a>.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="p4"><label for="p4"><span class="step-title">A free Groq account</span><span class="step-detail">Sign up at <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a> — no credit card needed.</span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="lab-section" id="airtable">
+    <div class="card-tab"><span class="num">03</span> Set up Airtable</div>
+    <h2>Create the database your app will write to</h2>
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="a1"><label for="a1"><span class="step-title">Create a new base</span><span class="step-detail">Click "Create a base" — name it anything, e.g. <span class="mono">Auto-Tag</span>.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a2"><label for="a2"><span class="step-title">Name the table Items</span><span class="step-detail">Rename the default table to exactly <span class="mono">Items</span> (capital I, matching your <span class="mono">.env</span>).</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a3"><label for="a3"><span class="step-title">Add two text fields</span><span class="step-detail"><span class="mono">Name</span> and <span class="mono">Category</span>, both single line text. Delete Airtable's other default fields — they aren't used.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a4"><label for="a4"><span class="step-title">Copy your base ID</span><span class="step-detail">Help &rarr; API documentation, or read it from the URL. It starts with <span class="mono">app</span>. This is the ID, not the base's display name.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a5"><label for="a5"><span class="step-title">Create a personal access token</span><span class="step-detail">At <a href="https://airtable.com/create/tokens" target="_blank" rel="noopener">airtable.com/create/tokens</a>, add scopes <span class="mono">data.records:read</span> and <span class="mono">data.records:write</span>, grant access to your base, then copy the token (starts with <span class="mono">pat</span>).</span></label>
+      </div>
+    </div>
+    <div class="callout amber">
+      A common early mistake: putting the base's <em>display name</em> into <span class="mono">AIRTABLE_BASE_ID</span>. The API only accepts the <span class="mono">app...</span> ID. The table, on the other hand, does use its plain name.
+    </div>
+  </section>
+
+  <section class="lab-section" id="groq">
+    <div class="card-tab"><span class="num">04</span> Get a Groq API key</div>
+    <h2>This is what powers the auto-tagging</h2>
+    <p class="intro">Groq's free tier runs open models fast, needs no credit card, and allows thousands of requests per day — plenty for this lab.</p>
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="g1"><label for="g1"><span class="step-title">Open console.groq.com/keys</span><span class="step-detail">Sign in with Google or email.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="g2"><label for="g2"><span class="step-title">Create an API key and copy it</span><span class="step-detail">Starts with <span class="mono">gsk_</span>. Copy it right away — it won't be shown again.</span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="lab-section" id="setup">
+    <div class="card-tab"><span class="num">05</span> Project setup</div>
+    <h2>Isolate the project, then configure it</h2>
+    <p class="intro">A virtual environment keeps this project's packages separate from the rest of your machine.</p>
+
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="s1"><label for="s1"><span class="step-title">Create and activate a virtual environment</span><span class="step-detail">Run the block that matches your terminal.</span></label>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label"><span>Windows — Command Prompt (cmd)</span><button class="copy-btn">copy</button></div>
+      <pre>python -m venv .venv
+.venv\Scripts\activate.bat</pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label"><span>Windows — PowerShell</span><button class="copy-btn">copy</button></div>
+      <pre>python -m venv .venv
+.venv\Scripts\Activate.ps1</pre>
+    </div>
+    <div class="code-block">
+      <div class="code-label"><span>macOS / Linux</span><button class="copy-btn">copy</button></div>
+      <pre>python3 -m venv .venv
+source .venv/bin/activate</pre>
+    </div>
+
+    <div class="callout amber">
+      You'll know it worked when your prompt starts with <span class="mono">(.venv)</span>. Two gotchas: in PowerShell you must use the <span class="mono">.ps1</span> script (running the <span class="mono">.bat</span> one silently does nothing), and if PowerShell reports that running scripts is disabled, run <span class="mono">Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned</span> once, then activate again.
+    </div>
+
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="s2"><label for="s2"><span class="step-title">Create your .env file</span><span class="step-detail">Copy <span class="mono">.env.example</span> to a new file named exactly <span class="mono">.env</span>, then paste in your real values from Parts 03 and 04.</span></label>
+      </div>
+    </div>
+    <div class="code-block">
+      <div class="code-label"><span>.env — fill in your own values</span><button class="copy-btn">copy</button></div>
+      <pre>AIRTABLE_TOKEN=pat_your_real_token
+AIRTABLE_BASE_ID=app_your_real_base_id
+AIRTABLE_TABLE_NAME=Items
+GROQ_API_KEY=gsk_your_real_key</pre>
+    </div>
+    <div class="callout coral">
+      Never commit <span class="mono">.env</span> to Git or share it — it holds live credentials. <span class="mono">.env.example</span> is the safe one to share, because it contains only placeholders. If this project goes into version control, add <span class="mono">.env</span> and <span class="mono">.venv/</span> to <span class="mono">.gitignore</span>.
+    </div>
+
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="s3"><label for="s3"><span class="step-title">Install the dependencies</span><span class="step-detail">With <span class="mono">(.venv)</span> showing in your prompt:</span></label>
+      </div>
+    </div>
+    <div class="code-block">
+      <div class="code-label"><span>terminal</span><button class="copy-btn">copy</button></div>
+      <pre>pip install -r requirements.txt</pre>
+    </div>
+  </section>
+
+  <section class="lab-section" id="code">
+    <div class="card-tab"><span class="num">06</span> The code</div>
+    <h2>Four files, each with one job</h2>
+    <p class="intro">This is the complete working code. Create each file with exactly this content, then read the comments — they explain what each piece does.</p>
+
+    <div class="download-row">
+      <button class="download-btn" id="downloadZip">Download starter project (.zip)</button>
+      <span class="download-note">All four files, ready to unzip and run — no copying needed. You'll still create your own <span class="mono">.env</span> and <span class="mono">.venv</span> (Part 05).</span>
+    </div>
+    <p class="file-note" style="margin-top:14px;">Prefer to type it out yourself? The full contents of every file are below.</p>
+
+    <h3 class="file-head">requirements.txt</h3>
+    <p class="file-note">The four packages this project needs.</p>
+    <div class="code-block">
+      <div class="code-label"><span>requirements.txt</span><button class="copy-btn">copy</button></div>
+      <pre id="code-req">flask
+requests
+python-dotenv
+groq</pre>
+    </div>
+
+    <h3 class="file-head">.env.example</h3>
+    <p class="file-note">A safe template with no real secrets in it.</p>
+    <div class="code-block">
+      <div class="code-label"><span>.env.example</span><button class="copy-btn">copy</button></div>
+      <pre id="code-env">AIRTABLE_TOKEN=patXXXXXXXXXXXXXX
+AIRTABLE_BASE_ID=appXXXXXXXXXXXXXX
+AIRTABLE_TABLE_NAME=Items
+GROQ_API_KEY=gsk_XXXXXXXXXXXXXX</pre>
+    </div>
+
+    <h3 class="file-head">app.py</h3>
+    <p class="file-note">The entire backend — routes, the Airtable calls, and the AI categorization.</p>
+    <div class="code-block">
+      <div class="code-label"><span>app.py</span><button class="copy-btn">copy</button></div>
+      <pre id="code-app">&quot;&quot;&quot;
+Simple List — Flask backend that stores items in Airtable, now with
+AI auto-categorization.
+
+THE FLOW, step by step:
+  1. Browser loads this page                          -&gt; GET  /
+  2. User types text, clicks &quot;Add&quot;                     -&gt; POST /api/items
+  3. Flask receives the POST                           -&gt; calls an LLM to
+     guess a category for the item (&quot;Grocery&quot;, &quot;Task&quot;, ...)
+  4. Flask sends the item&#x27;s name + category to Airtable -&gt; stored as a row
+  5. Flask returns the updated list to the browser      -&gt; the page re-renders it
+
+This is the same pattern used everywhere AI gets bolted onto an app:
+your backend calls an LLM with a prompt, gets text back, validates it,
+and treats it like any other piece of data. This app uses Groq&#x27;s free
+tier (no credit card required) — swap in any other provider and this
+same pattern still holds, only the client setup changes.
+
+Run with:  python app.py
+Then open: http://127.0.0.1:5000
+&quot;&quot;&quot;
+
+import os
+import requests
+from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv
+from groq import Groq
+
+load_dotenv()  # reads AIRTABLE_* and GROQ_API_KEY from a local .env file
+
+AIRTABLE_TOKEN = os.environ[&quot;AIRTABLE_TOKEN&quot;]
+BASE_ID = os.environ[&quot;AIRTABLE_BASE_ID&quot;]
+TABLE_NAME = os.environ[&quot;AIRTABLE_TABLE_NAME&quot;]
+
+AIRTABLE_URL = f&quot;https://api.airtable.com/v0/{BASE_ID}/{TABLE_NAME}&quot;
+HEADERS = {
+    &quot;Authorization&quot;: f&quot;Bearer {AIRTABLE_TOKEN}&quot;,
+    &quot;Content-Type&quot;: &quot;application/json&quot;,
+}
+
+# The Groq client reads GROQ_API_KEY from the environment automatically.
+groq_client = Groq()
+
+CATEGORIES = [&quot;Grocery&quot;, &quot;Task&quot;, &quot;Work&quot;, &quot;Personal&quot;, &quot;Other&quot;]
+
+app = Flask(__name__)
+
+
+def categorize_item(name: str) -&gt; str:
+    &quot;&quot;&quot;
+    Ask an LLM to sort one list item into a fixed set of categories.
+
+    This is the smallest possible example of the &quot;LLM as a function&quot; pattern:
+    text goes in, one constrained piece of text comes out, and the rest of
+    the program treats it like any other value.
+    &quot;&quot;&quot;
+    prompt = (
+        &quot;Classify the following to-do/list item into exactly one of these &quot;
+        f&quot;categories: {&#x27;, &#x27;.join(CATEGORIES)}.\n&quot;
+        f&quot;Item: {name}\n&quot;
+        &quot;Respond with only the category word and nothing else.&quot;
+    )
+    try:
+        response = groq_client.chat.completions.create(
+            model=&quot;llama-3.1-8b-instant&quot;,
+            max_tokens=10,
+            temperature=0,
+            messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}],
+        )
+        guess = response.choices[0].message.content.strip()
+        # Validate: only trust the model&#x27;s answer if it&#x27;s actually one of
+        # our categories. Never let raw model output flow into the database
+        # unchecked.
+        return guess if guess in CATEGORIES else &quot;Other&quot;
+    except Exception as e:
+        print(&quot;categorize_item failed:&quot;, e)
+        # If the AI call fails for any reason, the app should still work —
+        # it just falls back to an uncategorized item instead of crashing.
+        return &quot;Other&quot;
+
+
+@app.route(&quot;/&quot;)
+def index():
+    &quot;&quot;&quot;Serve the single HTML page.&quot;&quot;&quot;
+    return render_template(&quot;index.html&quot;)
+
+
+@app.route(&quot;/api/items&quot;, methods=[&quot;GET&quot;])
+def get_items():
+    &quot;&quot;&quot;Ask Airtable for every record currently in the table.&quot;&quot;&quot;
+    response = requests.get(AIRTABLE_URL, headers=HEADERS)
+    response.raise_for_status()
+    records = response.json()[&quot;records&quot;]
+    items = [
+        {
+            &quot;id&quot;: record[&quot;id&quot;],
+            &quot;name&quot;: record[&quot;fields&quot;].get(&quot;Name&quot;, &quot;&quot;),
+            &quot;category&quot;: record[&quot;fields&quot;].get(&quot;Category&quot;, &quot;&quot;),
+        }
+        for record in records
+    ]
+    return jsonify(items)
+
+
+@app.route(&quot;/api/items&quot;, methods=[&quot;POST&quot;])
+def add_item():
+    &quot;&quot;&quot;Take text from the browser, categorize it with Claude, and store both
+    the text and the category as a new record in Airtable.&quot;&quot;&quot;
+    data = request.get_json(silent=True) or {}
+    name = (data.get(&quot;name&quot;) or &quot;&quot;).strip()
+    if not name:
+        return jsonify({&quot;error&quot;: &quot;name is required&quot;}), 400
+
+    category = categorize_item(name)
+
+    payload = {&quot;fields&quot;: {&quot;Name&quot;: name, &quot;Category&quot;: category}}
+    response = requests.post(AIRTABLE_URL, headers=HEADERS, json=payload)
+    response.raise_for_status()
+    record = response.json()
+    return jsonify({
+        &quot;id&quot;: record[&quot;id&quot;],
+        &quot;name&quot;: record[&quot;fields&quot;][&quot;Name&quot;],
+        &quot;category&quot;: record[&quot;fields&quot;].get(&quot;Category&quot;, &quot;&quot;),
+    }), 201
+
+
+@app.route(&quot;/api/items/&lt;record_id&gt;&quot;, methods=[&quot;DELETE&quot;])
+def delete_item(record_id):
+    &quot;&quot;&quot;Delete one record from Airtable by its record id.&quot;&quot;&quot;
+    response = requests.delete(f&quot;{AIRTABLE_URL}/{record_id}&quot;, headers=HEADERS)
+    response.raise_for_status()
+    return jsonify({&quot;deleted&quot;: record_id})
+
+
+if __name__ == &quot;__main__&quot;:
+    app.run(debug=True, port=5000)</pre>
+    </div>
+
+    <h3 class="file-head">templates/index.html</h3>
+    <p class="file-note">The front end. Plain HTML, CSS, and JavaScript — no framework.</p>
+    <div class="code-block">
+      <div class="code-label"><span>templates/index.html</span><button class="copy-btn">copy</button></div>
+      <pre id="code-index">&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;UTF-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+&lt;title&gt;Simple List — Airtable + AI demo&lt;/title&gt;
+&lt;style&gt;
+  body{
+    margin:0; min-height:100vh; background:#F7F6F1; color:#201F1B;
+    font-family:-apple-system,BlinkMacSystemFont,&#x27;Segoe UI&#x27;,sans-serif;
+    display:flex; justify-content:center; padding:60px 20px;
+  }
+  .card{
+    width:100%; max-width:460px; background:#fff; border:1px solid #E4E1D6;
+    border-radius:10px; padding:28px 30px;
+  }
+  h1{ font-size:20px; margin:0 0 4px; }
+  p.sub{ color:#6E6A60; font-size:13.5px; margin:0 0 22px; }
+  form{ display:flex; gap:8px; }
+  input[type=text]{
+    flex:1; padding:10px 12px; border:1.5px solid #E4E1D6; border-radius:7px;
+    font-size:14px; outline:none;
+  }
+  input[type=text]:focus{ border-color:#2954A6; }
+  button{
+    padding:10px 16px; border:none; border-radius:7px; background:#201F1B;
+    color:#fff; font-size:14px; cursor:pointer;
+  }
+  button:hover{ background:#000; }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+  ul{ list-style:none; margin:22px 0 0; padding:0; }
+  li{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 0; border-bottom:1px solid #E4E1D6; font-size:14.5px;
+    gap:10px;
+  }
+  li:last-child{ border-bottom:none; }
+  .item-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+  .item-left span.name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .badge{
+    font-size:11px; padding:3px 9px; border-radius:20px; flex-shrink:0;
+    background:#EAF0FB; color:#2954A6; white-space:nowrap;
+  }
+  .badge.Grocery{ background:#E7F4EF; color:#2F8A72; }
+  .badge.Task{ background:#EAF0FB; color:#2954A6; }
+  .badge.Work{ background:#FBF4E7; color:#8a6a1f; }
+  .badge.Personal{ background:#FBEAE8; color:#a4453c; }
+  .badge.Other{ background:#F1EFE8; color:#6E6A60; }
+  li button{
+    background:transparent; color:#C1443C; padding:4px 8px; font-size:13px;
+    flex-shrink:0;
+  }
+  li button:hover{ background:#FBEAE8; }
+  .empty{ color:#A7A297; font-size:13.5px; padding:14px 0; text-align:center; }
+  .status{ font-size:12.5px; color:#A7A297; margin-top:14px; min-height:16px; }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;div class=&quot;card&quot;&gt;
+    &lt;h1&gt;Simple list&lt;/h1&gt;
+    &lt;p class=&quot;sub&quot;&gt;Every item lives in Airtable. Claude auto-tags each one when it&#x27;s added.&lt;/p&gt;
+
+    &lt;form id=&quot;addForm&quot;&gt;
+      &lt;input type=&quot;text&quot; id=&quot;itemInput&quot; placeholder=&quot;add an item…&quot; autocomplete=&quot;off&quot;&gt;
+      &lt;button type=&quot;submit&quot; id=&quot;addBtn&quot;&gt;Add&lt;/button&gt;
+    &lt;/form&gt;
+
+    &lt;ul id=&quot;list&quot;&gt;&lt;/ul&gt;
+    &lt;div class=&quot;status&quot; id=&quot;status&quot;&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;script&gt;
+const listEl = document.getElementById(&#x27;list&#x27;);
+const statusEl = document.getElementById(&#x27;status&#x27;);
+const form = document.getElementById(&#x27;addForm&#x27;);
+const input = document.getElementById(&#x27;itemInput&#x27;);
+const addBtn = document.getElementById(&#x27;addBtn&#x27;);
+
+async function loadItems(){
+  statusEl.textContent = &#x27;loading from Airtable…&#x27;;
+  const res = await fetch(&#x27;/api/items&#x27;);
+  const items = await res.json();
+  renderList(items);
+  statusEl.textContent = `${items.length} item${items.length===1?&#x27;&#x27;:&#x27;s&#x27;} in Airtable`;
+}
+
+function renderList(items){
+  listEl.innerHTML = &#x27;&#x27;;
+  if(items.length === 0){
+    listEl.innerHTML = &#x27;&lt;li class=&quot;empty&quot;&gt;no items yet&lt;/li&gt;&#x27;;
+    return;
+  }
+  items.forEach(item =&gt; {
+    const li = document.createElement(&#x27;li&#x27;);
+
+    const left = document.createElement(&#x27;div&#x27;);
+    left.className = &#x27;item-left&#x27;;
+
+    const span = document.createElement(&#x27;span&#x27;);
+    span.className = &#x27;name&#x27;;
+    span.textContent = item.name;
+    left.appendChild(span);
+
+    if(item.category){
+      const badge = document.createElement(&#x27;span&#x27;);
+      badge.className = &#x27;badge &#x27; + item.category;
+      badge.textContent = item.category;
+      left.appendChild(badge);
+    }
+
+    const del = document.createElement(&#x27;button&#x27;);
+    del.textContent = &#x27;remove&#x27;;
+    del.addEventListener(&#x27;click&#x27;, () =&gt; deleteItem(item.id));
+
+    li.appendChild(left);
+    li.appendChild(del);
+    listEl.appendChild(li);
+  });
+}
+
+async function deleteItem(id){
+  statusEl.textContent = &#x27;removing…&#x27;;
+  await fetch(`/api/items/${id}`, { method: &#x27;DELETE&#x27; });
+  loadItems();
+}
+
+form.addEventListener(&#x27;submit&#x27;, async (e) =&gt; {
+  e.preventDefault();
+  const name = input.value.trim();
+  if(!name) return;
+  addBtn.disabled = true;
+  statusEl.textContent = &#x27;asking Claude to categorize + saving to Airtable…&#x27;;
+  await fetch(&#x27;/api/items&#x27;, {
+    method: &#x27;POST&#x27;,
+    headers: { &#x27;Content-Type&#x27;: &#x27;application/json&#x27; },
+    body: JSON.stringify({ name })
+  });
+  input.value = &#x27;&#x27;;
+  addBtn.disabled = false;
+  loadItems();
+});
+
+loadItems();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+    </div>
+
+    <div class="callout">
+      <b>Read <span class="mono">categorize_item()</span> carefully</b> — it's the smallest complete example of the pattern behind almost every AI feature: build a prompt, call the model, check the answer against a fixed list of allowed values, and only then let it near your database. The <span class="mono">try/except</span> around it matters too: if the AI call fails, the app still saves the item instead of crashing.
+    </div>
+  </section>
+
+  <section class="lab-section" id="run">
+    <div class="card-tab"><span class="num">07</span> Run and verify</div>
+    <h2>Prove each layer works</h2>
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="r1"><label for="r1"><span class="step-title">Start the server</span><span class="step-detail">Run <span class="mono">python app.py</span>. You should see <span class="mono">Running on http://127.0.0.1:5000</span>.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="r2"><label for="r2"><span class="step-title">Open the page in a browser</span><span class="step-detail">Go to <span class="mono">http://127.0.0.1:5000</span>. You should see the "Simple list" card. Watch your terminal — a <span class="mono">GET /api/items</span> line should appear, proving the browser reached your server.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="r3"><label for="r3"><span class="step-title">Add an item</span><span class="step-detail">Type <span class="mono">buy milk</span> and click Add. A category badge should appear beside it within a second or two.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="r4"><label for="r4"><span class="step-title">Confirm it reached the cloud</span><span class="step-detail">Open your Airtable base in another tab. The row should be there with both <span class="mono">Name</span> and <span class="mono">Category</span> filled in. This is the proof the full round trip worked.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="r5"><label for="r5"><span class="step-title">Test the AI's judgment</span><span class="step-detail">Add <span class="mono">email my professor</span>, <span class="mono">bananas</span>, and <span class="mono">call mom</span>. Note that nothing in the code mentions any of these words — the model is reasoning about them.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="r6"><label for="r6"><span class="step-title">Test delete</span><span class="step-detail">Click "remove" on an item, then refresh Airtable to confirm the row is gone.</span></label>
+      </div>
+    </div>
+    <div class="callout">
+      <b>Read your terminal, not just the browser.</b> Flask logs every request, so <span class="mono">GET</span> and <span class="mono">POST</span> lines tell you whether the browser is actually reaching your server, and any <span class="mono">categorize_item failed:</span> message tells you exactly what went wrong with the AI call. When something misbehaves, the terminal is the first place to look.
+    </div>
+  </section>
+
+  <section class="lab-section" id="questions">
+    <div class="card-tab"><span class="num">08</span> Check your understanding</div>
+    <h2>Answer these before moving on</h2>
+    <p class="intro">If you can answer all six from the code in front of you, you understand this app.</p>
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="q1"><label for="q1"><span class="step-title">Why can't the browser call Airtable directly?</span><span class="step-detail">What would happen to your token if it did?</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="q2"><label for="q2"><span class="step-title">Where in app.py is the category actually decided?</span><span class="step-detail">Is there any <span class="mono">if</span> statement mapping "milk" to "Grocery"? If not, what decides?</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="q3"><label for="q3"><span class="step-title">What does the last line of categorize_item's try block protect against?</span><span class="step-detail">What could reach your database without it?</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="q4"><label for="q4"><span class="step-title">Why is temperature set to 0?</span><span class="step-detail">What would change at a higher value, and would that help or hurt a classification task?</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="q5"><label for="q5"><span class="step-title">Trace one "Add" click through all four programs.</span><span class="step-detail">Name each function and HTTP request involved, in order.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="q6"><label for="q6"><span class="step-title">Why does render_template only work with a templates folder?</span><span class="step-detail">And how would you have diagnosed that from the error message alone?</span></label>
+      </div>
+    </div>
+  </section>
+
+  <section class="lab-section" id="trouble">
+    <div class="card-tab"><span class="num">09</span> Troubleshooting</div>
+    <h2>Errors you're most likely to hit</h2>
+    <p class="intro">Every one of these has been hit by someone building this exact app. Find your error message below.</p>
+
+    <div class="trouble">
+      <div class="card trouble-item">
+        <div class="symptom">'pip' is not recognized as the name of a cmdlet...</div>
+        <div class="fix">Your virtual environment isn't active. In PowerShell, run <span class="mono">.venv\Scripts\Activate.ps1</span> — note the <span class="mono">.ps1</span>, not <span class="mono">.bat</span>. A <span class="mono">.bat</span> file runs in a throwaway subprocess in PowerShell, so its changes vanish immediately. Confirm you see <span class="mono">(.venv)</span> in your prompt before continuing.</div>
+      </div>
+      <div class="card trouble-item">
+        <div class="symptom">jinja2.exceptions.TemplateNotFound: index.html</div>
+        <div class="fix">Flask can't find your template. <span class="mono">index.html</span> must be inside a folder named exactly <span class="mono">templates</span>, next to <span class="mono">app.py</span> — not beside it. Create the folder, move the file in, and refresh.</div>
+      </div>
+      <div class="card trouble-item">
+        <div class="symptom">Every item is tagged "Other"</div>
+        <div class="fix">The AI call is failing and hitting the fallback. Look in your terminal for a <span class="mono">categorize_item failed:</span> line — it names the real cause, usually an invalid or missing <span class="mono">GROQ_API_KEY</span>, or a key that's still the placeholder from <span class="mono">.env.example</span>. Fix <span class="mono">.env</span>, then restart the server.</div>
+      </div>
+      <div class="card trouble-item">
+        <div class="symptom">KeyError: 'AIRTABLE_TOKEN'</div>
+        <div class="fix">Python can't find that variable. Either your <span class="mono">.env</span> file doesn't exist yet, it's named something else (like <span class="mono">.env.txt</span>), or it isn't in the same folder as <span class="mono">app.py</span>. Check the exact filename in VS Code's Explorer.</div>
+      </div>
+      <div class="card trouble-item">
+        <div class="symptom">401 / 403 from Airtable, or NOT_FOUND</div>
+        <div class="fix">Three things to check: your <span class="mono">AIRTABLE_BASE_ID</span> is the <span class="mono">app...</span> ID and not the base's display name; your token has both read and write scopes; and the token was explicitly granted access to <em>this</em> base when you created it.</div>
+      </div>
+      <div class="card trouble-item">
+        <div class="symptom">422 from Airtable when adding an item</div>
+        <div class="fix">Your field names don't match. The table needs fields named exactly <span class="mono">Name</span> and <span class="mono">Category</span>, with matching capitalization. Airtable is strict about this.</div>
+      </div>
+      <div class="card trouble-item">
+        <div class="symptom">Nothing at all appears in the terminal when you click Add</div>
+        <div class="fix">The browser isn't reaching the server you're watching — usually a stale Flask process from an earlier run is still holding port 5000. Stop the server with <span class="mono">Ctrl+C</span>, end any leftover <span class="mono">python.exe</span> processes in Task Manager, start it again, and open a fresh browser tab.</div>
+      </div>
+      <div class="card trouble-item">
+        <div class="symptom">Blank rows in the list</div>
+        <div class="fix">Not a bug in your code — those are empty records sitting in Airtable itself, usually left over from testing. Delete them from the Airtable grid view or click "remove" in the app.</div>
+      </div>
+      <div class="card trouble-item">
+        <div class="symptom">Code changes seem to have no effect</div>
+        <div class="fix">Save the file (<span class="mono">Ctrl+S</span>), then restart the server: <span class="mono">Ctrl+C</span>, then <span class="mono">python app.py</span>. Also confirm you're editing the file in the folder you're actually running from.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lab-section" id="stretch">
+    <div class="card-tab"><span class="num">10</span> Stretch goals</div>
+    <h2>Extend it once the basics work</h2>
+    <p class="intro">Pick one. Each teaches something the base lab doesn't.</p>
+
+    <div class="stretch-grid">
+      <div class="card stretch-card">
+        <span class="tag">Prompt engineering</span>
+        <h3>Change the categories</h3>
+        <p>Edit <span class="mono">CATEGORIES</span> to fit your own life, then observe how the model's answers shift with no other code change.</p>
+      </div>
+      <div class="card stretch-card">
+        <span class="tag">Error handling</span>
+        <h3>Break it deliberately</h3>
+        <p>Put a wrong Groq key in <span class="mono">.env</span>. Confirm the app still saves items instead of crashing, and explain why.</p>
+      </div>
+      <div class="card stretch-card">
+        <span class="tag">Structured output</span>
+        <h3>Multi-item entry</h3>
+        <p>Let a user type "milk, eggs, call mom" and have the model return a JSON list, creating three separate rows.</p>
+      </div>
+      <div class="card stretch-card">
+        <span class="tag">New route</span>
+        <h3>Add a summarize button</h3>
+        <p>Build a <span class="mono">GET /api/summary</span> route that sends the whole list to the model and returns one sentence about it.</p>
+      </div>
+      <div class="card stretch-card">
+        <span class="tag">Frontend</span>
+        <h3>Filter by category</h3>
+        <p>Add buttons that show only Grocery, only Task, and so on — all in the browser, with no new backend code.</p>
+      </div>
+      <div class="card stretch-card">
+        <span class="tag">Embeddings</span>
+        <h3>Detect near-duplicates</h3>
+        <p>Warn when a new item is semantically close to an existing one ("buy milk" vs "get milk") using embeddings and cosine similarity.</p>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <b>Worth noticing:</b> this project originally called a different AI provider's API and was switched to Groq by changing three lines — the import, the client, and the field the response is read from. The prompt, the validation, and the fallback never changed. The "LLM as a function" pattern is provider-agnostic; only the plumbing differs.
+    </div>
+  </section>
+
+  <section class="lab-section" id="submit">
+    <div class="card-tab"><span class="num">&middot;</span> Submission</div>
+    <h2>What to hand in</h2>
+    <div class="checklist">
+      <div class="check-item">
+        <input type="checkbox" id="d1"><label for="d1"><span class="step-title">Your project folder, without .venv or .env</span><span class="step-detail">Zip <span class="mono">app.py</span>, <span class="mono">requirements.txt</span>, <span class="mono">.env.example</span>, and <span class="mono">templates/index.html</span>. Never include your real <span class="mono">.env</span>.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="d2"><label for="d2"><span class="step-title">A screenshot of the running app</span><span class="step-detail">Showing at least four items with different categories assigned.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="d3"><label for="d3"><span class="step-title">A screenshot of your Airtable table</span><span class="step-detail">Showing the same rows stored in the cloud.</span></label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="d4"><label for="d4"><span class="step-title">Short written answers to Part 08</span><span class="step-detail">A few sentences each is enough.</span></label>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">Auto-Tag &middot; hands-on lab &middot; Flask + Airtable + Groq</footer>
+
+</main>
+
+<script>
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.copy-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var block = btn.closest('.code-block');
+    var pre = block ? block.querySelector('pre') : null;
+    if(!pre) return;
+    var text = pre.textContent;
+    var done = function(){
+      var old = btn.textContent;
+      btn.textContent = 'copied';
+      setTimeout(function(){ btn.textContent = old; }, 1400);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch(e){ btn.textContent = 'select manually'; }
+      document.body.removeChild(ta);
+    }
+  });
+});
+
+/* ---------- progress tracking ---------- */
+var STORAGE_KEY = 'autotag-lab-progress-v1';
+var boxes = Array.prototype.slice.call(document.querySelectorAll('.check-item input[type=checkbox]'));
+var fill = document.getElementById('progressFill');
+var label = document.getElementById('progressLabel');
+
+function readSaved(){
+  try {
+    var raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e){ return {}; }
+}
+function writeSaved(state){
+  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
+}
+
+function render(){
+  var done = 0;
+  boxes.forEach(function(box){
+    var row = box.closest('.check-item');
+    if(box.checked){ done++; row.classList.add('checked'); }
+    else { row.classList.remove('checked'); }
+  });
+  var pct = boxes.length ? (done / boxes.length) * 100 : 0;
+  fill.style.width = pct + '%';
+  label.textContent = done + ' / ' + boxes.length + ' done';
+}
+
+var saved = readSaved();
+boxes.forEach(function(box){
+  if(saved[box.id]) box.checked = true;
+  box.addEventListener('change', function(){
+    var state = readSaved();
+    if(box.checked) state[box.id] = true;
+    else delete state[box.id];
+    writeSaved(state);
+    render();
+  });
+});
+render();
+
+/* ---------- starter project download (zip embedded as base64) ---------- */
+var STARTER_ZIP_B64 = "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";
+
+document.getElementById('downloadZip').addEventListener('click', function(){
+  try {
+    var binary = window.atob(STARTER_ZIP_B64);
+    var bytes = new Uint8Array(binary.length);
+    for(var i = 0; i < binary.length; i++){ bytes[i] = binary.charCodeAt(i); }
+    var blob = new Blob([bytes], { type: 'application/zip' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'auto-tag-starter.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  } catch(e){
+    window.alert('Download failed in this browser. Copy the files from the code blocks below instead.');
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', function(){
+  if(!window.confirm('Clear all checked steps?')) return;
+  boxes.forEach(function(box){ box.checked = false; });
+  writeSaved({});
+  render();
+});
+</script>
+</body>
+</html>
