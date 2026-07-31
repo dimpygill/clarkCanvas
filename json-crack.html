@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON Crack — Interactive Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --white:   #FFFFFF;
+  --bg:      #F8F9FB;
+  --ink:     #18181B;
+  --ink-soft:#52525B;
+  --ink-faint:#A1A1AA;
+  --border:  #E4E4E7;
+  --accent:  #6941C6;   /* JSON Crack purple */
+  --accent-s:#F5F3FF;
+  --accent-m:#DDD6FE;
+  --green:   #15803D;
+  --green-s: #F0FDF4;
+  --red:     #B91C1C;
+  --red-s:   #FEF2F2;
+  --blue:    #1D4ED8;
+  --blue-s:  #EFF6FF;
+  --amber:   #B45309;
+  --amber-s: #FFFBEB;
+  --node-a:  #6941C6;
+  --node-b:  #0284C7;
+  --node-c:  #15803D;
+  --node-d:  #B45309;
+  --node-e:  #B91C1C;
+}
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0; background:var(--white); color:var(--ink);
+  font-family:'Inter',sans-serif; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{ background:var(--accent); color:#fff; }
+a{ color:var(--accent); }
+h1,h2,h3,h4{ font-family:'Space Grotesk',sans-serif; margin:0; letter-spacing:-.01em; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+.wrap{ max-width:840px; margin:0 auto; padding:0 28px; }
+
+/* nav */
+header{
+  background:var(--white); border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:50;
+}
+.topbar{
+  max-width:840px; margin:0 auto; padding:13px 28px;
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.brand{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600; color:var(--accent); white-space:nowrap; }
+nav.links{ display:flex; gap:14px; overflow-x:auto; }
+nav.links a{
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+  color:var(--ink-faint); text-decoration:none; white-space:nowrap;
+}
+nav.links a:hover{ color:var(--accent); }
+.open-btn{
+  margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:12px;
+  padding:8px 16px; border-radius:7px; background:var(--accent);
+  color:#fff; border:none; cursor:pointer; white-space:nowrap;
+  text-decoration:none; display:inline-block;
+}
+.open-btn:hover{ background:#5a34b0; }
+
+/* hero */
+.hero{ padding:56px 0 44px; border-bottom:1px solid var(--border); }
+.kicker{
+  display:inline-flex; align-items:center; gap:8px; margin-bottom:18px;
+  font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--accent);
+}
+.kicker::before{ content:''; width:7px; height:7px; background:var(--accent); border-radius:50%; display:inline-block; }
+.hero h1{ font-size:clamp(30px,4.5vw,48px); line-height:1.08; max-width:680px; }
+.hero p.sub{ margin-top:14px; max-width:580px; color:var(--ink-soft); font-size:16px; }
+.hero-cta{ margin-top:24px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.btn-primary{
+  font-family:'IBM Plex Mono',monospace; font-size:13px; padding:11px 22px;
+  border-radius:8px; background:var(--accent); color:#fff; border:none;
+  cursor:pointer; text-decoration:none; display:inline-block;
+}
+.btn-primary:hover{ background:#5a34b0; }
+.btn-ghost{
+  font-family:'IBM Plex Mono',monospace; font-size:13px; padding:11px 22px;
+  border-radius:8px; background:var(--white); color:var(--ink-soft);
+  border:1.5px solid var(--border); text-decoration:none; display:inline-block;
+}
+.btn-ghost:hover{ border-color:var(--accent); color:var(--accent); }
+.hero-note{ font-size:13px; color:var(--ink-faint); }
+
+/* sections */
+section.sec{ padding:52px 0; border-top:1px solid var(--border); }
+.sec-tag{
+  display:inline-flex; align-items:center; gap:9px; margin-bottom:14px;
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-faint);
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.sec-tag .num{
+  width:24px; height:24px; border-radius:6px; background:var(--ink);
+  color:#fff; font-size:11px; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+section.sec h2{ font-size:clamp(20px,3vw,28px); max-width:640px; }
+section.sec p.intro{ color:var(--ink-soft); max-width:620px; margin-top:10px; font-size:15px; }
+
+/* code blocks */
+.code-block{ margin-top:16px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.code-head{
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  background:var(--bg); padding:8px 14px; font-family:'IBM Plex Mono',monospace;
+  font-size:12px; color:var(--ink-faint); border-bottom:1px solid var(--border);
+}
+.copy-btn{
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:4px 10px;
+  border-radius:5px; border:1px solid var(--border); background:var(--white);
+  color:var(--ink-soft); cursor:pointer;
+}
+.copy-btn:hover{ background:var(--accent); color:#fff; border-color:var(--accent); }
+.code-block pre{
+  margin:0; padding:16px 18px; background:var(--white); overflow-x:auto;
+  font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.65; color:var(--ink);
+}
+.str{ color:var(--green); }
+.num{ color:var(--blue); }
+.key{ color:var(--accent); }
+.bool{ color:var(--amber); }
+
+/* callouts */
+.callout{
+  margin-top:18px; padding:14px 17px; border-radius:9px; font-size:14px;
+  border-left:3px solid;
+}
+.callout.purple{ background:var(--accent-s); border-color:var(--accent); color:#3b1d8a; }
+.callout.green{ background:var(--green-s); border-color:var(--green); color:#14532d; }
+.callout.red{ background:var(--red-s); border-color:var(--red); color:#7f1d1d; }
+.callout.amber{ background:var(--amber-s); border-color:var(--amber); color:#78350f; }
+.callout b{ font-weight:600; }
+.callout .mono{ font-size:.92em; background:rgba(0,0,0,.06); padding:1px 5px; border-radius:4px; }
+
+/* JSON graph visualiser */
+.graph-wrap{
+  margin-top:20px; border:1px solid var(--border); border-radius:12px;
+  overflow:hidden; background:var(--bg);
+}
+.graph-toolbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 14px; background:var(--white); border-bottom:1px solid var(--border);
+  font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-faint);
+}
+.graph-toolbar .tl-left{ display:flex; align-items:center; gap:10px; }
+.graph-toolbar .badge{
+  padding:3px 9px; border-radius:12px; background:var(--accent-s);
+  color:var(--accent); font-size:11px; font-weight:600;
+}
+svg.graph{ width:100%; height:340px; display:block; }
+
+/* node cards in SVG */
+.node-card{ filter:drop-shadow(0 2px 6px rgba(0,0,0,.10)); cursor:pointer; }
+.node-card rect{ rx:8; ry:8; }
+.node-title{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.node-row{ font-family:'IBM Plex Mono',monospace; font-size:11px; }
+
+/* before/after split */
+.before-after{
+  display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:18px;
+}
+.ba-pane{ border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.ba-label{
+  padding:9px 14px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600;
+  border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px;
+}
+.ba-label.bad{ background:var(--red-s); color:var(--red); }
+.ba-label.good{ background:var(--green-s); color:var(--green); }
+.ba-body{ padding:14px 16px; background:var(--white); }
+
+/* use cases */
+.use-grid{ display:grid; grid-template-columns:1fr 1fr; gap:13px; margin-top:20px; }
+.use-card{
+  border:1px solid var(--border); border-radius:10px; padding:18px 20px;
+}
+.use-card .uc-icon{
+  font-size:22px; margin-bottom:10px; display:block;
+}
+.use-card h3{ font-size:15px; margin-bottom:6px; }
+.use-card p{ font-size:13.5px; color:var(--ink-soft); margin:0; }
+
+/* interactive demo */
+.demo-wrap{
+  margin-top:20px; border:1px solid var(--border); border-radius:12px; overflow:hidden;
+}
+.demo-toolbar{
+  background:var(--bg); padding:10px 14px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px; font-size:13.5px; font-weight:600;
+}
+.demo-body{
+  display:grid; grid-template-columns:1fr 1fr; min-height:280px;
+}
+.demo-editor{
+  border-right:1px solid var(--border); padding:0;
+  display:flex; flex-direction:column;
+}
+.demo-editor textarea{
+  flex:1; resize:none; border:none; outline:none; padding:16px;
+  font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.65;
+  color:var(--ink); background:var(--white); min-height:260px;
+}
+.demo-preview{ background:var(--bg); padding:14px; overflow:auto; }
+.demo-error{
+  font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--red);
+  background:var(--red-s); padding:10px 13px; border-radius:7px;
+  margin-top:10px;
+}
+.demo-btn{
+  font-family:'IBM Plex Mono',monospace; font-size:12px; padding:7px 14px;
+  border-radius:7px; border:1px solid var(--accent); background:var(--accent);
+  color:#fff; cursor:pointer;
+}
+.demo-btn:hover{ background:#5a34b0; }
+
+/* comparison table */
+.cmp{ width:100%; border-collapse:collapse; margin-top:20px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.cmp th{ padding:10px 14px; font-size:13px; text-align:left; border-bottom:1px solid var(--border); }
+.cmp th:first-child{ background:var(--bg); color:var(--ink-soft); }
+.cmp th.bad{ background:var(--red-s); color:var(--red); }
+.cmp th.good{ background:var(--green-s); color:var(--green); }
+.cmp td{ padding:11px 14px; font-size:13.5px; border-bottom:1px solid var(--border); vertical-align:top; }
+.cmp td:first-child{ font-weight:600; font-size:13px; background:var(--bg); color:var(--ink-soft); }
+.cmp tr:last-child td{ border-bottom:none; }
+
+/* steps */
+.steps-list{ display:flex; flex-direction:column; gap:0; margin-top:24px; }
+.step-row{
+  display:grid; grid-template-columns:42px 1fr; gap:0;
+  position:relative;
+}
+.step-row:not(:last-child) .step-left::after{
+  content:''; position:absolute; left:20px; top:42px; bottom:0;
+  width:2px; background:var(--border);
+}
+.step-left{ position:relative; display:flex; justify-content:center; padding-top:8px; }
+.step-circle{
+  width:34px; height:34px; border-radius:50%; background:var(--accent);
+  color:#fff; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:700;
+  display:flex; align-items:center; justify-content:center; z-index:1; flex-shrink:0;
+}
+.step-right{ padding:4px 0 32px 16px; }
+.step-right h4{ font-size:15.5px; margin-bottom:6px; }
+.step-right p{ font-size:14px; color:var(--ink-soft); margin:0 0 10px; }
+
+/* tips grid */
+.tips-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:20px; }
+.tip-card{ border:1px solid var(--border); border-radius:10px; padding:16px; }
+.tip-card .tip-icon{ font-size:20px; margin-bottom:8px; display:block; }
+.tip-card h4{ font-size:14px; margin-bottom:5px; }
+.tip-card p{ font-size:13px; color:var(--ink-soft); margin:0; }
+
+footer{
+  border-top:1px solid var(--border); padding:24px 0 52px;
+  font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-faint);
+}
+
+@media(max-width:720px){
+  .before-after,.use-grid,.tips-grid,.demo-body{ grid-template-columns:1fr; }
+  .demo-editor{ border-right:none; border-bottom:1px solid var(--border); }
+  nav.links{ display:none; }
+  .open-btn{ display:none; }
+}
+@media(prefers-reduced-motion:reduce){ html{ scroll-behavior:auto; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <span class="brand">JSON CRACK</span>
+    <nav class="links">
+      <a href="#what">01 What it is</a>
+      <a href="#why">02 Why use it</a>
+      <a href="#demo">03 Try it</a>
+      <a href="#use-cases">04 Use cases</a>
+      <a href="#howto">05 How to use</a>
+      <a href="#code">06 Code examples</a>
+      <a href="#tips">07 Tips</a>
+    </nav>
+    <a class="open-btn" href="https://jsoncrack.com" target="_blank" rel="noopener">Open JSON Crack →</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="kicker">Interactive tutorial</div>
+  <h1>Stop reading JSON.<br>Start seeing it.</h1>
+  <p class="sub">JSON Crack turns raw, nested JSON text into an interactive visual graph. Instead of counting brackets and squinting at indentation, you see your data structure at a glance — as nodes and connections.</p>
+  <div class="hero-cta">
+    <a class="btn-primary" href="https://jsoncrack.com" target="_blank" rel="noopener">Open JSON Crack ↗</a>
+    <a class="btn-ghost" href="#demo">Try the mini demo ↓</a>
+  </div>
+  <p class="hero-note" style="margin-top:12px;">Free · No sign-in required · Works in any browser</p>
+</div>
+
+<!-- 01 WHAT IT IS -->
+<section class="sec" id="what">
+  <div class="sec-tag"><span class="num">01</span> What it is</div>
+  <h2>JSON as a diagram, not a wall of text</h2>
+  <p class="intro">The same data — one as raw text, one as a visual graph. Both say exactly the same thing. Which one is easier to read?</p>
+
+  <div class="before-after">
+    <div class="ba-pane">
+      <div class="ba-label bad">😵 Raw JSON — hard to follow</div>
+      <div class="ba-body">
+        <div class="code-block" style="margin:0;border:none;border-radius:0;">
+<pre style="font-size:11.5px;line-height:1.5;padding:12px;">{
+  <span class="key">"student"</span>: {
+    <span class="key">"name"</span>: <span class="str">"Ada"</span>,
+    <span class="key">"grade"</span>: <span class="num">92</span>,
+    <span class="key">"passed"</span>: <span class="bool">true</span>,
+    <span class="key">"courses"</span>: [
+      <span class="str">"Python"</span>,
+      <span class="str">"Flask"</span>,
+      <span class="str">"AI"</span>
+    ],
+    <span class="key">"address"</span>: {
+      <span class="key">"city"</span>: <span class="str">"Seattle"</span>,
+      <span class="key">"zip"</span>: <span class="str">"98101"</span>
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+    <div class="ba-pane">
+      <div class="ba-label good">✨ JSON Crack — instant structure</div>
+      <div class="ba-body" style="background:var(--bg);padding:10px;">
+        <svg viewBox="0 0 360 250" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:240px;">
+          <!-- edges -->
+          <line x1="110" y1="40" x2="60" y2="110" stroke="#D1D5DB" stroke-width="1.5"/>
+          <line x1="110" y1="40" x2="290" y2="110" stroke="#D1D5DB" stroke-width="1.5"/>
+          <!-- root -->
+          <rect x="60" y="14" width="100" height="30" rx="7" fill="#6941C6"/>
+          <text x="110" y="33" text-anchor="middle" fill="#fff" font-family="IBM Plex Mono" font-size="11" font-weight="600">student</text>
+          <!-- student node -->
+          <rect x="8" y="98" width="104" height="78" rx="7" fill="white" stroke="#E4E4E7" stroke-width="1.2"/>
+          <rect x="8" y="98" width="104" height="18" rx="7" fill="#0284C7"/>
+          <rect x="8" y="108" width="104" height="8" fill="#0284C7"/>
+          <text x="60" y="111" text-anchor="middle" fill="#fff" font-family="IBM Plex Mono" font-size="10" font-weight="600">student</text>
+          <text x="14" y="127" fill="#52525B" font-family="IBM Plex Mono" font-size="9.5">name: <tspan fill="#15803D">"Ada"</tspan></text>
+          <text x="14" y="141" fill="#52525B" font-family="IBM Plex Mono" font-size="9.5">grade: <tspan fill="#1D4ED8">92</tspan></text>
+          <text x="14" y="155" fill="#52525B" font-family="IBM Plex Mono" font-size="9.5">passed: <tspan fill="#B45309">true</tspan></text>
+          <text x="14" y="169" fill="#52525B" font-family="IBM Plex Mono" font-size="9.5">courses: <tspan fill="#6941C6">[…]</tspan></text>
+          <!-- courses array -->
+          <line x1="60" y1="176" x2="60" y2="200" stroke="#D1D5DB" stroke-width="1.5"/>
+          <rect x="8" y="198" width="104" height="46" rx="7" fill="white" stroke="#E4E4E7" stroke-width="1.2"/>
+          <rect x="8" y="198" width="104" height="18" rx="7" fill="#15803D"/>
+          <rect x="8" y="208" width="104" height="8" fill="#15803D"/>
+          <text x="60" y="211" text-anchor="middle" fill="#fff" font-family="IBM Plex Mono" font-size="10" font-weight="600">courses[ ]</text>
+          <text x="14" y="227" fill="#52525B" font-family="IBM Plex Mono" font-size="9.5">0: <tspan fill="#15803D">"Python"</tspan></text>
+          <text x="14" y="238" fill="#52525B" font-family="IBM Plex Mono" font-size="9.5">1: <tspan fill="#15803D">"Flask"</tspan></text>
+          <!-- address node -->
+          <rect x="238" y="98" width="114" height="64" rx="7" fill="white" stroke="#E4E4E7" stroke-width="1.2"/>
+          <rect x="238" y="98" width="114" height="18" rx="7" fill="#B45309"/>
+          <rect x="238" y="108" width="114" height="8" fill="#B45309"/>
+          <text x="295" y="111" text-anchor="middle" fill="#fff" font-family="IBM Plex Mono" font-size="10" font-weight="600">address</text>
+          <text x="244" y="128" fill="#52525B" font-family="IBM Plex Mono" font-size="9.5">city: <tspan fill="#15803D">"Seattle"</tspan></text>
+          <text x="244" y="142" fill="#52525B" font-family="IBM Plex Mono" font-size="9.5">zip: <tspan fill="#15803D">"98101"</tspan></text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout purple" style="margin-top:20px;">
+    <b>Same data, completely different experience.</b> JSON Crack doesn't change or add to your data — it just renders it as a graph. Every nested object becomes a node. Every field becomes a row in that node. Connections show which objects belong inside which.
+  </div>
+</section>
+
+<!-- 02 WHY USE IT -->
+<section class="sec" id="why">
+  <div class="sec-tag"><span class="num">02</span> Why use it</div>
+  <h2>When raw JSON stops making sense</h2>
+  <p class="intro">You'll want JSON Crack any time your JSON has more than two or three levels of nesting, or when something in your code isn't finding the field it expects.</p>
+
+  <table class="cmp">
+    <tr>
+      <th></th>
+      <th class="bad">Without JSON Crack</th>
+      <th class="good">With JSON Crack</th>
+    </tr>
+    <tr>
+      <td>Find a nested field</td>
+      <td>Count brackets manually, check indentation level</td>
+      <td>See the node, trace the connection in one glance</td>
+    </tr>
+    <tr>
+      <td>Understand an API response</td>
+      <td>Read from top to bottom, mentally model the structure</td>
+      <td>The graph shows the shape instantly</td>
+    </tr>
+    <tr>
+      <td>Debug a KeyError</td>
+      <td>Print the whole blob, try to spot the missing key</td>
+      <td>Paste the response — the missing key obviously isn't there</td>
+    </tr>
+    <tr>
+      <td>Share data structure with a teammate</td>
+      <td>Paste raw JSON and hope they read it</td>
+      <td>Screenshot the graph — no explanation needed</td>
+    </tr>
+    <tr>
+      <td>JSON with 50+ fields</td>
+      <td>Long scroll, easy to miss things</td>
+      <td>Separate nodes you can move around and zoom</td>
+    </tr>
+  </table>
+
+  <div class="callout amber" style="margin-top:20px;">
+    <b>Especially useful in this course:</b> every time your Flask app gets a response from Airtable or Groq, that response is JSON. When <span class="mono">record["fields"].get("Category")</span> returns <span class="mono">None</span> and you don't know why — paste the actual Airtable response into JSON Crack and see exactly what fields came back and how they're named.
+  </div>
+</section>
+
+<!-- 03 MINI DEMO -->
+<section class="sec" id="demo">
+  <div class="sec-tag"><span class="num">03</span> Try it here</div>
+  <h2>Edit the JSON — watch the graph update</h2>
+  <p class="intro">This is a simplified in-page demo. The real JSON Crack at <a href="https://jsoncrack.com" target="_blank">jsoncrack.com</a> is much more powerful — drag nodes, zoom, search, and export. But this shows the idea.</p>
+
+  <div class="demo-wrap">
+    <div class="demo-toolbar">
+      <span>✏️ JSON editor</span>
+      <button class="demo-btn" id="visualiseBtn">Visualise →</button>
+    </div>
+    <div class="demo-body">
+      <div class="demo-editor">
+        <textarea id="jsonInput" spellcheck="false">{
+  "course": "AI Fundamentals",
+  "instructor": "Prof. Gill",
+  "students": [
+    {
+      "name": "Ada",
+      "grade": 92,
+      "passed": true
+    },
+    {
+      "name": "Alan",
+      "grade": 78,
+      "passed": true
+    }
+  ],
+  "topics": ["Python", "Flask", "Airtable", "Groq"]
+}</textarea>
+      </div>
+      <div class="demo-preview" id="demoPreview">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);margin-bottom:10px;">Click "Visualise →" to see the graph</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout purple" style="margin-top:18px;">
+    <b>Try changing the JSON</b> — add a new field, nest another object, or change a value. The graph updates each time you click Visualise. This is exactly how the real JSON Crack works: paste on the left, see the graph on the right.
+  </div>
+
+  <div style="margin-top:20px;text-align:center;">
+    <a class="btn-primary" href="https://jsoncrack.com" target="_blank" rel="noopener" style="font-size:15px;padding:13px 28px;">Open the real JSON Crack ↗</a>
+    <p style="margin-top:10px;font-size:13px;color:var(--ink-faint);">Free, no sign-in, works in any browser</p>
+  </div>
+</section>
+
+<!-- 04 USE CASES -->
+<section class="sec" id="use-cases">
+  <div class="sec-tag"><span class="num">04</span> Use cases</div>
+  <h2>Six situations where it saves time</h2>
+
+  <div class="use-grid">
+    <div class="use-card">
+      <span class="uc-icon">🔍</span>
+      <h3>Debugging API responses</h3>
+      <p>When your Flask app calls Airtable or Groq and the response isn't what you expected, paste the raw JSON response in. You'll immediately see if the field name is different, the nesting is deeper than you thought, or the key simply doesn't exist.</p>
+    </div>
+    <div class="use-card">
+      <span class="uc-icon">📚</span>
+      <h3>Understanding a new API</h3>
+      <p>Every API has its own response shape. Instead of reading docs to understand the structure, call the API once, paste the response into JSON Crack, and see the shape immediately — then write your code knowing exactly what to expect.</p>
+    </div>
+    <div class="use-card">
+      <span class="uc-icon">🎓</span>
+      <h3>Learning JSON structure</h3>
+      <p>If you're new to JSON, JSON Crack makes nested objects and arrays visual and concrete. Instead of "an object contains an array of objects", you see three boxes connected by lines and it clicks.</p>
+    </div>
+    <div class="use-card">
+      <span class="uc-icon">🤝</span>
+      <h3>Sharing data structures</h3>
+      <p>When explaining an API response to a classmate or showing a teammate what data your endpoint returns, a screenshot of the graph communicates instantly what a wall of text doesn't.</p>
+    </div>
+    <div class="use-card">
+      <span class="uc-icon">✅</span>
+      <h3>Validating JSON</h3>
+      <p>JSON Crack highlights syntax errors the moment you paste — a missing comma, unclosed bracket, or wrong quote type. It's a fast sanity check before you paste JSON into your code.</p>
+    </div>
+    <div class="use-card">
+      <span class="uc-icon">🗂️</span>
+      <h3>Planning your data model</h3>
+      <p>When designing what JSON your API should return, write a sample response first and paste it into JSON Crack. The graph shows you immediately if the structure is clear or if you need to rethink the nesting.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 05 HOW TO USE IT -->
+<section class="sec" id="howto">
+  <div class="sec-tag"><span class="num">05</span> How to use it</div>
+  <h2>Three steps every time</h2>
+  <p class="intro">JSON Crack is deliberately simple — there's almost nothing to learn about the tool itself. The skill is knowing <em>when</em> to reach for it.</p>
+
+  <div class="steps-list">
+    <div class="step-row">
+      <div class="step-left"><div class="step-circle">1</div></div>
+      <div class="step-right">
+        <h4>Go to jsoncrack.com</h4>
+        <p>Open it in any browser. No account, no install, no sign-in required. The editor appears immediately.</p>
+        <div class="code-block" style="margin-top:8px;">
+          <div class="code-head"><span>URL</span></div>
+          <pre style="padding:10px 14px;font-size:13px;">https://jsoncrack.com</pre>
+        </div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-left"><div class="step-circle">2</div></div>
+      <div class="step-right">
+        <h4>Paste your JSON into the left panel</h4>
+        <p>Copy any JSON — an API response, a config file, data from your database — and paste it in. The graph appears on the right instantly as you type.</p>
+        <div class="callout green" style="margin-top:10px;">
+          <b>Where to get JSON during this course:</b> print an Airtable API response in your terminal with <span class="mono">print(response.json())</span> inside any Flask route, copy the output, and paste it into JSON Crack.
+        </div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-left"><div class="step-circle">3</div></div>
+      <div class="step-right">
+        <h4>Interact with the graph</h4>
+        <p>Once the graph renders, you can:</p>
+        <div class="use-grid" style="margin-top:10px;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div class="use-card" style="padding:13px 14px;">
+            <h3 style="font-size:13.5px;">🖱️ Drag</h3>
+            <p style="font-size:12.5px;">Move nodes around to arrange the layout that makes most sense to you</p>
+          </div>
+          <div class="use-card" style="padding:13px 14px;">
+            <h3 style="font-size:13.5px;">🔎 Zoom</h3>
+            <p style="font-size:12.5px;">Scroll to zoom in on a specific section of a large response</p>
+          </div>
+          <div class="use-card" style="padding:13px 14px;">
+            <h3 style="font-size:13.5px;">🔍 Search</h3>
+            <p style="font-size:12.5px;">Use Ctrl+F to search for any key or value — it highlights matching nodes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:18px;margin-top:36px;margin-bottom:14px;">Real example — Airtable API response</h3>
+  <p style="color:var(--ink-soft);font-size:14.5px;margin:0 0 14px;">This is what Airtable actually sends back when your Flask app fetches records. Paste this into JSON Crack to see its structure.</p>
+  <div class="code-block">
+    <div class="code-head">
+      <span>Airtable GET /records — response JSON</span>
+      <button class="copy-btn" data-copy='{"records":[{"id":"recABC123","fields":{"Name":"buy milk","Category":"Grocery"},"createdTime":"2026-07-30T10:00:00.000Z"},{"id":"recDEF456","fields":{"Name":"email professor","Category":"Task"},"createdTime":"2026-07-30T10:01:00.000Z"}]}'>copy</button>
+    </div>
+<pre>{
+  <span class="key">"records"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"recABC123"</span>,
+      <span class="key">"fields"</span>: {
+        <span class="key">"Name"</span>: <span class="str">"buy milk"</span>,
+        <span class="key">"Category"</span>: <span class="str">"Grocery"</span>
+      },
+      <span class="key">"createdTime"</span>: <span class="str">"2026-07-30T10:00:00.000Z"</span>
+    },
+    {
+      <span class="key">"id"</span>: <span class="str">"recDEF456"</span>,
+      <span class="key">"fields"</span>: {
+        <span class="key">"Name"</span>: <span class="str">"email professor"</span>,
+        <span class="key">"Category"</span>: <span class="str">"Task"</span>
+      },
+      <span class="key">"createdTime"</span>: <span class="str">"2026-07-30T10:01:00.000Z"</span>
+    }
+  ]
+}</pre>
+  </div>
+  <div class="callout purple" style="margin-top:14px;">
+    Once you paste this into JSON Crack, you'll immediately see why your code says <span class="mono">record["fields"]["Name"]</span> — the data you care about is two levels deep: inside <span class="mono">records[0]</span>, then inside <span class="mono">fields</span>. The graph makes that nesting obvious.
+  </div>
+</section>
+
+<!-- 06 TIPS -->
+<section class="sec" id="tips">
+  <div class="sec-tag"><span class="num">07</span> Tips</div>
+  <h2>Get the most out of it</h2>
+
+  <div class="tips-grid">
+    <div class="tip-card">
+      <span class="tip-icon">⚡</span>
+      <h4>Keep it open in a tab</h4>
+      <p>During any API work, keep JSON Crack open in a pinned tab. When something breaks, paste and check — takes five seconds.</p>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">🖨️</span>
+      <h4>Print before pasting</h4>
+      <p>Add <span class="mono" style="font-size:11.5px;">import json; print(json.dumps(data, indent=2))</span> anywhere in your Flask route to get clean, pasteable JSON in the terminal.</p>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">🔗</span>
+      <h4>VS Code extension</h4>
+      <p>Search "JSON Crack" in the VS Code Extensions panel to get it built right into your editor — right-click any JSON file and open the graph view.</p>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">📋</span>
+      <h4>Check field names exactly</h4>
+      <p>JSON is case-sensitive. JSON Crack shows you <span class="mono" style="font-size:11.5px;">"Category"</span> vs <span class="mono" style="font-size:11.5px;">"category"</span> — the most common source of <span class="mono" style="font-size:11.5px;">None</span> bugs.</p>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">🔐</span>
+      <h4>Don't paste real secrets</h4>
+      <p>Never paste JSON that contains API keys, passwords, or personal data into a public web tool. Sanitize or replace sensitive values first.</p>
+    </div>
+    <div class="tip-card">
+      <span class="tip-icon">📤</span>
+      <h4>Export as image</h4>
+      <p>JSON Crack lets you export the graph as a PNG — useful for documentation, lab reports, or sharing with classmates.</p>
+    </div>
+  </div>
+
+  <div style="margin-top:36px;padding:24px;background:var(--accent-s);border-radius:12px;text-align:center;">
+    <h3 style="font-size:20px;margin-bottom:8px;">Ready to try it?</h3>
+    <p style="color:var(--ink-soft);margin:0 0 18px;font-size:15px;">Paste any JSON and see your data as a graph — free, instant, no account needed.</p>
+    <a class="btn-primary" href="https://jsoncrack.com" target="_blank" rel="noopener" style="font-size:15px;padding:13px 30px;">Open JSON Crack ↗</a>
+  </div>
+</section>
+
+<!-- 06 CODE EXAMPLES -->
+<section class="sec" id="code">
+  <div class="sec-tag"><span class="num">06</span> Code examples</div>
+  <h2>Working Python code — copy, run, then visualise</h2>
+  <p class="intro">Each example is a complete, runnable Python script. Run it in your terminal, then paste the printed JSON into <a href="https://jsoncrack.com" target="_blank" rel="noopener">jsoncrack.com</a> to see the structure as a graph.</p>
+
+  <style>
+  .ex-tab{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; padding:11px 16px;
+    border:none; background:transparent; cursor:pointer; color:var(--ink-faint);
+    border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .15s;
+    display:flex; flex-direction:column; align-items:flex-start; gap:2px;
+    white-space:nowrap;
+  }
+  .ex-tab.active{ color:var(--accent); border-bottom-color:var(--accent); }
+  .ex-tab:hover{ color:var(--ink); }
+  .ex-tab-sub{ font-size:10px; color:var(--ink-faint); }
+  .ex-tab.active .ex-tab-sub{ color:var(--accent-m); }
+  .ex-panel.hidden{ display:none; }
+  .ex-heading{ font-size:17px; margin:20px 0 8px; }
+  .ex-desc{ font-size:14.5px; color:var(--ink-soft); max-width:660px; margin:0 0 14px; }
+  .ex-output-wrap{ margin-top:16px; border-radius:9px; overflow:hidden; border:1px solid var(--border); }
+  .ex-output-label{
+    background:var(--bg); padding:8px 14px;
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-faint);
+    border-bottom:1px solid var(--border);
+  }
+  .ex-output{
+    margin:0; padding:14px 16px; background:var(--white); overflow-x:auto;
+    font-family:'IBM Plex Mono',monospace; font-size:12.5px; line-height:1.65; color:var(--ink);
+  }
+  .ex-explain{ margin-top:18px; padding:16px 18px; background:var(--bg); border-radius:9px; }
+  .ex-explain h4{ font-size:14px; margin-bottom:10px; }
+  .fn-table{ width:100%; border-collapse:collapse; }
+  .fn-table td{ padding:7px 10px; font-size:13.5px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .fn-table tr:last-child td{ border-bottom:none; }
+  .fn-table td:first-child{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); width:48%; }
+  .pyimport{ color:#1D4ED8; }
+  .pycmt{ color:#6B7280; font-style:italic; }
+  .pykw{ color:#7C3AED; font-weight:600; }
+  .pyfn{ color:#0369A1; }
+  .pystr{ color:#15803D; }
+  .pynum{ color:#B45309; }
+  </style>
+
+  <div style="display:flex;gap:0;margin-top:24px;border-bottom:2px solid var(--border);overflow-x:auto;flex-wrap:nowrap;">
+    <button class="ex-tab active" data-ex="1">Example 1<span class="ex-tab-sub">Create &amp; save</span></button>
+    <button class="ex-tab" data-ex="2">Example 2<span class="ex-tab-sub">Read &amp; parse</span></button>
+    <button class="ex-tab" data-ex="3">Example 3<span class="ex-tab-sub">Nested data</span></button>
+    <button class="ex-tab" data-ex="4">Example 4<span class="ex-tab-sub">Modify JSON</span></button>
+    <button class="ex-tab" data-ex="5">Example 5<span class="ex-tab-sub">API response</span></button>
+  </div>
+
+  <!-- EXAMPLE 1 -->
+  <div class="ex-panel" id="ex1">
+    <h3 class="ex-heading">Create JSON from a Python dictionary and save to a file</h3>
+    <p class="ex-desc">The most common starting point — you have data in a Python dictionary and want to convert it to JSON. <span class="mono">json.dumps()</span> converts to a string; <span class="mono">json.dump()</span> writes directly to a file.</p>
+    <div class="code-block">
+      <div class="code-head"><span>example1_create.py</span><button class="copy-btn" data-target="code1">copy</button></div>
+      <pre id="code1"><span class="pyimport">import</span> json
+
+<span class="pycmt"># Step 1: Create a Python dictionary</span>
+student = {
+    <span class="pystr">"id"</span>: <span class="pynum">101</span>,
+    <span class="pystr">"name"</span>: <span class="pystr">"Alice"</span>,
+    <span class="pystr">"age"</span>: <span class="pynum">21</span>,
+    <span class="pystr">"major"</span>: <span class="pystr">"Computer Science"</span>,
+    <span class="pystr">"courses"</span>: [
+        {<span class="pystr">"course"</span>: <span class="pystr">"Python"</span>,   <span class="pystr">"grade"</span>: <span class="pystr">"A"</span>},
+        {<span class="pystr">"course"</span>: <span class="pystr">"Database"</span>, <span class="pystr">"grade"</span>: <span class="pystr">"B+"</span>}
+    ],
+    <span class="pystr">"address"</span>: {
+        <span class="pystr">"city"</span>: <span class="pystr">"Seattle"</span>,
+        <span class="pystr">"state"</span>: <span class="pystr">"WA"</span>
+    }
+}
+
+<span class="pycmt"># Step 2: Convert dictionary to JSON string (indent=4 makes it readable)</span>
+json_string = json.<span class="pyfn">dumps</span>(student, indent=<span class="pynum">4</span>)
+
+<span class="pycmt"># Step 3: Print it — copy this output into JSON Crack</span>
+<span class="pyfn">print</span>(json_string)
+
+<span class="pycmt"># Step 4: Save to a .json file</span>
+<span class="pykw">with</span> <span class="pyfn">open</span>(<span class="pystr">"student.json"</span>, <span class="pystr">"w"</span>) <span class="pykw">as</span> file:
+    json.<span class="pyfn">dump</span>(student, file, indent=<span class="pynum">4</span>)
+
+<span class="pyfn">print</span>(<span class="pystr">"\nstudent.json saved successfully!"</span>)</pre>
+    </div>
+    <div class="ex-output-wrap">
+      <div class="ex-output-label">Output — paste this into JSON Crack</div>
+      <pre class="ex-output">{
+    "id": 101,
+    "name": "Alice",
+    "age": 21,
+    "major": "Computer Science",
+    "courses": [
+        {"course": "Python",   "grade": "A"},
+        {"course": "Database", "grade": "B+"}
+    ],
+    "address": {
+        "city": "Seattle",
+        "state": "WA"
+    }
+}
+
+student.json saved successfully!</pre>
+    </div>
+    <div class="ex-explain">
+      <h4>What each function does</h4>
+      <table class="fn-table">
+        <tr><td>json.dumps(data, indent=4)</td><td>Converts a Python dict to a JSON string. <span class="mono">indent</span> makes it human-readable.</td></tr>
+        <tr><td>json.dump(data, file)</td><td>Writes JSON directly to an open file. No intermediate string needed.</td></tr>
+        <tr><td>indent=4</td><td>Adds 4 spaces of indentation per level — makes the structure match what JSON Crack shows.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- EXAMPLE 2 -->
+  <div class="ex-panel hidden" id="ex2">
+    <h3 class="ex-heading">Read a JSON file and access its values in Python</h3>
+    <p class="ex-desc">Once JSON is in a file, <span class="mono">json.load()</span> reads it back into a Python dictionary. You then access fields exactly like any other dictionary — with square brackets or <span class="mono">.get()</span>.</p>
+    <div class="code-block">
+      <div class="code-head"><span>example2_read.py</span><button class="copy-btn" data-target="code2">copy</button></div>
+      <pre id="code2"><span class="pyimport">import</span> json
+
+<span class="pycmt"># Step 1: Read the JSON file back into Python</span>
+<span class="pykw">with</span> <span class="pyfn">open</span>(<span class="pystr">"student.json"</span>, <span class="pystr">"r"</span>) <span class="pykw">as</span> file:
+    student = json.<span class="pyfn">load</span>(file)    <span class="pycmt"># JSON file → Python dictionary</span>
+
+<span class="pycmt"># Step 2: Access top-level fields (same as any Python dict)</span>
+<span class="pyfn">print</span>(<span class="pystr">"Name:"</span>,  student[<span class="pystr">"name"</span>])       <span class="pycmt"># Alice</span>
+<span class="pyfn">print</span>(<span class="pystr">"Age:"</span>,   student[<span class="pystr">"age"</span>])        <span class="pycmt"># 21</span>
+<span class="pyfn">print</span>(<span class="pystr">"Major:"</span>, student[<span class="pystr">"major"</span>])     <span class="pycmt"># Computer Science</span>
+
+<span class="pycmt"># Step 3: Access a nested field (one level deeper)</span>
+city = student[<span class="pystr">"address"</span>][<span class="pystr">"city"</span>]
+<span class="pyfn">print</span>(<span class="pystr">"City:"</span>,  city)                   <span class="pycmt"># Seattle</span>
+
+<span class="pycmt"># Step 4: Loop through a nested list</span>
+<span class="pyfn">print</span>(<span class="pystr">"\nCourses:"</span>)
+<span class="pykw">for</span> c <span class="pykw">in</span> student[<span class="pystr">"courses"</span>]:
+    <span class="pyfn">print</span>(<span class="pystr">f"  {c['course']} — Grade: {c['grade']}"</span>)
+
+<span class="pycmt"># Step 5: Use .get() to safely read a field that might not exist</span>
+email = student.<span class="pyfn">get</span>(<span class="pystr">"email"</span>, <span class="pystr">"not provided"</span>)
+<span class="pyfn">print</span>(<span class="pystr">"\nEmail:"</span>, email)                 <span class="pycmt"># not provided (no crash)</span></pre>
+    </div>
+    <div class="ex-output-wrap">
+      <div class="ex-output-label">Output</div>
+      <pre class="ex-output">Name:  Alice
+Age:   21
+Major: Computer Science
+City:  Seattle
+
+Courses:
+  Python — Grade: A
+  Database — Grade: B+
+
+Email: not provided</pre>
+    </div>
+    <div class="ex-explain">
+      <h4>Key concepts</h4>
+      <table class="fn-table">
+        <tr><td>json.load(file)</td><td>Reads a JSON file and returns a Python dict. Different from <span class="mono">json.loads()</span> which parses a string.</td></tr>
+        <tr><td>data["key"]</td><td>Access a field directly. Raises <span class="mono">KeyError</span> if the key doesn't exist.</td></tr>
+        <tr><td>data.get("key", default)</td><td>Safely access a field — returns the default value instead of crashing if the key is missing.</td></tr>
+        <tr><td>data["address"]["city"]</td><td>Chain brackets to reach nested values. JSON Crack's graph makes this chaining visible.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- EXAMPLE 3 -->
+  <div class="ex-panel hidden" id="ex3">
+    <h3 class="ex-heading">Work with deeply nested JSON</h3>
+    <p class="ex-desc">Real-world JSON from APIs is often several levels deep. This example shows how to build it, navigate it, and why JSON Crack is especially helpful once the nesting gets past two levels.</p>
+    <div class="code-block">
+      <div class="code-head"><span>example3_nested.py</span><button class="copy-btn" data-target="code3">copy</button></div>
+      <pre id="code3"><span class="pyimport">import</span> json
+
+<span class="pycmt"># Deeply nested structure — 3 levels deep</span>
+school = {
+    <span class="pystr">"school"</span>: <span class="pystr">"Tech University"</span>,
+    <span class="pystr">"department"</span>: {
+        <span class="pystr">"name"</span>: <span class="pystr">"Computer Science"</span>,
+        <span class="pystr">"head"</span>: <span class="pystr">"Dr. Smith"</span>,
+        <span class="pystr">"courses"</span>: [
+            {
+                <span class="pystr">"code"</span>: <span class="pystr">"CS101"</span>,
+                <span class="pystr">"title"</span>: <span class="pystr">"Intro to Python"</span>,
+                <span class="pystr">"students"</span>: [
+                    {<span class="pystr">"id"</span>: <span class="pynum">1</span>, <span class="pystr">"name"</span>: <span class="pystr">"Alice"</span>, <span class="pystr">"grade"</span>: <span class="pystr">"A"</span>},
+                    {<span class="pystr">"id"</span>: <span class="pynum">2</span>, <span class="pystr">"name"</span>: <span class="pystr">"Bob"</span>,   <span class="pystr">"grade"</span>: <span class="pystr">"B"</span>}
+                ]
+            },
+            {
+                <span class="pystr">"code"</span>: <span class="pystr">"CS201"</span>,
+                <span class="pystr">"title"</span>: <span class="pystr">"Databases"</span>,
+                <span class="pystr">"students"</span>: [
+                    {<span class="pystr">"id"</span>: <span class="pynum">3</span>, <span class="pystr">"name"</span>: <span class="pystr">"Carol"</span>, <span class="pystr">"grade"</span>: <span class="pystr">"A+"</span>}
+                ]
+            }
+        ]
+    }
+}
+
+<span class="pycmt"># Navigate the nested structure level by level</span>
+dept = school[<span class="pystr">"department"</span>]                     <span class="pycmt"># level 1</span>
+<span class="pyfn">print</span>(<span class="pystr">"Dept:"</span>,   dept[<span class="pystr">"name"</span>])
+
+first_course = dept[<span class="pystr">"courses"</span>][<span class="pynum">0</span>]              <span class="pycmt"># level 2</span>
+<span class="pyfn">print</span>(<span class="pystr">"Course:"</span>, first_course[<span class="pystr">"title"</span>])
+
+first_student = first_course[<span class="pystr">"students"</span>][<span class="pynum">0</span>]   <span class="pycmt"># level 3</span>
+<span class="pyfn">print</span>(<span class="pystr">"Student:"</span>, first_student[<span class="pystr">"name"</span>])
+
+<span class="pycmt"># Loop through all courses and students</span>
+<span class="pyfn">print</span>(<span class="pystr">"\nAll enrollments:"</span>)
+<span class="pykw">for</span> course <span class="pykw">in</span> dept[<span class="pystr">"courses"</span>]:
+    <span class="pykw">for</span> s <span class="pykw">in</span> course[<span class="pystr">"students"</span>]:
+        <span class="pyfn">print</span>(<span class="pystr">f"  {s['name']} → {course['code']} → {s['grade']}"</span>)
+
+<span class="pycmt"># Print as JSON — paste into JSON Crack</span>
+<span class="pyfn">print</span>(<span class="pystr">"\n--- Paste below into JSON Crack ---"</span>)
+<span class="pyfn">print</span>(json.<span class="pyfn">dumps</span>(school, indent=<span class="pynum">4</span>))</pre>
+    </div>
+    <div class="ex-output-wrap">
+      <div class="ex-output-label">Output</div>
+      <pre class="ex-output">Dept:    Computer Science
+Course:  Intro to Python
+Student: Alice
+
+All enrollments:
+  Alice → CS101 → A
+  Bob   → CS101 → B
+  Carol → CS201 → A+
+
+--- Paste below into JSON Crack ---
+{
+    "school": "Tech University",
+    "department": {
+        "name": "Computer Science",
+        "head": "Dr. Smith",
+        "courses": [...]
+    }
+}</pre>
+    </div>
+    <div class="callout purple" style="margin-top:16px;">
+      <b>Why JSON Crack helps here:</b> this data is 3 levels deep — school, department, courses, students. When you get a KeyError on <span class="mono">first_course["students"][0]["name"]</span>, paste the JSON into JSON Crack and immediately see which level the key is actually at.
+    </div>
+  </div>
+
+  <!-- EXAMPLE 4 -->
+  <div class="ex-panel hidden" id="ex4">
+    <h3 class="ex-heading">Read, modify, and write JSON</h3>
+    <p class="ex-desc">Load a JSON file, change it in Python, and save it back. This is how configuration files, simple data stores, and cached results work.</p>
+    <div class="code-block">
+      <div class="code-head"><span>example4_modify.py</span><button class="copy-btn" data-target="code4">copy</button></div>
+      <pre id="code4"><span class="pyimport">import</span> json
+
+<span class="pycmt"># Step 1: Start with some existing data and save it</span>
+students = {
+    <span class="pystr">"students"</span>: [
+        {<span class="pystr">"id"</span>: <span class="pynum">1</span>, <span class="pystr">"name"</span>: <span class="pystr">"Alice"</span>, <span class="pystr">"grade"</span>: <span class="pystr">"A"</span>},
+        {<span class="pystr">"id"</span>: <span class="pynum">2</span>, <span class="pystr">"name"</span>: <span class="pystr">"Bob"</span>,   <span class="pystr">"grade"</span>: <span class="pystr">"B"</span>}
+    ]
+}
+<span class="pykw">with</span> <span class="pyfn">open</span>(<span class="pystr">"students.json"</span>, <span class="pystr">"w"</span>) <span class="pykw">as</span> f:
+    json.<span class="pyfn">dump</span>(students, f, indent=<span class="pynum">4</span>)
+<span class="pyfn">print</span>(<span class="pystr">"Original saved."</span>)
+
+<span class="pycmt"># Step 2: Read it back</span>
+<span class="pykw">with</span> <span class="pyfn">open</span>(<span class="pystr">"students.json"</span>, <span class="pystr">"r"</span>) <span class="pykw">as</span> f:
+    data = json.<span class="pyfn">load</span>(f)
+
+<span class="pycmt"># Step 3: Modify — update Alice's grade</span>
+data[<span class="pystr">"students"</span>][<span class="pynum">0</span>][<span class="pystr">"grade"</span>] = <span class="pystr">"A+"</span>
+
+<span class="pycmt"># Step 4: Add a new field to every student</span>
+<span class="pykw">for</span> s <span class="pykw">in</span> data[<span class="pystr">"students"</span>]:
+    s[<span class="pystr">"passed"</span>] = <span class="pykw">True</span>
+
+<span class="pycmt"># Step 5: Append a new student to the list</span>
+data[<span class="pystr">"students"</span>].<span class="pyfn">append</span>({
+    <span class="pystr">"id"</span>: <span class="pynum">3</span>,
+    <span class="pystr">"name"</span>: <span class="pystr">"Carol"</span>,
+    <span class="pystr">"grade"</span>: <span class="pystr">"A"</span>,
+    <span class="pystr">"passed"</span>: <span class="pykw">True</span>
+})
+
+<span class="pycmt"># Step 6: Save the updated version back to the same file</span>
+<span class="pykw">with</span> <span class="pyfn">open</span>(<span class="pystr">"students.json"</span>, <span class="pystr">"w"</span>) <span class="pykw">as</span> f:
+    json.<span class="pyfn">dump</span>(data, f, indent=<span class="pynum">4</span>)
+
+<span class="pycmt"># Print result — paste into JSON Crack to see what changed</span>
+<span class="pyfn">print</span>(json.<span class="pyfn">dumps</span>(data, indent=<span class="pynum">4</span>))
+<span class="pyfn">print</span>(<span class="pystr">"\nstudents.json updated!"</span>)</pre>
+    </div>
+    <div class="ex-output-wrap">
+      <div class="ex-output-label">Updated JSON output</div>
+      <pre class="ex-output">Original saved.
+{
+    "students": [
+        {"id": 1, "name": "Alice", "grade": "A+", "passed": true},
+        {"id": 2, "name": "Bob",   "grade": "B",  "passed": true},
+        {"id": 3, "name": "Carol", "grade": "A",  "passed": true}
+    ]
+}
+
+students.json updated!</pre>
+    </div>
+    <div class="ex-explain">
+      <h4>The read-modify-write pattern</h4>
+      <table class="fn-table">
+        <tr><td>json.load()</td><td>Load file into memory as a Python dict</td></tr>
+        <tr><td>data[key] = value</td><td>Modify the dict in memory (file unchanged so far)</td></tr>
+        <tr><td>list.append(item)</td><td>Add a new item to a JSON array</td></tr>
+        <tr><td>json.dump(data, file)</td><td>Overwrite the file with the modified dict</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- EXAMPLE 5 -->
+  <div class="ex-panel hidden" id="ex5">
+    <h3 class="ex-heading">Parse a real API response string</h3>
+    <p class="ex-desc">When your code calls an API, the response arrives as a JSON-formatted string — not a Python dict. <span class="mono">json.loads()</span> (with an s) parses it into a dict you can work with. This example simulates exactly what happens in a real API call.</p>
+    <div class="code-block">
+      <div class="code-head"><span>example5_api.py</span><button class="copy-btn" data-target="code5">copy</button></div>
+      <pre id="code5"><span class="pyimport">import</span> json
+
+<span class="pycmt"># This simulates the raw JSON string your code gets from an API.</span>
+<span class="pycmt"># In a real app: api_response_string = requests.get(url).text</span>
+api_response_string = <span class="pystr">"""
+{
+    "status": "success",
+    "records": [
+        {
+            "id": "rec001",
+            "fields": {
+                "Name": "buy milk",
+                "Category": "Grocery",
+                "Done": false
+            }
+        },
+        {
+            "id": "rec002",
+            "fields": {
+                "Name": "finish assignment",
+                "Category": "Task",
+                "Done": true
+            }
+        },
+        {
+            "id": "rec003",
+            "fields": {
+                "Name": "call dentist",
+                "Category": "Personal",
+                "Done": false
+            }
+        }
+    ],
+    "total": 3
+}
+"""</span>
+
+<span class="pycmt"># Step 1: Parse the JSON string → Python dictionary</span>
+data = json.<span class="pyfn">loads</span>(api_response_string)   <span class="pycmt"># note: loads (with s), not load</span>
+
+<span class="pycmt"># Step 2: Check status before reading data</span>
+<span class="pykw">if</span> data[<span class="pystr">"status"</span>] == <span class="pystr">"success"</span>:
+    <span class="pyfn">print</span>(<span class="pystr">f"Fetched {data['total']} records\n"</span>)
+
+    <span class="pycmt"># Step 3: Loop through records</span>
+    <span class="pycmt"># Note: data is 2 levels deep — record["fields"]["Name"]</span>
+    <span class="pykw">for</span> record <span class="pykw">in</span> data[<span class="pystr">"records"</span>]:
+        name     = record[<span class="pystr">"fields"</span>][<span class="pystr">"Name"</span>]
+        category = record[<span class="pystr">"fields"</span>][<span class="pystr">"Category"</span>]
+        done     = record[<span class="pystr">"fields"</span>][<span class="pystr">"Done"</span>]
+        icon     = <span class="pystr">"✓"</span> <span class="pykw">if</span> done <span class="pykw">else</span> <span class="pystr">"○"</span>
+        <span class="pyfn">print</span>(<span class="pystr">f"  {icon}  [{category}]  {name}"</span>)
+
+<span class="pycmt"># Step 4: Filter — only show incomplete items</span>
+<span class="pyfn">print</span>(<span class="pystr">"\nStill to do:"</span>)
+todo = [r <span class="pykw">for</span> r <span class="pykw">in</span> data[<span class="pystr">"records"</span>] <span class="pykw">if</span> <span class="pykw">not</span> r[<span class="pystr">"fields"</span>][<span class="pystr">"Done"</span>]]
+<span class="pykw">for</span> r <span class="pykw">in</span> todo:
+    <span class="pyfn">print</span>(<span class="pystr">f"  - {r['fields']['Name']}"</span>)
+
+<span class="pycmt"># Step 5: Print as formatted JSON — paste into JSON Crack</span>
+<span class="pyfn">print</span>(<span class="pystr">"\n--- Paste into JSON Crack ---"</span>)
+<span class="pyfn">print</span>(json.<span class="pyfn">dumps</span>(data, indent=<span class="pynum">4</span>))</pre>
+    </div>
+    <div class="ex-output-wrap">
+      <div class="ex-output-label">Output</div>
+      <pre class="ex-output">Fetched 3 records
+
+  ○  [Grocery]   buy milk
+  ✓  [Task]      finish assignment
+  ○  [Personal]  call dentist
+
+Still to do:
+  - buy milk
+  - call dentist</pre>
+    </div>
+    <div class="callout purple" style="margin-top:16px;">
+      <b>The key insight:</b> notice <span class="mono">record["fields"]["Name"]</span>, not just <span class="mono">record["Name"]</span>. The field you want is nested inside a <span class="mono">fields</span> object. When this gives a KeyError, paste the full response into JSON Crack and the graph immediately shows you exactly how deep your key actually is.
+    </div>
+    <div class="ex-explain">
+      <h4>json.loads() vs json.load()</h4>
+      <table class="fn-table">
+        <tr><td>json.loads(string)</td><td>Parses a JSON string into a dict. Use this with API responses.</td></tr>
+        <tr><td>json.load(file)</td><td>Reads a JSON file into a dict. Use this when reading a .json file from disk.</td></tr>
+        <tr><td>response.json()</td><td>The <span class="mono">requests</span> library calls <span class="mono">json.loads()</span> automatically — use this in real API calls.</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUMMARY TABLE -->
+  <div style="margin-top:36px;padding-top:28px;border-top:1px solid var(--border);">
+    <h3 style="font-size:18px;margin-bottom:14px;">All json module functions — at a glance</h3>
+    <table class="cmp">
+      <tr>
+        <th style="background:var(--bg);color:var(--ink-soft);">Function</th>
+        <th style="background:var(--bg);color:var(--ink-soft);">Input</th>
+        <th style="background:var(--bg);color:var(--ink-soft);">Output</th>
+        <th style="background:var(--bg);color:var(--ink-soft);">When to use</th>
+      </tr>
+      <tr><td><span class="mono">json.dumps(data)</span></td><td>Python dict/list</td><td>JSON string</td><td>Print or send JSON</td></tr>
+      <tr><td><span class="mono">json.dump(data, file)</span></td><td>Python dict/list + file</td><td>Writes to file</td><td>Save JSON to disk</td></tr>
+      <tr><td><span class="mono">json.loads(string)</span></td><td>JSON string</td><td>Python dict/list</td><td>Parse an API response string</td></tr>
+      <tr><td><span class="mono">json.load(file)</span></td><td>Open file object</td><td>Python dict/list</td><td>Read a .json file from disk</td></tr>
+    </table>
+  </div>
+
+</section>
+
+
+<footer class="wrap">
+  JSON Crack tutorial · <a href="https://jsoncrack.com" target="_blank" rel="noopener">jsoncrack.com</a> · free tool, no sign-in required
+</footer>
+
+</main>
+
+<script>
+/* ── copy buttons ── */
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.copy-btn');
+  if(!btn) return;
+  var text = btn.dataset.copy || btn.closest('.code-block').querySelector('pre').textContent;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ flash(btn); });
+  } else {
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); flash(btn); }catch(e){}
+    document.body.removeChild(ta);
+  }
+});
+function flash(btn){
+  var old=btn.textContent; btn.textContent='copied!';
+  setTimeout(function(){ btn.textContent=old; }, 1400);
+}
+
+/* ── mini JSON visualiser ── */
+var COLORS = ['#6941C6','#0284C7','#15803D','#B45309','#B91C1C','#7C3AED','#0369A1'];
+
+function buildGraph(json){
+  var preview = document.getElementById('demoPreview');
+  preview.innerHTML = '';
+
+  var data;
+  try { data = JSON.parse(json); }
+  catch(err){
+    preview.innerHTML = '<div class="demo-error">⚠ Invalid JSON: ' + err.message + '</div>';
+    return;
+  }
+
+  var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
+
+  var nodes = [];
+  var edges = [];
+
+  function collect(obj, label, parentId, depth, x, y){
+    var id = nodes.length;
+    var rows = [];
+    var childKeys = [];
+
+    if(typeof obj === 'object' && obj !== null && !Array.isArray(obj)){
+      Object.keys(obj).forEach(function(k){
+        var v = obj[k];
+        if(typeof v === 'object' && v !== null){
+          childKeys.push(k);
+          rows.push({k:k, v: Array.isArray(v) ? '[…array]' : '{…object}', child:true});
+        } else {
+          var disp = typeof v === 'string' ? '"'+v+'"' : String(v);
+          if(disp.length > 18) disp = disp.slice(0,16)+'…"';
+          rows.push({k:k, v:disp, child:false});
+        }
+      });
+    } else if(Array.isArray(obj)){
+      obj.forEach(function(item, idx){
+        if(typeof item === 'object' && item !== null){
+          childKeys.push(idx);
+          rows.push({k:idx, v:'{…}', child:true});
+        } else {
+          rows.push({k:idx, v:JSON.stringify(item), child:false});
+        }
+      });
+    } else {
+      rows.push({k:'value', v:JSON.stringify(obj), child:false});
+    }
+
+    var displayRows = rows.slice(0,5);
+    if(rows.length > 5) displayRows.push({k:'…', v:'+'+(rows.length-5)+' more', child:false});
+
+    var W = 148, H = 22 + displayRows.length * 15;
+    nodes.push({id:id, label:label, rows:displayRows, x:x, y:y, w:W, h:H, color:COLORS[depth % COLORS.length], obj:obj});
+
+    if(parentId !== null) edges.push({from:parentId, to:id});
+
+    var childCount = childKeys.length;
+    childKeys.forEach(function(k, ci){
+      var childObj = Array.isArray(obj) ? obj[k] : obj[k];
+      var cx = x + (ci - (childCount-1)/2) * 170;
+      var cy = y + H + 48;
+      collect(childObj, String(k), id, depth+1, cx, cy);
+    });
+  }
+
+  var startLabel = typeof data === 'object' && data !== null ? (Array.isArray(data) ? 'root[ ]' : 'root{}') : 'value';
+  collect(data, startLabel, null, 0, 0, 10);
+
+  // calculate bounding box
+  var minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  nodes.forEach(function(n){
+    minX=Math.min(minX,n.x); minY=Math.min(minY,n.y);
+    maxX=Math.max(maxX,n.x+n.w); maxY=Math.max(maxY,n.y+n.h);
+  });
+  var pad = 16;
+  var vw = maxX - minX + pad*2 + 20;
+  var vh = maxY - minY + pad*2;
+
+  svg.setAttribute('viewBox', (minX-pad-10)+' '+(minY-pad)+' '+vw+' '+vh);
+  svg.style.width = '100%';
+  svg.style.maxHeight = '280px';
+
+  // draw edges
+  edges.forEach(function(edge){
+    var f = nodes[edge.from], t = nodes[edge.to];
+    var x1 = f.x + f.w/2, y1 = f.y + f.h;
+    var x2 = t.x + t.w/2, y2 = t.y;
+    var line = document.createElementNS('http://www.w3.org/2000/svg','path');
+    var mid = (y1+y2)/2;
+    line.setAttribute('d','M'+x1+','+y1+' C'+x1+','+mid+' '+x2+','+mid+' '+x2+','+y2);
+    line.setAttribute('stroke','#D1D5DB'); line.setAttribute('stroke-width','1.5');
+    line.setAttribute('fill','none');
+    svg.appendChild(line);
+  });
+
+  // draw nodes
+  nodes.forEach(function(n){
+    var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    // shadow
+    var sh = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    sh.setAttribute('x',n.x+2); sh.setAttribute('y',n.y+2);
+    sh.setAttribute('width',n.w); sh.setAttribute('height',n.h);
+    sh.setAttribute('rx',8); sh.setAttribute('fill','rgba(0,0,0,.06)');
+    g.appendChild(sh);
+    // body
+    var rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',n.x); rect.setAttribute('y',n.y);
+    rect.setAttribute('width',n.w); rect.setAttribute('height',n.h);
+    rect.setAttribute('rx',8); rect.setAttribute('fill','white');
+    rect.setAttribute('stroke','#E4E4E7'); rect.setAttribute('stroke-width','1.2');
+    g.appendChild(rect);
+    // header
+    var hdr = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    hdr.setAttribute('x',n.x); hdr.setAttribute('y',n.y);
+    hdr.setAttribute('width',n.w); hdr.setAttribute('height',18);
+    hdr.setAttribute('rx',8); hdr.setAttribute('fill',n.color);
+    g.appendChild(hdr);
+    var hdr2 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    hdr2.setAttribute('x',n.x); hdr2.setAttribute('y',n.y+10);
+    hdr2.setAttribute('width',n.w); hdr2.setAttribute('height',8);
+    hdr2.setAttribute('fill',n.color);
+    g.appendChild(hdr2);
+    // header text
+    var ht = document.createElementNS('http://www.w3.org/2000/svg','text');
+    ht.setAttribute('x',n.x+n.w/2); ht.setAttribute('y',n.y+13);
+    ht.setAttribute('text-anchor','middle'); ht.setAttribute('fill','white');
+    ht.setAttribute('font-family','IBM Plex Mono'); ht.setAttribute('font-size','10');
+    ht.setAttribute('font-weight','600');
+    ht.textContent = n.label.length > 18 ? n.label.slice(0,17)+'…' : n.label;
+    g.appendChild(ht);
+    // rows
+    n.rows.forEach(function(row, ri){
+      var ry = n.y + 28 + ri * 15;
+      var rt = document.createElementNS('http://www.w3.org/2000/svg','text');
+      rt.setAttribute('x',n.x+6); rt.setAttribute('y',ry);
+      rt.setAttribute('font-family','IBM Plex Mono'); rt.setAttribute('font-size','9.5');
+      rt.setAttribute('fill','#52525B');
+      var kspan = document.createElementNS('http://www.w3.org/2000/svg','tspan');
+      kspan.setAttribute('fill',n.color); kspan.setAttribute('font-weight','600');
+      var kl = String(row.k); kspan.textContent = (kl.length>10?kl.slice(0,9)+'…':kl)+':';
+      rt.appendChild(kspan);
+      var vspan = document.createElementNS('http://www.w3.org/2000/svg','tspan');
+      var vl = String(row.v);
+      vspan.textContent = ' '+(vl.length>14?vl.slice(0,13)+'…':vl);
+      vspan.setAttribute('fill', row.child ? n.color : '#18181B');
+      rt.appendChild(vspan);
+      g.appendChild(rt);
+    });
+    svg.appendChild(g);
+  });
+
+  preview.appendChild(svg);
+}
+
+document.getElementById('visualiseBtn').addEventListener('click', function(){
+  buildGraph(document.getElementById('jsonInput').value);
+});
+
+
+/* ── example tabs ── */
+document.querySelectorAll('.ex-tab').forEach(function(tab){
+  tab.addEventListener('click', function(){
+    var ex = tab.dataset.ex;
+    document.querySelectorAll('.ex-tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.ex-panel').forEach(function(p){ p.classList.add('hidden'); });
+    tab.classList.add('active');
+    var panel = document.getElementById('ex'+ex);
+    if(panel) panel.classList.remove('hidden');
+  });
+});
+
+/* ── copy by target id ── */
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('[data-target]');
+  if(!btn) return;
+  var target = document.getElementById(btn.dataset.target);
+  if(!target) return;
+  var text = target.innerText || target.textContent;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ flash(btn); });
+  } else {
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); flash(btn); }catch(err){}
+    document.body.removeChild(ta);
+  }
+});
+
+// render on load
+buildGraph(document.getElementById('jsonInput').value);
+</script>
+</body>
+</html>
