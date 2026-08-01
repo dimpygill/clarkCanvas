@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python vs Flask — A Complete Interactive Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root{
+  --bg:       #F8F7F2;
+  --surface:  #FFFFFF;
+  --line:     #E6E3D9;
+  --ink:      #1A1917;
+  --ink-soft: #6A665C;
+  --ink-faint:#AEAA9F;
+
+  --py:       #3B5BA5;   /* Python — blue */
+  --py-soft:  #EBF0FB;
+  --py-mid:   #C3D0F0;
+
+  --fl:       #C07A28;   /* Flask — amber */
+  --fl-soft:  #FBF3E7;
+  --fl-mid:   #F0D5A8;
+
+  --ok:       #2F8A72;
+  --ok-soft:  #E7F4EF;
+  --err:      #C1443C;
+  --err-soft: #FBEAE8;
+}
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:'Inter',sans-serif; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{ background:var(--py); color:#fff; }
+a{ color:var(--py); }
+h1,h2,h3,h4{ font-family:'Space Grotesk',sans-serif; margin:0; letter-spacing:-.01em; }
+.mono{ font-family:'IBM Plex Mono',monospace; }
+.wrap{ max-width:960px; margin:0 auto; padding:0 28px; }
+
+/* ── NAV ── */
+header.top{
+  position:sticky; top:0; z-index:60;
+  background:rgba(248,247,242,.95); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.topbar{
+  max-width:960px; margin:0 auto; padding:11px 28px;
+  display:flex; align-items:center; gap:20px;
+}
+.brand{ font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; white-space:nowrap; }
+.brand .py-dot{ color:var(--py); }
+.brand .fl-dot{ color:var(--fl); }
+nav.links{ display:flex; gap:14px; overflow-x:auto; }
+nav.links a{
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+  color:var(--ink-soft); text-decoration:none; white-space:nowrap;
+}
+nav.links a:hover{ color:var(--fl); }
+.prog-wrap{ margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.prog-bar{ width:90px; height:6px; background:var(--line); border-radius:4px; overflow:hidden; }
+.prog-fill{ height:100%; background:var(--fl); width:0%; transition:width .3s; border-radius:4px; }
+.prog-txt{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-faint); }
+
+/* ── LEGEND PILLS ── */
+.legend{
+  display:inline-flex; align-items:center; gap:16px; flex-wrap:wrap;
+  background:var(--surface); border:1px solid var(--line); border-radius:8px;
+  padding:9px 14px; margin-top:22px;
+}
+.legend-item{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-soft); }
+.pill{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
+  padding:3px 9px; border-radius:12px;
+}
+.pill.py{ background:var(--py-soft); color:var(--py); border:1px solid var(--py-mid); }
+.pill.fl{ background:var(--fl-soft); color:var(--fl); border:1px solid var(--fl-mid); }
+
+/* ── SECTION ── */
+section.sec{ padding:52px 0; border-top:1px solid var(--line); }
+.sec-tag{
+  display:inline-flex; align-items:center; gap:8px; margin-bottom:12px;
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+  text-transform:uppercase; letter-spacing:.07em; color:var(--ink-faint);
+}
+.sec-tag .badge{
+  padding:3px 8px; border-radius:5px; font-size:11px; font-weight:600;
+}
+.sec-tag .badge.py{ background:var(--py-soft); color:var(--py); }
+.sec-tag .badge.fl{ background:var(--fl-soft); color:var(--fl); }
+.sec-tag .badge.both{ background:var(--line); color:var(--ink-soft); }
+section.sec h2{ font-size:clamp(22px,3vw,30px); max-width:700px; }
+section.sec p.intro{ color:var(--ink-soft); max-width:660px; margin-top:10px; font-size:15px; }
+
+/* ── SPLIT CODE BLOCK ── */
+.split-code{
+  display:grid; grid-template-columns:1fr 1fr; gap:0;
+  border:1px solid var(--line); border-radius:10px; overflow:hidden;
+  margin-top:20px;
+}
+.split-pane{ display:flex; flex-direction:column; }
+.split-label{
+  padding:8px 14px; font-family:'IBM Plex Mono',monospace; font-size:12px;
+  font-weight:600; display:flex; align-items:center; gap:8px;
+  border-bottom:1px solid var(--line);
+}
+.split-label.py{ background:var(--py-soft); color:var(--py); border-right:1px solid var(--py-mid); }
+.split-label.fl{ background:var(--fl-soft); color:var(--fl); }
+.split-pane pre{
+  margin:0; padding:15px 16px; font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px; line-height:1.65; flex:1; overflow-x:auto;
+}
+.split-pane.py pre{ background:#F2F5FD; border-right:1px solid var(--line); }
+.split-pane.fl pre{ background:#FDF9F3; }
+.split-divider{
+  display:flex; align-items:center; justify-content:center;
+  writing-mode:horizontal-tb; background:var(--line); width:0px;
+  overflow:visible; position:relative; z-index:1;
+}
+
+/* ── SINGLE CODE BLOCK ── */
+.code-block{ margin-top:16px; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+.code-header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:8px 14px; background:#EEECEA; border-bottom:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft);
+}
+.code-block pre{
+  margin:0; padding:15px 17px; background:#FCFBF8; overflow-x:auto;
+  font-family:'IBM Plex Mono',monospace; font-size:13px; line-height:1.65; color:var(--ink);
+}
+/* syntax */
+.kw{ color:#8B3FA8; } .str{ color:var(--ok); }
+.cmt{ color:var(--ink-faint); font-style:italic; }
+.fn{ color:var(--py); }
+.dec{ color:var(--fl); font-weight:600; }
+.hl{ background:#FFF3D4; border-radius:3px; padding:1px 3px; }
+
+/* ── CALLOUT ── */
+.callout{
+  margin-top:20px; padding:15px 17px; border-radius:9px; font-size:14px;
+  background:var(--ok-soft); border:1px solid #b5dcce; color:#1e4037;
+}
+.callout.py{ background:var(--py-soft); border-color:var(--py-mid); color:#1e2e5c; }
+.callout.fl{ background:var(--fl-soft); border-color:var(--fl-mid); color:#5c3a0e; }
+.callout.warn{ background:#FEF9EC; border-color:#f0d9a0; color:#5c421a; }
+.callout b{ font-weight:600; }
+.callout .mono{ background:rgba(0,0,0,.06); padding:1px 5px; border-radius:4px; }
+
+/* ── ANALOGY BOX ── */
+.analogy{
+  margin-top:20px; display:grid; grid-template-columns:1fr auto 1fr; gap:0;
+  border:1px solid var(--line); border-radius:10px; overflow:hidden;
+}
+.analogy-side{ padding:18px 20px; }
+.analogy-side.py{ background:var(--py-soft); }
+.analogy-side.fl{ background:var(--fl-soft); }
+.analogy-mid{
+  display:flex; align-items:center; justify-content:center;
+  background:var(--line); padding:0 14px; font-size:18px; color:var(--ink-faint);
+}
+.analogy-side h4{ font-size:13px; margin-bottom:6px; }
+.analogy-side.py h4{ color:var(--py); }
+.analogy-side.fl h4{ color:var(--fl); }
+.analogy-side p{ font-size:13.5px; color:var(--ink-soft); margin:0; }
+
+/* ── BROWSER SIM ── */
+.sim{
+  margin-top:20px; border:1px solid var(--line); border-radius:11px;
+  background:var(--surface); overflow:hidden;
+}
+.sim-bar{
+  display:flex; align-items:center; gap:8px; padding:10px 13px;
+  background:#EEECEA; border-bottom:1px solid var(--line);
+}
+.dots{ display:flex; gap:5px; }
+.dot{ width:10px; height:10px; border-radius:50%; }
+.url-row{ display:flex; flex:1; gap:7px; align-items:center; }
+.url-input{
+  flex:1; font-family:'IBM Plex Mono',monospace; font-size:13px;
+  padding:7px 12px; border:1.5px solid var(--line); border-radius:20px;
+  background:#fff; color:var(--ink); outline:none; min-width:0;
+}
+.url-input:focus{ border-color:var(--py); }
+.go-btn{
+  font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:7px 16px;
+  border-radius:20px; border:none; background:var(--ink); color:#fff; cursor:pointer;
+}
+.go-btn:hover{ background:#000; }
+.go-btn.post{ background:var(--fl); }
+.go-btn.post:hover{ background:#a0651f; }
+.sim-body{ padding:18px; min-height:90px; }
+.status-tag{
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+  display:inline-block; padding:3px 9px; border-radius:5px; margin-bottom:10px;
+}
+.status-tag.ok{ background:var(--ok-soft); color:var(--ok); }
+.status-tag.err{ background:var(--err-soft); color:var(--err); }
+.sim-out{ font-size:17px; margin-bottom:12px; }
+.sim-trace{
+  padding-top:12px; border-top:1px dashed var(--line);
+  font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink-soft);
+  line-height:1.75;
+}
+.sim-trace .hl-py{ color:var(--py); font-weight:600; }
+.sim-trace .hl-fl{ color:var(--fl); font-weight:600; }
+
+.chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+.chip{
+  font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 12px;
+  background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  cursor:pointer; color:var(--ink-soft); transition:all .15s;
+}
+.chip:hover{ background:var(--py-soft); border-color:var(--py); color:var(--py); }
+.chip-note{ font-size:12.5px; color:var(--ink-faint); margin-top:8px; }
+
+/* ── COMPARISON TABLE ── */
+.cmp-table{ width:100%; border-collapse:collapse; margin-top:20px; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+.cmp-table th{
+  padding:10px 14px; font-family:'IBM Plex Mono',monospace; font-size:12px;
+  font-weight:600; text-align:left; border-bottom:1px solid var(--line);
+}
+.cmp-table th.py{ background:var(--py-soft); color:var(--py); }
+.cmp-table th.fl{ background:var(--fl-soft); color:var(--fl); }
+.cmp-table th.hd{ background:#EEECEA; color:var(--ink-soft); width:160px; }
+.cmp-table td{
+  padding:11px 14px; font-size:13.5px; border-bottom:1px solid var(--line);
+  vertical-align:top;
+}
+.cmp-table td:first-child{ font-weight:600; font-size:13px; background:#FAFAF7; }
+.cmp-table tr:last-child td{ border-bottom:none; }
+
+/* ── QUIZ ── */
+.quiz-card{ padding:20px 22px; margin-top:14px; }
+.quiz-q{ font-size:15px; font-weight:600; margin-bottom:14px; }
+.quiz-opts{ display:flex; flex-direction:column; gap:7px; }
+.qopt{
+  text-align:left; font-family:'IBM Plex Mono',monospace; font-size:13px;
+  padding:10px 14px; border-radius:8px; border:1.5px solid var(--line);
+  background:var(--surface); color:var(--ink); cursor:pointer; transition:all .15s;
+}
+.qopt:hover{ border-color:var(--py); background:var(--py-soft); }
+.qopt.correct{ border-color:var(--ok); background:var(--ok-soft); color:var(--ok); pointer-events:none; }
+.qopt.wrong{ border-color:var(--err); background:var(--err-soft); color:var(--err); }
+.quiz-fb{ margin-top:11px; font-size:13.5px; min-height:18px; color:var(--ink-soft); }
+
+/* ── MISC ── */
+.card{ background:var(--surface); border:1px solid var(--line); border-radius:10px; }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:13px; margin-top:20px; }
+.grid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:13px; margin-top:20px; }
+.info-card{ padding:16px 18px; }
+.info-card .tag{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:7px;
+}
+.info-card .tag.py{ color:var(--py); }
+.info-card .tag.fl{ color:var(--fl); }
+.info-card h3{ font-size:14.5px; margin-bottom:5px; }
+.info-card p{ font-size:13px; color:var(--ink-soft); margin:0; }
+
+.flow{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:24px; }
+.flow-box{ padding:14px 16px; border-radius:9px; text-align:center; min-width:120px; }
+.flow-box .k{ font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.06em; opacity:.7; display:block; margin-bottom:5px; }
+.flow-box .v{ font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; }
+.flow-box.py{ background:var(--py-soft); border:1px solid var(--py-mid); }
+.flow-box.fl{ background:var(--fl-soft); border:1px solid var(--fl-mid); }
+.flow-box.dark{ background:var(--ink); color:#fff; }
+.flow-arrow{ color:var(--ink-faint); font-size:18px; }
+
+footer.foot{
+  padding:30px 0 60px; font-family:'IBM Plex Mono',monospace;
+  font-size:12px; color:var(--ink-faint);
+  border-top:1px solid var(--line); margin-top:20px;
+}
+
+@media(max-width:720px){
+  .split-code{ grid-template-columns:1fr; }
+  .split-pane.py pre{ border-right:none; border-bottom:1px solid var(--line); }
+  .analogy{ grid-template-columns:1fr; }
+  .analogy-mid{ padding:8px; writing-mode:horizontal-tb; }
+  .grid2,.grid3{ grid-template-columns:1fr; }
+  nav.links{ display:none; }
+}
+@media(prefers-reduced-motion:reduce){ html{ scroll-behavior:auto; } .prog-fill{ transition:none; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="topbar">
+    <span class="brand"><span class="py-dot">Python</span> <span style="color:var(--ink-faint)">vs</span> <span class="fl-dot">Flask</span></span>
+    <nav class="links">
+      <a href="#kitchen">01 The difference</a>
+      <a href="#pure-python">02 Pure Python</a>
+      <a href="#enter-flask">03 Enter Flask</a>
+      <a href="#routes">04 Routes</a>
+      <a href="#dynamic">05 Dynamic URLs</a>
+      <a href="#methods">06 GET vs POST</a>
+      <a href="#returning">07 What you return</a>
+      <a href="#internals">08 Flask internals</a>
+      <a href="#quiz">09 Quiz</a>
+    </nav>
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+      <span class="prog-txt" id="progTxt">0 / 0</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ══ HERO ══ -->
+<section style="padding:58px 0 36px;">
+  <div style="display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--fl);margin-bottom:18px;">
+    <span style="width:7px;height:7px;background:var(--fl);border-radius:50%;display:inline-block;"></span>
+    Interactive tutorial
+  </div>
+  <h1 style="font-size:clamp(32px,4.8vw,52px);line-height:1.07;max-width:760px;">
+    Python is the kitchen.<br>Flask is the oven.
+  </h1>
+  <p style="margin-top:16px;max-width:620px;color:var(--ink-soft);font-size:16.5px;">
+    Python is a general-purpose language. Flask is a Python package that adds exactly one thing: the ability to receive browser requests and send responses back. This tutorial shows the difference with side-by-side examples you can interact with.
+  </p>
+
+  <div class="legend">
+    <div class="legend-item"><span class="pill py">Python</span> Plain Python — works without Flask</div>
+    <div class="legend-item"><span class="pill fl">Flask</span> Flask-specific — needs Flask installed</div>
+  </div>
+</section>
+
+<!-- ══ 01 THE DIFFERENCE ══ -->
+<section class="sec" id="kitchen">
+  <div class="sec-tag"><span class="badge both">01</span> The core difference</div>
+  <h2>What each one actually is</h2>
+  <p class="intro">Before writing a single line, it's worth being clear: you don't choose between Python and Flask — you use both together. Flask is written in Python. Every Flask app is a Python program. The question is what Flask adds on top.</p>
+
+  <div class="analogy">
+    <div class="analogy-side py">
+      <h4>Python</h4>
+      <p>A general-purpose programming language. Can do data science, automation, AI, games, file processing — anything. Has no concept of web servers, URLs, or browsers built in.</p>
+    </div>
+    <div class="analogy-mid">+</div>
+    <div class="analogy-side fl">
+      <h4>Flask</h4>
+      <p>A Python package (someone else's code you install) that adds exactly one thing: the ability to listen for HTTP requests from a browser and send responses back. Built entirely in Python.</p>
+    </div>
+  </div>
+
+  <div class="grid3" style="margin-top:20px;">
+    <div class="card info-card">
+      <span class="tag py">Python only</span>
+      <h3>Variables &amp; functions</h3>
+      <p>All the basics — loops, conditions, classes, strings. Flask uses these but doesn't invent them.</p>
+    </div>
+    <div class="card info-card">
+      <span class="tag py">Python only</span>
+      <h3>Libraries &amp; imports</h3>
+      <p><span class="mono">import math</span>, <span class="mono">import pandas</span> — Python's built-in and third-party packages.</p>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">Flask adds</span>
+      <h3>URL routing</h3>
+      <p>Connecting a URL like <span class="mono">/about</span> to a Python function that runs when someone visits it.</p>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">Flask adds</span>
+      <h3>Request / response</h3>
+      <p>Reading what the browser sent (form data, JSON, headers) and sending back HTML, JSON, or anything else.</p>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">Flask adds</span>
+      <h3>A web server</h3>
+      <p><span class="mono">app.run()</span> starts a server that listens on a port so a browser can reach it.</p>
+    </div>
+    <div class="card info-card">
+      <span class="tag py">Python only</span>
+      <h3>Everything else</h3>
+      <p>Database calls, business logic, calculations, file I/O — all plain Python that Flask simply calls when a request arrives.</p>
+    </div>
+  </div>
+
+  <div class="callout warn" style="margin-top:20px;">
+    <b>The most common misconception:</b> thinking Flask and Python are alternatives. They're not. You write Flask apps <em>in</em> Python. Flask is just a set of tools you import — like importing <span class="mono">pandas</span> or <span class="mono">math</span>, except this one lets your code respond to web requests.
+  </div>
+</section>
+
+<!-- ══ 02 PURE PYTHON ══ -->
+<section class="sec" id="pure-python">
+  <div class="sec-tag"><span class="badge py">02</span> Pure Python</div>
+  <h2>Python without Flask — just functions</h2>
+  <p class="intro">Here's what pure Python can do — define functions, do math, work with strings. This code runs perfectly without Flask. You call these functions by name in your code, not by visiting a URL.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span>pure_python.py — no Flask anywhere</span><span class="pill py" style="font-size:11px;">Python</span></div>
+<pre><span class="cmt"># Pure Python — no Flask, no web server, just functions</span>
+
+<span class="kw">def</span> <span class="fn">greet</span>(name):
+    <span class="kw">return</span> <span class="str">f"Hello, {name}!"</span>
+
+<span class="kw">def</span> <span class="fn">square</span>(n):
+    <span class="kw">return</span> n * n
+
+<span class="kw">def</span> <span class="fn">is_even</span>(n):
+    <span class="kw">return</span> n % 2 == 0
+
+<span class="cmt"># You call these directly in your code:</span>
+print(<span class="fn">greet</span>(<span class="str">"Ada"</span>))       <span class="cmt"># Hello, Ada!</span>
+print(<span class="fn">square</span>(7))         <span class="cmt"># 49</span>
+print(<span class="fn">is_even</span>(4))        <span class="cmt"># True</span></pre>
+  </div>
+
+  <div class="callout py">
+    <b>Key point:</b> these functions exist and work. But only <em>your Python code</em> can call them — by name, in the same file or after importing. A web browser has no way to call <span class="mono">greet("Ada")</span>. There is no URL, no server, no way in from the outside. That's the gap Flask fills.
+  </div>
+
+  <p style="margin-top:22px;color:var(--ink-soft);font-size:15px;">Now let's see what happens when Flask enters the picture. The functions don't change at all — Flask just gives each one a URL so a browser can reach it.</p>
+
+  <div class="split-code" style="margin-top:16px;">
+    <div class="split-pane py">
+      <div class="split-label py">🐍 Pure Python — same functions</div>
+<pre><span class="kw">def</span> <span class="fn">greet</span>(name):
+    <span class="kw">return</span> <span class="str">f"Hello, {name}!"</span>
+
+<span class="kw">def</span> <span class="fn">square</span>(n):
+    <span class="kw">return</span> n * n
+
+<span class="cmt"># Called by name in code:</span>
+<span class="fn">greet</span>(<span class="str">"Ada"</span>)
+<span class="fn">square</span>(7)</pre>
+    </div>
+    <div class="split-pane fl">
+      <div class="split-label fl">🌶 With Flask — same functions, now on URLs</div>
+<pre><span class="dec">@app.route</span>(<span class="str">"/greet/&lt;name&gt;"</span>)
+<span class="kw">def</span> <span class="fn">greet</span>(name):
+    <span class="kw">return</span> <span class="str">f"Hello, {name}!"</span>
+
+<span class="dec">@app.route</span>(<span class="str">"/square/&lt;int:n&gt;"</span>)
+<span class="kw">def</span> <span class="fn">square</span>(n):
+    <span class="kw">return</span> <span class="str">f"{n} squared = {n*n}"</span>
+
+<span class="cmt"># Called by visiting a URL:</span>
+<span class="cmt"># /greet/Ada → "Hello, Ada!"</span>
+<span class="cmt"># /square/7  → "7 squared = 49"</span></pre>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>Notice what didn't change:</b> the function bodies are identical. Flask only added the <span class="mono" style="color:var(--fl);">@app.route()</span> decorator above each one. That decorator is the whole of what Flask does to a function — attach a URL to it.
+  </div>
+</section>
+
+<!-- ══ 03 ENTER FLASK ══ -->
+<section class="sec" id="enter-flask">
+  <div class="sec-tag"><span class="badge fl">03</span> Enter Flask</div>
+  <h2>The anatomy of a Flask app</h2>
+  <p class="intro">A Flask app is a Python file that imports Flask, creates one app object, and defines routes. Let's read every line and understand which parts are Python and which parts are Flask.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span>app.py — annotated line by line</span></div>
+<pre><span class="kw">from</span> flask <span class="kw">import</span> Flask    <span class="cmt"># ← FLASK: import the Flask tool (like import math)</span>
+
+app = Flask(__name__)       <span class="cmt"># ← FLASK: create one app object. __name__ is Python.</span>
+
+<span class="dec">@app.route</span>(<span class="str">"/"</span>)           <span class="cmt"># ← FLASK: attach URL "/" to the function below</span>
+<span class="kw">def</span> <span class="fn">home</span>():                <span class="cmt"># ← PYTHON: a regular function definition</span>
+    <span class="kw">return</span> <span class="str">"Hello!"</span>        <span class="cmt"># ← PYTHON: a regular return statement</span>
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>: <span class="cmt"># ← PYTHON: standard "run this file directly" check</span>
+    app.<span class="fn">run</span>(debug=<span class="kw">True</span>)    <span class="cmt"># ← FLASK: start the web server</span></pre>
+  </div>
+
+  <div class="split-code" style="margin-top:22px;">
+    <div class="split-pane py">
+      <div class="split-label py">🐍 These are Python</div>
+<pre><span class="kw">from</span> ... <span class="kw">import</span> ...
+<span class="kw">def</span> <span class="fn">home</span>():
+    <span class="kw">return</span> <span class="str">"Hello!"</span>
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+__name__</pre>
+    </div>
+    <div class="split-pane fl">
+      <div class="split-label fl">🌶 These are Flask</div>
+<pre>Flask(__name__)
+<span class="dec">@app.route</span>(<span class="str">"/"</span>)
+app.<span class="fn">run</span>(debug=<span class="kw">True</span>)
+request
+jsonify()</pre>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:20px;">
+    <div class="card info-card">
+      <span class="tag fl">Flask(__name__)</span>
+      <h3>Creates the application</h3>
+      <p>One object that holds all your routes. <span class="mono">__name__</span> tells Flask where to look for template files — that part is Python, the rest is Flask.</p>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">@app.route("/")</span>
+      <h3>The decorator</h3>
+      <p>A Python decorator is a function that wraps another function. Flask uses it to register the URL in a lookup table. When <span class="mono">/</span> is visited, Flask finds <span class="mono">home()</span> in that table and calls it.</p>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">app.run()</span>
+      <h3>Starts the server</h3>
+      <p>Tells Python to listen on port 5000 (by default). Without this, the file runs and immediately exits — nothing to receive browser requests.</p>
+    </div>
+    <div class="card info-card">
+      <span class="tag py">return "Hello!"</span>
+      <h3>Return value becomes the response</h3>
+      <p>Flask takes whatever your function returns and sends it to the browser as the HTTP response body. A string becomes a plain text page.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 04 ROUTES ══ -->
+<section class="sec" id="routes">
+  <div class="sec-tag"><span class="badge fl">04</span> Routes</div>
+  <h2>Try it: type a URL, see which function runs</h2>
+  <p class="intro">Here's an app with four routes. The fake browser below works exactly like Flask's router. Type any URL and see what you get — and whether it was Python or Flask that produced it.</p>
+
+  <div class="split-code">
+    <div class="split-pane py">
+      <div class="split-label py">🐍 Python — the function bodies</div>
+<pre><span class="kw">def</span> <span class="fn">home</span>():
+    <span class="kw">return</span> <span class="str">"Welcome!"</span>
+
+<span class="kw">def</span> <span class="fn">about</span>():
+    <span class="kw">return</span> <span class="str">"Built with Flask."</span>
+
+<span class="kw">def</span> <span class="fn">contact</span>():
+    <span class="kw">return</span> <span class="str">"hello@example.com"</span>
+
+<span class="kw">def</span> <span class="fn">pricing</span>():
+    price = 9.99 * 12    <span class="cmt"># Python math</span>
+    <span class="kw">return</span> <span class="str">f"${price}/year"</span></pre>
+    </div>
+    <div class="split-pane fl">
+      <div class="split-label fl">🌶 Flask — the URL attachments</div>
+<pre><span class="dec">@app.route</span>(<span class="str">"/"</span>)
+<span class="kw">def</span> <span class="fn">home</span>(): ...
+
+<span class="dec">@app.route</span>(<span class="str">"/about"</span>)
+<span class="kw">def</span> <span class="fn">about</span>(): ...
+
+<span class="dec">@app.route</span>(<span class="str">"/contact"</span>)
+<span class="kw">def</span> <span class="fn">contact</span>(): ...
+
+<span class="dec">@app.route</span>(<span class="str">"/pricing"</span>)
+<span class="kw">def</span> <span class="fn">pricing</span>(): ...</pre>
+    </div>
+  </div>
+
+  <div class="sim" style="margin-top:18px;">
+    <div class="sim-bar">
+      <div class="dots">
+        <span class="dot" style="background:#E0685E;"></span>
+        <span class="dot" style="background:#E5B95C;"></span>
+        <span class="dot" style="background:#6FBF8E;"></span>
+      </div>
+      <div class="url-row">
+        <input class="url-input" id="url4" value="/" spellcheck="false" autocomplete="off">
+        <button class="go-btn" id="go4">Go</button>
+      </div>
+    </div>
+    <div class="sim-body">
+      <div class="status-tag ok" id="s4">200 OK</div>
+      <div class="sim-out" id="o4">Welcome!</div>
+      <div class="sim-trace" id="t4">Flask matched <span class="hl-fl">/</span> → called <span class="hl-py">home()</span> → returned its value as the response.</div>
+    </div>
+  </div>
+
+  <p class="chip-note">Try these:</p>
+  <div class="chips" id="chips4">
+    <span class="chip">/ </span>
+    <span class="chip">/about</span>
+    <span class="chip">/contact</span>
+    <span class="chip">/pricing</span>
+    <span class="chip">/blog</span>
+    <span class="chip">/ABOUT</span>
+  </div>
+
+  <div class="callout warn" style="margin-top:20px;">
+    <b>Try /blog and /ABOUT.</b> Flask does <em>exact</em> string matching — <span class="mono">/ABOUT</span> is different from <span class="mono">/about</span>, and <span class="mono">/blog</span> has no route, so both return 404. Routing is not fuzzy; it's case-sensitive and exact.
+  </div>
+</section>
+
+<!-- ══ 05 DYNAMIC URLS ══ -->
+<section class="sec" id="dynamic">
+  <div class="sec-tag"><span class="badge fl">05</span> Dynamic URLs</div>
+  <h2>One route, any number of pages</h2>
+  <p class="intro">You don't write a separate route for every user or every product. Put a variable in angle brackets — Flask extracts it from the URL and passes it straight into your function as an argument.</p>
+
+  <div class="split-code">
+    <div class="split-pane py">
+      <div class="split-label py">🐍 Python — function takes an argument</div>
+<pre><span class="kw">def</span> <span class="fn">profile</span>(name):
+    <span class="kw">return</span> <span class="str">f"Profile: {name}"</span>
+
+<span class="kw">def</span> <span class="fn">power</span>(base, exp):
+    result = base ** exp  <span class="cmt"># Python math</span>
+    <span class="kw">return</span> <span class="str">f"{base}^{exp} = {result}"</span>
+
+<span class="kw">def</span> <span class="fn">item</span>(category, item_id):
+    <span class="kw">return</span> <span class="str">f"Item {item_id} in {category}"</span></pre>
+    </div>
+    <div class="split-pane fl">
+      <div class="split-label fl">🌶 Flask — URL pieces become arguments</div>
+<pre><span class="dec">@app.route</span>(<span class="str">"/user/&lt;name&gt;"</span>)
+<span class="kw">def</span> <span class="fn">profile</span>(name): ...
+
+<span class="dec">@app.route</span>(<span class="str">"/power/&lt;int:base&gt;/&lt;int:exp&gt;"</span>)
+<span class="kw">def</span> <span class="fn">power</span>(base, exp): ...
+<span class="cmt"># int: converts to integer automatically</span>
+
+<span class="dec">@app.route</span>(<span class="str">"/shop/&lt;category&gt;/&lt;int:item_id&gt;"</span>)
+<span class="kw">def</span> <span class="fn">item</span>(category, item_id): ...</pre>
+    </div>
+  </div>
+
+  <div class="sim" style="margin-top:18px;">
+    <div class="sim-bar">
+      <div class="dots">
+        <span class="dot" style="background:#E0685E;"></span>
+        <span class="dot" style="background:#E5B95C;"></span>
+        <span class="dot" style="background:#6FBF8E;"></span>
+      </div>
+      <div class="url-row">
+        <input class="url-input" id="url5" value="/user/ada" spellcheck="false" autocomplete="off">
+        <button class="go-btn" id="go5">Go</button>
+      </div>
+    </div>
+    <div class="sim-body">
+      <div class="status-tag ok" id="s5">200 OK</div>
+      <div class="sim-out" id="o5">Profile: ada</div>
+      <div class="sim-trace" id="t5">Flask matched <span class="hl-fl">/user/&lt;name&gt;</span> → called <span class="hl-py">profile(name="ada")</span>.</div>
+    </div>
+  </div>
+
+  <p class="chip-note">Try these:</p>
+  <div class="chips" id="chips5">
+    <span class="chip">/user/ada</span>
+    <span class="chip">/user/grace</span>
+    <span class="chip">/power/2/10</span>
+    <span class="chip">/power/3/3</span>
+    <span class="chip">/shop/books/42</span>
+    <span class="chip">/shop/shoes/7</span>
+    <span class="chip">/power/two/3</span>
+  </div>
+
+  <div class="callout py" style="margin-top:20px;">
+    <b>Python's <span class="mono">**</span> operator does the math.</b> Flask just extracted <span class="mono">base</span> and <span class="mono">exp</span> from the URL and handed them to your function. The actual calculation — <span class="mono">base ** exp</span> — is pure Python, nothing to do with Flask.
+  </div>
+  <div class="callout fl" style="margin-top:12px;">
+    <b>Try <span class="mono">/power/two/3</span>.</b> The <span class="mono">int:</span> converter in <span class="mono">&lt;int:base&gt;</span> only matches digits, so "two" fails before your function ever runs. Flask rejected it at the routing layer. You didn't write that validation — Flask gave it to you.
+  </div>
+</section>
+
+<!-- ══ 06 GET vs POST ══ -->
+<section class="sec" id="methods">
+  <div class="sec-tag"><span class="badge fl">06</span> GET vs POST</div>
+  <h2>Same URL, two different actions</h2>
+  <p class="intro">Every HTTP request has a method — GET means "give me something to read," POST means "here's data I'm sending." Flask lets you route the same URL to different functions depending on which method arrived.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span>app.py</span></div>
+<pre><span class="kw">from</span> flask <span class="kw">import</span> Flask, request, jsonify  <span class="cmt"># ← FLASK imports</span>
+
+notes = []                                   <span class="cmt"># ← PYTHON: plain list</span>
+
+<span class="dec">@app.route</span>(<span class="str">"/notes"</span>, methods=[<span class="str">"GET"</span>])     <span class="cmt"># ← FLASK: only handles GET</span>
+<span class="kw">def</span> <span class="fn">list_notes</span>():
+    <span class="kw">return</span> <span class="str">f"You have {len(notes)} notes"</span>  <span class="cmt"># ← PYTHON: f-string, len()</span>
+
+<span class="dec">@app.route</span>(<span class="str">"/notes"</span>, methods=[<span class="str">"POST"</span>])    <span class="cmt"># ← FLASK: only handles POST</span>
+<span class="kw">def</span> <span class="fn">add_note</span>():
+    data = request.<span class="fn">get_json</span>()             <span class="cmt"># ← FLASK: read what browser sent</span>
+    notes.<span class="fn">append</span>(data[<span class="str">"text"</span>])            <span class="cmt"># ← PYTHON: list.append()</span>
+    <span class="kw">return</span> <span class="str">f"Saved: {data['text']}"</span>        <span class="cmt"># ← PYTHON: f-string</span></pre>
+  </div>
+
+  <div class="sim" style="margin-top:18px;">
+    <div class="sim-bar">
+      <div class="dots">
+        <span class="dot" style="background:#E0685E;"></span>
+        <span class="dot" style="background:#E5B95C;"></span>
+        <span class="dot" style="background:#6FBF8E;"></span>
+      </div>
+      <div class="url-row">
+        <input class="url-input" id="url6" value="/notes" spellcheck="false" autocomplete="off">
+        <button class="go-btn" id="get6">GET</button>
+        <button class="go-btn post" id="post6">POST</button>
+      </div>
+    </div>
+    <div class="sim-body">
+      <div class="status-tag ok" id="s6">200 OK</div>
+      <div class="sim-out" id="o6">You have 0 notes</div>
+      <div class="sim-trace" id="t6">A <span class="hl-fl">GET</span> to <span class="hl-fl">/notes</span> → ran <span class="hl-py">list_notes()</span>.</div>
+    </div>
+  </div>
+
+  <div class="callout fl" style="margin-top:20px;">
+    <b>Click POST, then GET again.</b> The count goes up because POST called <span class="mono">add_note()</span> which ran <span class="mono">notes.append()</span> — that's Python's list doing the work. Flask only decided <em>which function</em> to call. Everything inside the function is Python.
+  </div>
+</section>
+
+<!-- ══ 07 WHAT YOU RETURN ══ -->
+<section class="sec" id="returning">
+  <div class="sec-tag"><span class="badge both">07</span> What you return</div>
+  <h2>Return values become HTTP responses</h2>
+  <p class="intro">A Python function can return anything — a string, a number, a list. Flask intercepts that return value and turns it into an HTTP response. What you return determines what the browser sees.</p>
+
+  <table class="cmp-table">
+    <tr>
+      <th class="hd">Return value</th>
+      <th class="py">Python side</th>
+      <th class="fl">What Flask sends to browser</th>
+    </tr>
+    <tr>
+      <td>String</td>
+      <td><span class="mono">return "Hello!"</span></td>
+      <td>Plain text page with body "Hello!"</td>
+    </tr>
+    <tr>
+      <td>HTML string</td>
+      <td><span class="mono">return "&lt;h1&gt;Hello&lt;/h1&gt;"</span></td>
+      <td>A rendered HTML page</td>
+    </tr>
+    <tr>
+      <td>jsonify()</td>
+      <td><span class="mono">return jsonify({"name": "Ada"})</span></td>
+      <td>JSON response with correct Content-Type header</td>
+    </tr>
+    <tr>
+      <td>Tuple with status</td>
+      <td><span class="mono">return "Not found", 404</span></td>
+      <td>Response with a custom HTTP status code</td>
+    </tr>
+    <tr>
+      <td>render_template()</td>
+      <td><span class="mono">return render_template("page.html")</span></td>
+      <td>Renders a Jinja2 template file and sends the result</td>
+    </tr>
+  </table>
+
+  <div class="split-code" style="margin-top:20px;">
+    <div class="split-pane py">
+      <div class="split-label py">🐍 Python — building the data</div>
+<pre><span class="kw">def</span> <span class="fn">get_user</span>(user_id):
+    <span class="cmt"># All Python: dict, math, string</span>
+    user = {
+        <span class="str">"id"</span>: user_id,
+        <span class="str">"name"</span>: <span class="str">"Ada"</span>,
+        <span class="str">"score"</span>: user_id * 10
+    }
+    <span class="kw">return</span> user  <span class="cmt"># Python dict</span></pre>
+    </div>
+    <div class="split-pane fl">
+      <div class="split-label fl">🌶 Flask — converting to HTTP response</div>
+<pre><span class="kw">from</span> flask <span class="kw">import</span> jsonify
+
+<span class="dec">@app.route</span>(<span class="str">"/user/&lt;int:user_id&gt;"</span>)
+<span class="kw">def</span> <span class="fn">get_user</span>(user_id):
+    user = {
+        <span class="str">"id"</span>: user_id,
+        <span class="str">"name"</span>: <span class="str">"Ada"</span>,
+        <span class="str">"score"</span>: user_id * 10
+    }
+    <span class="kw">return</span> <span class="fn">jsonify</span>(user)  <span class="cmt"># Flask wraps it</span></pre>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>jsonify() is Flask, dicts are Python.</b> You build the data structure using plain Python — dicts, lists, strings. <span class="mono">jsonify()</span> is the Flask function that serializes it to JSON and sets the right HTTP headers so the browser understands what it's receiving.
+  </div>
+</section>
+
+<!-- ══ 08 QUIZ ══ -->
+<section class="sec" id="quiz">
+  <div class="sec-tag"><span class="badge both">09</span> Quiz</div>
+  <h2>Python or Flask?</h2>
+  <p class="intro">Five questions. For each line of code, decide whether it's plain Python, or whether it requires Flask to be installed.</p>
+
+  <div class="card quiz-card" data-answer="1">
+    <div class="quiz-q">Which side of the split is <span class="mono">@app.route("/about")</span>?</div>
+    <div class="quiz-opts">
+      <button class="qopt">Python — it's a standard decorator syntax</button>
+      <button class="qopt">Flask — it registers a URL in Flask's routing table</button>
+      <button class="qopt">Both equally</button>
+    </div>
+    <div class="quiz-fb"></div>
+  </div>
+
+  <div class="card quiz-card" data-answer="0">
+    <div class="quiz-q">Inside a route function: <span class="mono">result = name.upper()</span></div>
+    <div class="quiz-opts">
+      <button class="qopt">Python — .upper() is a built-in string method</button>
+      <button class="qopt">Flask — it's transforming request data</button>
+      <button class="qopt">Can't tell without seeing the full file</button>
+    </div>
+    <div class="quiz-fb"></div>
+  </div>
+
+  <div class="card quiz-card" data-answer="1">
+    <div class="quiz-q">What does <span class="mono">request.get_json()</span> do, and which tool provides it?</div>
+    <div class="quiz-opts">
+      <button class="qopt">Python — reads a JSON file from disk</button>
+      <button class="qopt">Flask — reads the JSON body the browser sent in the HTTP request</button>
+      <button class="qopt">Python's json module — parses a string</button>
+    </div>
+    <div class="quiz-fb"></div>
+  </div>
+
+  <div class="card quiz-card" data-answer="2">
+    <div class="quiz-q">You define <span class="mono">def calculate(x, y): return x * y</span> with no decorator. What can call it?</div>
+    <div class="quiz-opts">
+      <button class="qopt">Any URL — Flask checks all functions automatically</button>
+      <button class="qopt">Only POST requests — GET can't trigger plain functions</button>
+      <button class="qopt">Only Python code — no URL is attached, so browsers can't reach it</button>
+    </div>
+    <div class="quiz-fb"></div>
+  </div>
+
+  <div class="card quiz-card" data-answer="0">
+    <div class="quiz-q">A student says "I'm writing my app in Flask, not Python." What's wrong with this?</div>
+    <div class="quiz-opts">
+      <button class="qopt">Flask is written in Python — you're always writing Python, just using Flask's tools</button>
+      <button class="qopt">Nothing, they're interchangeable terms</button>
+      <button class="qopt">Correct — Flask and Python are two different languages</button>
+    </div>
+    <div class="quiz-fb"></div>
+  </div>
+</section>
+
+<!-- ══ FLASK INTERNALS ══ -->
+<section class="sec" id="internals">
+  <div class="sec-tag"><span class="badge fl">08</span> Inside the Flask package</div>
+  <h2>What Flask is actually made of</h2>
+  <p class="intro">When you run <span class="mono">pip install flask</span>, you get a package with six layers. You'll only use a handful of them day to day — but knowing the map stops you from being confused when you see things like <span class="mono">from flask import session</span> or <span class="mono">g</span>.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span>Flask package — the full map</span><span class="pill fl" style="font-size:11px;">Flask</span></div>
+<pre>Flask Package
+│
+├── <span class="dec">Classes</span>
+│   ├── <span class="fn">Flask</span>           <span class="cmt"># the application object — app = Flask(__name__)</span>
+│   └── <span class="fn">Blueprint</span>       <span class="cmt"># organise routes into reusable groups</span>
+│
+├── <span class="dec">Functions</span>
+│   ├── <span class="fn">render_template()</span>  <span class="cmt"># find an HTML file and fill in variables</span>
+│   ├── <span class="fn">jsonify()</span>          <span class="cmt"># turn a Python dict into a JSON response</span>
+│   ├── <span class="fn">redirect()</span>         <span class="cmt"># send the browser to a different URL</span>
+│   ├── <span class="fn">url_for()</span>          <span class="cmt"># build a URL from a function name</span>
+│   ├── <span class="fn">abort()</span>            <span class="cmt"># immediately return an error code (e.g. 404)</span>
+│   └── <span class="fn">make_response()</span>    <span class="cmt"># build a custom HTTP response object</span>
+│
+├── <span class="dec">Objects</span>
+│   ├── <span class="fn">request</span>        <span class="cmt"># the current incoming HTTP request</span>
+│   ├── <span class="fn">session</span>        <span class="cmt"># stores data across multiple requests (cookie-backed)</span>
+│   ├── <span class="fn">current_app</span>    <span class="cmt"># the running Flask application</span>
+│   └── <span class="fn">g</span>              <span class="cmt"># scratch space for one request's lifetime</span>
+│
+├── <span class="dec">Routing System</span>
+│   └── <span class="fn">@app.route()</span>   <span class="cmt"># decorator that maps URLs to functions</span>
+│
+├── <span class="dec">Template Engine</span>
+│   └── Jinja2          <span class="cmt"># HTML templates with {{ variables }} and {% logic %}</span>
+│
+└── <span class="dec">Development Server</span>
+    └── <span class="fn">app.run()</span>      <span class="cmt"># starts the server on localhost:5000</span></pre>
+  </div>
+
+  <div class="callout warn" style="margin-top:20px;">
+    <b>You won't use all of these at once.</b> Most apps day-to-day only need: <span class="mono">Flask</span>, <span class="mono">request</span>, <span class="mono">render_template</span>, <span class="mono">jsonify</span>, <span class="mono">redirect</span>, <span class="mono">url_for</span>, and <span class="mono">session</span>. The rest exist for specific situations.
+  </div>
+
+  <!-- interactive: click a term to see what it does -->
+  <h3 style="font-size:16px;margin-top:32px;">Click any term — see what it does and when to use it</h3>
+  <div class="chips" id="term-chips" style="margin-top:12px;">
+    <span class="chip term-chip" data-term="Flask">Flask()</span>
+    <span class="chip term-chip" data-term="Blueprint">Blueprint</span>
+    <span class="chip term-chip" data-term="render_template">render_template()</span>
+    <span class="chip term-chip" data-term="jsonify">jsonify()</span>
+    <span class="chip term-chip" data-term="redirect">redirect()</span>
+    <span class="chip term-chip" data-term="url_for">url_for()</span>
+    <span class="chip term-chip" data-term="abort">abort()</span>
+    <span class="chip term-chip" data-term="make_response">make_response()</span>
+    <span class="chip term-chip" data-term="request">request</span>
+    <span class="chip term-chip" data-term="session">session</span>
+    <span class="chip term-chip" data-term="g">g</span>
+    <span class="chip term-chip" data-term="route">@app.route()</span>
+    <span class="chip term-chip" data-term="jinja2">Jinja2</span>
+    <span class="chip term-chip" data-term="run">app.run()</span>
+  </div>
+
+  <div class="card" id="term-panel" style="margin-top:14px;padding:20px 22px;display:none;">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:220px;">
+        <div id="term-name" style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--fl);margin-bottom:6px;"></div>
+        <div id="term-layer" style="font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin-bottom:10px;"></div>
+        <div id="term-desc" style="font-size:14px;color:var(--ink-soft);line-height:1.6;"></div>
+      </div>
+      <div style="flex:1;min-width:240px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);margin-bottom:8px;">EXAMPLE</div>
+        <pre id="term-code" style="margin:0;padding:13px 15px;background:#FDF9F3;border:1px solid var(--fl-mid);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.6;overflow-x:auto;white-space:pre;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- the six most-used in one place -->
+  <h3 style="font-size:16px;margin-top:32px;">The six you'll use in almost every app</h3>
+  <div class="grid2" style="margin-top:14px;">
+    <div class="card info-card">
+      <span class="tag fl">from flask import Flask</span>
+      <h3>Flask()</h3>
+      <p>Creates the application. You call it once at the top of your file. Everything else hangs off this object.</p>
+      <div class="code-block" style="margin-top:10px;">
+        <pre style="padding:10px 13px;font-size:12px;">app = Flask(__name__)</pre>
+      </div>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">from flask import request</span>
+      <h3>request</h3>
+      <p>Represents whatever the browser just sent. Read JSON, form fields, query parameters, or headers from it.</p>
+      <div class="code-block" style="margin-top:10px;">
+        <pre style="padding:10px 13px;font-size:12px;">data = request.get_json()
+name = request.args.get("q")</pre>
+      </div>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">from flask import render_template</span>
+      <h3>render_template()</h3>
+      <p>Finds an HTML file in your <span class="mono">templates/</span> folder, fills in any variables, and returns the result.</p>
+      <div class="code-block" style="margin-top:10px;">
+        <pre style="padding:10px 13px;font-size:12px;">return render_template(
+  "page.html", name="Ada")</pre>
+      </div>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">from flask import jsonify</span>
+      <h3>jsonify()</h3>
+      <p>Turns a Python dict or list into a proper JSON HTTP response, with the correct Content-Type header set automatically.</p>
+      <div class="code-block" style="margin-top:10px;">
+        <pre style="padding:10px 13px;font-size:12px;">return jsonify({"id": 1,
+                "name": "Ada"})</pre>
+      </div>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">from flask import redirect, url_for</span>
+      <h3>redirect() + url_for()</h3>
+      <p>Send the browser to a different URL. <span class="mono">url_for()</span> builds the URL from a function name so you don't hardcode paths.</p>
+      <div class="code-block" style="margin-top:10px;">
+        <pre style="padding:10px 13px;font-size:12px;">return redirect(
+  url_for("home"))</pre>
+      </div>
+    </div>
+    <div class="card info-card">
+      <span class="tag fl">from flask import session</span>
+      <h3>session</h3>
+      <p>A dictionary that persists across multiple requests for the same user (stored in a signed cookie). Useful for login state.</p>
+      <div class="code-block" style="margin-top:10px;">
+        <pre style="padding:10px 13px;font-size:12px;">session["user"] = "Ada"
+user = session.get("user")</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jinja2 mini demo -->
+  <h3 style="font-size:16px;margin-top:32px;">Jinja2 — Flask's template engine</h3>
+  <p style="font-size:15px;color:var(--ink-soft);margin-top:6px;">Templates let you write HTML with placeholders that Flask fills in at request time. The <span class="mono">{{ }}</span> syntax is Jinja2, not Python — but it feels very similar.</p>
+
+  <div class="split-code" style="margin-top:16px;">
+    <div class="split-pane py">
+      <div class="split-label py">🐍 Python — pass data to template</div>
+<pre><span class="dec">@app.route</span>(<span class="str">"/user/&lt;name&gt;"</span>)
+<span class="kw">def</span> <span class="fn">profile</span>(name):
+    score = <span class="fn">len</span>(name) * 10  <span class="cmt"># Python</span>
+    items = [<span class="str">"flask"</span>, <span class="str">"python"</span>]
+    <span class="kw">return</span> <span class="fn">render_template</span>(
+        <span class="str">"profile.html"</span>,
+        name=name,
+        score=score,
+        items=items
+    )</pre>
+    </div>
+    <div class="split-pane fl">
+      <div class="split-label fl">🌶 Jinja2 — templates/profile.html</div>
+<pre><span class="cmt">&lt;!-- {{ }} prints a value --&gt;</span>
+&lt;h1&gt;Hello, <span class="dec">{{ name }}</span>!&lt;/h1&gt;
+&lt;p&gt;Score: <span class="dec">{{ score }}</span>&lt;/p&gt;
+
+<span class="cmt">&lt;!-- {% %} is logic --&gt;</span>
+<span class="dec">{% for item in items %}</span>
+  &lt;li&gt;<span class="dec">{{ item }}</span>&lt;/li&gt;
+<span class="dec">{% endfor %}</span>
+
+<span class="cmt">&lt;!-- conditional --&gt;</span>
+<span class="dec">{% if score &gt; 50 %}</span>
+  &lt;p&gt;High scorer!&lt;/p&gt;
+<span class="dec">{% endif %}</span></pre>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>Jinja2 is Flask's template engine.</b> It's a separate package Flask pulls in automatically. The <span class="mono">{{ }}</span> and <span class="mono">{% %}</span> syntax is Jinja2, not Python — but the logic (if, for, variables) looks almost identical to Python on purpose.
+  </div>
+</section>
+
+<!-- ══ RECAP ══ -->
+<section class="sec" style="border-bottom:1px solid var(--line);">
+  <div class="sec-tag"><span class="badge both">·</span> Recap</div>
+  <h2>The mental model in one picture</h2>
+
+  <div class="flow">
+    <div class="flow-box py"><span class="k">Python</span><span class="v">functions,<br>logic, data</span></div>
+    <div class="flow-arrow">+</div>
+    <div class="flow-box fl"><span class="k">Flask</span><span class="v">URLs,<br>requests, responses</span></div>
+    <div class="flow-arrow">=</div>
+    <div class="flow-box dark"><span class="k" style="opacity:.6;">result</span><span class="v" style="font-size:12px;">a web app a<br>browser can use</span></div>
+  </div>
+
+  <table class="cmp-table" style="margin-top:24px;">
+    <tr>
+      <th class="hd">Task</th>
+      <th class="py">Python handles it</th>
+      <th class="fl">Flask handles it</th>
+    </tr>
+    <tr>
+      <td>Define logic</td>
+      <td>✅ def, return, if, for, math</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Attach a URL</td>
+      <td></td>
+      <td>✅ @app.route("/path")</td>
+    </tr>
+    <tr>
+      <td>Read request data</td>
+      <td></td>
+      <td>✅ request.get_json(), request.args</td>
+    </tr>
+    <tr>
+      <td>Return a string</td>
+      <td>✅ return "hello"</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Return JSON</td>
+      <td>Build the dict: {}</td>
+      <td>✅ jsonify() wraps it</td>
+    </tr>
+    <tr>
+      <td>Start the server</td>
+      <td></td>
+      <td>✅ app.run()</td>
+    </tr>
+    <tr>
+      <td>Business logic</td>
+      <td>✅ Everything inside your functions</td>
+      <td></td>
+    </tr>
+  </table>
+</section>
+
+<footer class="foot">Python vs Flask &middot; Interactive tutorial &middot; Every example runs in this page</footer>
+
+</main>
+
+<script>
+/* ══ ROUTE MATCHER ══ */
+function matchRoute(routes, method, path){
+  path = path.trim() || '/';
+  if(path.length > 1 && path.slice(-1) === '/') path = path.slice(0,-1);
+  var segs = path.split('/').filter(Boolean);
+  for(var i=0;i<routes.length;i++){
+    var r = routes[i];
+    if(r.method && r.method !== method) continue;
+    var rsegs = r.rule.split('/').filter(Boolean);
+    if(rsegs.length !== segs.length) continue;
+    var args={}, ok=true;
+    for(var j=0;j<rsegs.length;j++){
+      var rs=rsegs[j];
+      if(rs[0]==='<'&&rs[rs.length-1]==='>'){
+        var inner=rs.slice(1,-1), isInt=inner.indexOf('int:')===0;
+        var key=isInt?inner.slice(4):inner;
+        if(isInt&&!/^-?\d+$/.test(segs[j])){ ok=false; break; }
+        args[key]=isInt?parseInt(segs[j],10):segs[j];
+      } else if(rs.toLowerCase()!==segs[j].toLowerCase()||rs!==segs[j]){
+        ok=false; break;
+      }
+    }
+    if(ok) return {r:r, args:args};
+  }
+  return null;
+}
+
+function e(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderSim(ids, m, path, method){
+  var status=document.getElementById(ids.s), out=document.getElementById(ids.o), trace=document.getElementById(ids.t);
+  if(!m){
+    status.textContent='404 Not Found'; status.className='status-tag err';
+    out.textContent='Not Found';
+    trace.innerHTML='No route matches <span class="hl-fl">'+e(path)+'</span>. Flask returns 404.';
+    return;
+  }
+  status.textContent=m.r.status||'200 OK'; status.className='status-tag ok';
+  out.textContent=m.r.respond(m.args);
+  var keys=Object.keys(m.args);
+  var callStr=m.r.fn+'('+keys.map(function(k){ var v=m.args[k]; return k+'='+(typeof v==='number'?v:'"'+v+'"'); }).join(', ')+')';
+  trace.innerHTML='<span class="hl-fl">'+(method||'GET')+' '+e(m.r.rule)+'</span> → called <span class="hl-py">'+e(callStr)+'</span> → returned response.';
+}
+
+/* ── demo 4: static routes ── */
+var R4=[
+  {rule:'/',fn:'home',respond:function(){return 'Welcome!';}},
+  {rule:'/about',fn:'about',respond:function(){return 'Built with Flask.';}},
+  {rule:'/contact',fn:'contact',respond:function(){return 'hello@example.com';}},
+  {rule:'/pricing',fn:'pricing',respond:function(){return '$'+(9.99*12).toFixed(2)+'/year';}}
+];
+function run4(){
+  var path=document.getElementById('url4').value;
+  renderSim({s:'s4',o:'o4',t:'t4'},matchRoute(R4,null,path),path);
+}
+document.getElementById('go4').addEventListener('click',run4);
+document.getElementById('url4').addEventListener('keydown',function(e){if(e.key==='Enter')run4();});
+document.getElementById('chips4').addEventListener('click',function(ev){
+  var c=ev.target.closest('.chip'); if(!c)return;
+  document.getElementById('url4').value=c.textContent.trim(); run4();
+});
+
+/* ── demo 5: dynamic routes ── */
+var R5=[
+  {rule:'/user/<name>',fn:'profile',respond:function(a){return 'Profile: '+a.name;}},
+  {rule:'/power/<int:base>/<int:exp>',fn:'power',respond:function(a){return a.base+'^'+a.exp+' = '+Math.pow(a.base,a.exp);}},
+  {rule:'/shop/<category>/<int:item_id>',fn:'item',respond:function(a){return 'Item '+a.item_id+' in '+a.category;}}
+];
+function run5(){
+  var path=document.getElementById('url5').value;
+  renderSim({s:'s5',o:'o5',t:'t5'},matchRoute(R5,null,path),path);
+}
+document.getElementById('go5').addEventListener('click',run5);
+document.getElementById('url5').addEventListener('keydown',function(e){if(e.key==='Enter')run5();});
+document.getElementById('chips5').addEventListener('click',function(ev){
+  var c=ev.target.closest('.chip'); if(!c)return;
+  document.getElementById('url5').value=c.textContent.trim(); run5();
+});
+
+/* ── demo 6: GET vs POST ── */
+var notes6=[];
+function run6(method){
+  var path=document.getElementById('url6').value.trim();
+  var s=document.getElementById('s6'),o=document.getElementById('o6'),t=document.getElementById('t6');
+  if(path!=='/notes'&&path!=='/notes/'){
+    s.textContent='404 Not Found'; s.className='status-tag err';
+    o.textContent='Not Found';
+    t.innerHTML='Only <span class="hl-fl">/notes</span> is defined in this example.';
+    return;
+  }
+  s.className='status-tag ok';
+  if(method==='GET'){
+    s.textContent='200 OK';
+    o.textContent='You have '+notes6.length+' note'+(notes6.length===1?'':'s');
+    t.innerHTML='A <span class="hl-fl">GET</span> → ran <span class="hl-py">list_notes()</span>. Used Python\'s <span class="hl-py">len(notes)</span>.';
+  } else {
+    notes6.push('Buy milk');
+    s.textContent='201 Created';
+    o.textContent='Saved: Buy milk';
+    t.innerHTML='A <span class="hl-fl">POST</span> → ran <span class="hl-py">add_note()</span>. Flask read the body; Python\'s <span class="hl-py">list.append()</span> stored it.';
+  }
+}
+document.getElementById('get6').addEventListener('click',function(){run6('GET');});
+document.getElementById('post6').addEventListener('click',function(){run6('POST');});
+document.getElementById('url6').addEventListener('keydown',function(e){if(e.key==='Enter')run6('GET');});
+
+/* ══ QUIZ ══ */
+var FEED={correct:'Correct.',wrong:'Not quite — try again.'};
+document.querySelectorAll('.quiz-card').forEach(function(card){
+  var ans=parseInt(card.dataset.answer,10);
+  var opts=Array.prototype.slice.call(card.querySelectorAll('.qopt'));
+  var fb=card.querySelector('.quiz-fb');
+  opts.forEach(function(opt,idx){
+    opt.addEventListener('click',function(){
+      if(idx===ans){
+        opts.forEach(function(o){o.classList.remove('wrong');});
+        opt.classList.add('correct');
+        fb.textContent=FEED.correct; fb.style.color='var(--ok)';
+        updateProgress();
+      } else {
+        opt.classList.add('wrong');
+        fb.textContent=FEED.wrong; fb.style.color='var(--err)';
+      }
+    });
+  });
+});
+
+/* ══ TERM PANEL ══ */
+var TERMS = {
+  'Flask': {
+    layer: 'Class',
+    desc: 'The core application class. You instantiate it once and every route, config, and extension attaches to this one object. __name__ tells Flask where your project root is so it can find templates and static files.',
+    code: 'from flask import Flask\n\napp = Flask(__name__)\n# Now app holds everything'
+  },
+  'Blueprint': {
+    layer: 'Class',
+    desc: 'A way to organize routes into separate files instead of cramming everything into one app.py. Think of it as a mini-Flask you attach to the main app. Useful once your project grows beyond a handful of routes.',
+    code: 'from flask import Blueprint\n\nbp = Blueprint("auth", __name__)\n\n@bp.route("/login")\ndef login():\n    return "Login page"\n\napp.register_blueprint(bp)'
+  },
+  'render_template': {
+    layer: 'Function',
+    desc: 'Looks for an HTML file inside your templates/ folder, runs it through the Jinja2 engine to fill in any {{ variables }}, and returns the result as a string Flask sends to the browser.',
+    code: 'from flask import render_template\n\n@app.route("/hello/<name>")\ndef hello(name):\n    return render_template(\n        "hello.html",\n        name=name,\n        year=2026\n    )'
+  },
+  'jsonify': {
+    layer: 'Function',
+    desc: 'Converts a Python dict or list to a JSON-formatted HTTP response and sets the Content-Type header to application/json automatically. Much safer than return json.dumps() which skips the headers.',
+    code: 'from flask import jsonify\n\n@app.route("/api/user/<int:uid>")\ndef get_user(uid):\n    return jsonify({\n        "id": uid,\n        "name": "Ada"\n    })'
+  },
+  'redirect': {
+    layer: 'Function',
+    desc: 'Sends the browser to a different URL with a 302 (or custom) status code. The browser immediately makes a new request to the target URL. Commonly used after a form POST to prevent duplicate submissions.',
+    code: 'from flask import redirect, url_for\n\n@app.route("/old-page")\ndef old():\n    return redirect(\n        url_for("new_page"),\n        code=301  # permanent\n    )'
+  },
+  'url_for': {
+    layer: 'Function',
+    desc: 'Builds a URL from a function name instead of hardcoding it. If you ever rename a route, url_for() still works — only the decorator needs updating. Also handles query parameters and static files.',
+    code: 'from flask import url_for\n\n# Inside a route or template:\nurl = url_for("profile", name="ada")\n# → "/user/ada"\n\nurl_for("static",\n        filename="style.css")\n# → "/static/style.css"'
+  },
+  'abort': {
+    layer: 'Function',
+    desc: 'Immediately stops the current request and returns an HTTP error code. Useful for permission checks — if the user is not logged in, abort(401) right away instead of writing nested if/else all the way down.',
+    code: 'from flask import abort\n\n@app.route("/admin")\ndef admin():\n    if not user_is_admin():\n        abort(403)  # stops here\n    return "Admin panel"'
+  },
+  'make_response': {
+    layer: 'Function',
+    desc: 'Creates a response object you can customize before returning — useful when you need to set cookies, custom headers, or a non-200 status code on a rendered template.',
+    code: 'from flask import make_response\n\n@app.route("/")\ndef home():\n    resp = make_response(\n        render_template("home.html")\n    )\n    resp.set_cookie("visited", "yes")\n    resp.headers["X-Custom"] = "hi"\n    return resp'
+  },
+  'request': {
+    layer: 'Object',
+    desc: 'A proxy object that holds everything about the current HTTP request: the method (GET/POST), URL, headers, JSON body, form data, query parameters, and more. Only valid inside a request context (i.e., inside a route function).',
+    code: 'from flask import request\n\n@app.route("/search")\ndef search():\n    q = request.args.get("q")   # ?q=...\n    data = request.get_json()   # POST body\n    ua = request.headers.get(\n        "User-Agent"\n    )\n    return f"Searching: {q}"'
+  },
+  'session': {
+    layer: 'Object',
+    desc: 'A dictionary that persists across requests for the same user. Stored in a cryptographically signed browser cookie. Set app.secret_key to enable it. Values disappear when the user clears cookies or the session expires.',
+    code: 'from flask import session\napp.secret_key = "your-secret"\n\n@app.route("/login", methods=["POST"])\ndef login():\n    session["user"] = "Ada"\n    return redirect(url_for("home"))\n\n@app.route("/")\ndef home():\n    user = session.get("user")\n    return f"Hello, {user}"'
+  },
+  'g': {
+    layer: 'Object',
+    desc: 'A scratch space tied to one request\'s lifetime. Use it to store things that multiple functions need during a single request — like a database connection opened in before_request() and used in several route helpers.',
+    code: 'from flask import g\n\n@app.before_request\ndef open_db():\n    g.db = connect_database()\n\n@app.route("/items")\ndef items():\n    rows = g.db.query("SELECT ...")\n    return jsonify(rows)\n\n@app.teardown_request\ndef close_db(e):\n    g.db.close()'
+  },
+  'route': {
+    layer: 'Routing System',
+    desc: 'A decorator that registers a URL rule in Flask\'s routing table. When a request arrives, Flask walks the table and calls the first function whose rule matches. The function name and URL are completely independent.',
+    code: '# Same URL, two methods → two functions\n@app.route("/notes", methods=["GET"])\ndef list_notes(): ...\n\n@app.route("/notes", methods=["POST"])\ndef add_note(): ...\n\n# One function, two URLs\n@app.route("/")\n@app.route("/home")\ndef homepage(): ...'
+  },
+  'jinja2': {
+    layer: 'Template Engine',
+    desc: 'Jinja2 is a separate package Flask pulls in to power templates. It lets you write HTML with {{ variable }} placeholders and {% control flow %} blocks. Flask passes your Python values in; Jinja2 fills them in and returns plain HTML.',
+    code: '<!-- templates/profile.html -->\n<h1>{{ name }}</h1>\n\n{% if score > 50 %}\n  <p>High scorer!</p>\n{% endif %}\n\n<ul>\n{% for item in items %}\n  <li>{{ item }}</li>\n{% endfor %}\n</ul>'
+  },
+  'run': {
+    layer: 'Development Server',
+    desc: 'Starts Flask\'s built-in development web server. Only for local development — never use in production. In production, run Flask behind a WSGI server like Gunicorn. debug=True auto-reloads on code changes.',
+    code: 'if __name__ == "__main__":\n    app.run(\n        debug=True,   # auto-reload\n        port=5000,    # default\n        host="0.0.0.0"  # all interfaces\n    )'
+  }
+};
+
+var panel = document.getElementById('term-panel');
+var nameEl = document.getElementById('term-name');
+var layerEl = document.getElementById('term-layer');
+var descEl = document.getElementById('term-desc');
+var codeEl = document.getElementById('term-code');
+
+document.getElementById('term-chips').addEventListener('click', function(ev){
+  var chip = ev.target.closest('.term-chip');
+  if(!chip) return;
+  var key = chip.dataset.term;
+  var t = TERMS[key];
+  if(!t) return;
+
+  document.querySelectorAll('.term-chip').forEach(function(c){ c.style.background=''; c.style.color=''; c.style.borderColor=''; });
+  chip.style.background='var(--fl-soft)';
+  chip.style.color='var(--fl)';
+  chip.style.borderColor='var(--fl-mid)';
+
+  nameEl.textContent = chip.textContent;
+  layerEl.textContent = t.layer;
+  descEl.textContent = t.desc;
+  codeEl.textContent = t.code;
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+});
+
+/* ══ PROGRESS (update to count new quiz section) ══ */
+function updateProgress(){
+  var total=document.querySelectorAll('.quiz-card').length;
+  var done=document.querySelectorAll('.qopt.correct').length;
+  var pct=total?done/total*100:0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('progTxt').textContent=done+' / '+total;
+}
+updateProgress();
+</script>
+</body>
+</html>
