@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flask Flashcards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8F7F2; --white:#FFFFFF; --border:#E4E1D6;
+  --ink:#1A1917; --ink-soft:#6A665C; --ink-faint:#AEAA9F;
+  --py:#2954A6; --py-soft:#EAF0FB; --py-mid:#C3D0F0;
+  --fl:#C07A28; --fl-soft:#FBF3E7; --fl-mid:#F0D5A8;
+  --green:#2F8A72; --green-soft:#E7F4EF;
+  --red:#C1443C; --red-soft:#FBEAE8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Inter',sans-serif; line-height:1.6;
+  -webkit-font-smoothing:antialiased; min-height:100vh;
+}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif; letter-spacing:-.01em;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ── HEADER ── */
+header{
+  background:var(--white); border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:50;
+}
+.topbar{
+  max-width:880px; margin:0 auto; padding:13px 24px;
+  display:flex; align-items:center; gap:14px;
+}
+.brand{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600; color:var(--ink); }
+.brand span{color:var(--fl);}
+.progress-bar{ flex:1; height:6px; background:var(--border); border-radius:4px; overflow:hidden; }
+.progress-fill{ height:100%; background:var(--fl); transition:width .3s; border-radius:4px; width:0%; }
+.progress-text{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-faint); white-space:nowrap; }
+
+/* ── HERO ── */
+.hero{
+  max-width:880px; margin:0 auto; padding:44px 24px 32px;
+  display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap;
+}
+.hero h1{ font-size:clamp(26px,4vw,38px); line-height:1.1; }
+.hero p{ color:var(--ink-soft); font-size:15px; margin-top:8px; max-width:480px; }
+.stats{
+  display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;
+}
+.stat{
+  display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink-soft);
+  background:var(--white); border:1px solid var(--border); border-radius:20px;
+  padding:6px 14px;
+}
+.stat-dot{ width:8px; height:8px; border-radius:50%; }
+
+/* ── CATEGORY FILTER ── */
+.filter-row{
+  max-width:880px; margin:0 auto; padding:0 24px 20px;
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+.filter-btn{
+  font-family:'IBM Plex Mono',monospace; font-size:12px; padding:7px 15px;
+  border-radius:20px; border:1.5px solid var(--border); background:var(--white);
+  color:var(--ink-soft); cursor:pointer; transition:all .15s;
+}
+.filter-btn:hover{ border-color:var(--fl); color:var(--fl); }
+.filter-btn.active{ background:var(--fl); border-color:var(--fl); color:#fff; }
+
+/* ── CARD GRID ── */
+.grid{
+  max-width:880px; margin:0 auto; padding:0 24px 60px;
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;
+}
+
+/* ── FLASHCARD ── */
+.card-outer{ cursor:pointer; }
+.card-inner{ width:100%; position:relative; }
+.card-face{
+  border-radius:12px; border:1.5px solid var(--border);
+  display:flex; flex-direction:column; padding:18px 20px;
+  background:var(--white); transition:border-color .2s, border-radius .2s;
+}
+.card-back{
+  display:none; border-top:2px dashed var(--border);
+  border-radius:0 0 12px 12px;
+  animation:slideDown .25s ease;
+}
+@keyframes slideDown{
+  from{opacity:0;transform:translateY(-8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.card-outer.flipped .card-front{
+  border-bottom-left-radius:0; border-bottom-right-radius:0;
+  border-bottom:none; border-color:var(--fl);
+}
+.card-outer.flipped .card-back{ display:flex; border-color:var(--fl); }
+
+/* front */
+.card-cat{
+  font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px;
+  padding:3px 9px; border-radius:12px; display:inline-block; align-self:flex-start;
+}
+.card-cat.py{ background:var(--py-soft); color:var(--py); }
+.card-cat.fl{ background:var(--fl-soft); color:var(--fl); }
+.card-cat.both{ background:var(--bg); color:var(--ink-faint); border:1px solid var(--border); }
+
+.card-q{ font-family:'Space Grotesk',sans-serif; font-size:15.5px; font-weight:600; color:var(--ink); flex:1; }
+.card-q code{ font-family:'IBM Plex Mono',monospace; font-size:13px; background:var(--bg); padding:1px 6px; border-radius:4px; color:var(--py); }
+
+.flip-hint{
+  font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-faint);
+  margin-top:12px; display:flex; align-items:center; gap:5px;
+}
+.flip-hint::before{ content:'↻'; font-size:13px; }
+
+/* back */
+.card-back{ background:var(--white); }
+.card-a{
+  font-size:13.5px; color:var(--ink-soft); line-height:1.65; flex:1;
+}
+.card-a code{
+  font-family:'IBM Plex Mono',monospace; font-size:12px;
+  background:var(--bg); padding:1px 6px; border-radius:4px; color:var(--py);
+}
+.card-a pre{
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px; background:var(--bg);
+  border:1px solid var(--border); border-radius:7px; padding:10px 12px;
+  margin-top:8px; overflow-x:auto; line-height:1.6;
+}
+.card-a .kw{color:#8B3FA8;} .card-a .dec{color:var(--fl);font-weight:600;}
+.card-a .str{color:var(--green);} .card-a .fn{color:var(--py);}
+.card-a .cmt{color:var(--ink-faint);font-style:italic;}
+
+.card-knew{
+  display:flex; gap:8px; margin-top:12px;
+}
+.btn-knew, .btn-didnt{
+  flex:1; font-family:'IBM Plex Mono',monospace; font-size:12px; padding:7px 0;
+  border-radius:8px; border:1.5px solid; cursor:pointer; transition:all .15s;
+}
+.btn-knew{ background:var(--green-soft); border-color:var(--green); color:var(--green); }
+.btn-knew:hover{ background:var(--green); color:#fff; }
+.btn-didnt{ background:var(--red-soft); border-color:var(--red); color:var(--red); }
+.btn-didnt:hover{ background:var(--red); color:#fff; }
+
+/* card state badges */
+.card-outer.known .card-face{ border-color:var(--green); }
+.card-outer.known .card-face::after{
+  content:'✓'; position:absolute; top:10px; right:12px;
+  font-size:13px; color:var(--green); font-weight:700;
+}
+
+/* ── SUMMARY ── */
+#summary{
+  display:none; max-width:480px; margin:0 auto; padding:48px 24px 60px;
+  text-align:center;
+}
+#summary h2{ font-size:26px; margin-bottom:12px; }
+#summary p{ color:var(--ink-soft); font-size:15px; margin-bottom:28px; }
+.score-ring{
+  width:120px; height:120px; border-radius:50%;
+  background:conic-gradient(var(--fl) 0%, var(--border) 0%);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 24px; font-size:28px; font-family:'Space Grotesk',sans-serif;
+  font-weight:700; position:relative;
+}
+.score-ring::before{
+  content:''; position:absolute; inset:10px; border-radius:50%; background:var(--bg);
+}
+.score-num{ position:relative; z-index:1; }
+.restart-btn{
+  font-family:'IBM Plex Mono',monospace; font-size:13.5px; padding:12px 28px;
+  border-radius:9px; background:var(--ink); color:#fff; border:none;
+  cursor:pointer; margin:0 auto;
+}
+.restart-btn:hover{ background:#000; }
+
+@media(max-width:600px){
+  .grid{ grid-template-columns:1fr; }
+  .hero{ padding:32px 20px 24px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <span class="brand">FLASK <span>FLASHCARDS</span></span>
+    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    <span class="progress-text" id="progText">0 / 0 known</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="hero">
+    <div>
+      <h1>Flask &amp; Python<br>Flashcard Deck</h1>
+      <p>Click any card to reveal the answer. Mark each one as known or still learning to track your progress.</p>
+      <div class="stats">
+        <div class="stat"><span class="stat-dot" style="background:var(--py);"></span> Python concepts</div>
+        <div class="stat"><span class="stat-dot" style="background:var(--fl);"></span> Flask concepts</div>
+        <div class="stat"><span class="stat-dot" style="background:var(--ink-faint);"></span> Both</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <button class="filter-btn active" data-filter="all">All cards</button>
+    <button class="filter-btn" data-filter="py">Python</button>
+    <button class="filter-btn" data-filter="fl">Flask</button>
+    <button class="filter-btn" data-filter="both">Both</button>
+    <button class="filter-btn" data-filter="unknown">Still learning</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div id="summary">
+    <div class="score-ring"><span class="score-num" id="scoreNum">0%</span></div>
+    <h2>Deck complete!</h2>
+    <p id="summaryMsg"></p>
+    <button class="restart-btn" id="restartBtn">Start over</button>
+  </div>
+
+</main>
+
+<script>
+var CARDS = [
+  {
+    cat:'both',
+    q:'What is the difference between Python and Flask?',
+    a:'Python is a general-purpose programming language. Flask is a Python <em>package</em> — someone else\'s code you install — that adds one specific thing: the ability to receive HTTP requests from a browser and send responses back. You never choose between them; Flask apps are written in Python.'
+  },
+  {
+    cat:'py',
+    q:'What is a Python function? How do you call it?',
+    a:'A Python function is a named block of code defined with <code>def</code>. You call it by writing its name followed by parentheses: <code>greet("Ada")</code>. Without Flask, a browser has no way to call a Python function — there is no URL, no server, no entry point from the outside.'
+  },
+  {
+    cat:'fl',
+    q:'What does <code>@app.route("/")</code> do?',
+    a:'It is a decorator that registers a URL in Flask\'s routing table and connects it to the function directly below it. When a browser visits that URL, Flask looks up the table and calls the matching function. The URL string and the function name are completely independent.'
+  },
+  {
+    cat:'fl',
+    q:'What is <code>Flask(__name__)</code> and why do you pass <code>__name__</code>?',
+    a:'<code>Flask(__name__)</code> creates the Flask application object. <code>__name__</code> is a string Python sets automatically — the module name of the current file. Flask uses it to locate your project folder on disk so it can find <code>templates/</code> and <code>static/</code> relative to that file.'
+  },
+  {
+    cat:'py',
+    q:'What is <code>__name__</code> in Python?',
+    a:'A variable Python sets automatically in every file. Its value depends on how the file is used:<br><br>• Run directly → <code>"__main__"</code><br>• Imported by another file → the filename without <code>.py</code> (e.g. <code>"app"</code>)<br><br>You never define it yourself.'
+  },
+  {
+    cat:'fl',
+    q:'What does <code>app.run(debug=True)</code> do?',
+    a:'Starts Flask\'s built-in development web server, listening on port 5000 by default. Without this call, the Python file runs and exits immediately — nothing is left running to receive browser requests. <code>debug=True</code> enables auto-reload when code changes.'
+  },
+  {
+    cat:'fl',
+    q:'What is a route in Flask?',
+    a:'A mapping between a URL pattern and a Python function. When a request arrives, Flask matches the URL against all registered routes and calls the first matching function. Routes are case-sensitive and exact — <code>/about</code> and <code>/About</code> are different routes.'
+  },
+  {
+    cat:'fl',
+    q:'What happens when you visit a URL with no matching route?',
+    a:'Flask returns a <strong>404 Not Found</strong> response. Routing is not fuzzy or case-insensitive — Flask only calls a function if the URL matches the route string exactly. <code>/blog</code> and <code>/ABOUT</code> both return 404 if only <code>/about</code> is defined.'
+  },
+  {
+    cat:'fl',
+    q:'How do you create a dynamic URL in Flask?',
+    a:'Put a variable name in angle brackets in the route string. Flask extracts that piece of the URL and passes it as an argument to your function:<pre><span class="dec">@app.route</span>(<span class="str">"/user/&lt;name&gt;"</span>)\n<span class="kw">def</span> <span class="fn">profile</span>(name):\n    <span class="kw">return</span> <span class="str">f"Profile: {name}"</span></pre>Visiting <code>/user/ada</code> calls <code>profile(name="ada")</code>.'
+  },
+  {
+    cat:'fl',
+    q:'What does <code>&lt;int:n&gt;</code> mean in a route?',
+    a:'A type converter. It tells Flask to only match URLs where that segment is a valid integer, and to convert it to a Python <code>int</code> before passing it to your function. If someone visits <code>/square/two</code>, Flask rejects it at the routing layer — your function never runs.'
+  },
+  {
+    cat:'fl',
+    q:'What is the difference between GET and POST?',
+    a:'Two HTTP methods:<br><br>• <strong>GET</strong> — the browser is asking to <em>read</em> something. No data is sent in the body.<br>• <strong>POST</strong> — the browser is <em>sending</em> data to the server (e.g. a form submission or JSON payload).<br><br>The same URL can have two different Flask functions, one for each method.'
+  },
+  {
+    cat:'fl',
+    q:'How do you restrict a route to GET or POST only?',
+    a:'Pass a <code>methods</code> list to the decorator:<pre><span class="dec">@app.route</span>(<span class="str">"/notes"</span>, methods=[<span class="str">"GET"</span>])\n<span class="kw">def</span> <span class="fn">list_notes</span>(): ...\n\n<span class="dec">@app.route</span>(<span class="str">"/notes"</span>, methods=[<span class="str">"POST"</span>])\n<span class="kw">def</span> <span class="fn">add_note</span>(): ...</pre>Same URL, two functions, each handling one method.'
+  },
+  {
+    cat:'fl',
+    q:'What is <code>request.get_json()</code>?',
+    a:'A Flask function that reads the JSON body sent by the browser in a POST request and converts it into a Python dictionary. The <code>request</code> object is provided by Flask and represents the current incoming HTTP request.'
+  },
+  {
+    cat:'fl',
+    q:'What does <code>jsonify()</code> do?',
+    a:'A Flask function that converts a Python dictionary or list into a proper JSON HTTP response, and automatically sets the <code>Content-Type: application/json</code> header. Using <code>jsonify()</code> is safer than <code>json.dumps()</code> because it sets the headers correctly.'
+  },
+  {
+    cat:'fl',
+    q:'What happens to the return value of a Flask route function?',
+    a:'Flask intercepts it and turns it into an HTTP response:<br><br>• <code>return "Hello"</code> → plain text page<br>• <code>return "&lt;h1&gt;Hi&lt;/h1&gt;"</code> → HTML page<br>• <code>return jsonify({...})</code> → JSON response<br>• <code>return "Not found", 404</code> → custom status code<br>• <code>return render_template("page.html")</code> → rendered HTML file'
+  },
+  {
+    cat:'fl',
+    q:'What is <code>render_template()</code>?',
+    a:'A Flask function that finds an HTML file in your <code>templates/</code> folder, runs it through the Jinja2 template engine to fill in any <code>{{ variable }}</code> placeholders, and returns the result as a string that becomes the HTTP response.'
+  },
+  {
+    cat:'both',
+    q:'Which parts of a Flask app are Python and which are Flask?',
+    a:'<strong>Python:</strong> <code>def</code>, <code>return</code>, <code>if</code>, <code>for</code>, strings, math, lists, dicts, <code>__name__</code>, <code>import</code><br><br><strong>Flask:</strong> <code>Flask()</code>, <code>@app.route()</code>, <code>app.run()</code>, <code>request</code>, <code>jsonify()</code>, <code>render_template()</code>, <code>redirect()</code>, <code>session</code><br><br>The business logic inside every route function is always plain Python.'
+  },
+  {
+    cat:'fl',
+    q:'What is the Flask <code>request</code> object?',
+    a:'A proxy object Flask provides that holds everything about the current HTTP request: the method (GET/POST), URL, headers, JSON body, form data, and query parameters. It is only valid inside a route function. Examples:<br><br><code>request.get_json()</code> — reads JSON body<br><code>request.args.get("q")</code> — reads query params<br><code>request.method</code> — "GET" or "POST"'
+  },
+  {
+    cat:'fl',
+    q:'What is a Blueprint in Flask?',
+    a:'A way to organise routes into separate files instead of putting everything in one <code>app.py</code>. A Blueprint is like a mini-Flask object — you define routes on it, then register it with the main app. Useful once a project grows beyond a handful of routes.'
+  },
+  {
+    cat:'fl',
+    q:'What is <code>session</code> in Flask?',
+    a:'A dictionary that persists across multiple requests for the same user, stored in a signed browser cookie. Useful for login state. Requires <code>app.secret_key</code> to be set. Values survive page refreshes but disappear when the user clears cookies.'
+  },
+  {
+    cat:'fl',
+    q:'What is Jinja2 and how does it relate to Flask?',
+    a:'Jinja2 is a separate template engine that Flask includes automatically. It lets you write HTML files with <code>{{ variable }}</code> placeholders and <code>{% if %}</code> / <code>{% for %}</code> control flow. Flask passes Python values in; Jinja2 fills them in and returns plain HTML.'
+  },
+  {
+    cat:'fl',
+    q:'What does <code>redirect()</code> do?',
+    a:'Sends the browser to a different URL with a 302 status code (or custom). The browser immediately makes a new request to the target URL. Commonly used after a form POST to prevent duplicate submissions when the user refreshes.'
+  },
+  {
+    cat:'fl',
+    q:'What is <code>url_for()</code> and why use it instead of hardcoding URLs?',
+    a:'A Flask function that builds a URL from a function name. Example: <code>url_for("profile", name="ada")</code> → <code>"/user/ada"</code>. If you rename the route later, <code>url_for()</code> still works — only the decorator needs updating. Hardcoded URLs break silently.'
+  },
+  {
+    cat:'fl',
+    q:'What is <code>abort()</code>?',
+    a:'Immediately stops the current request and returns an HTTP error response. Example: <code>abort(403)</code> returns Forbidden. Useful for permission checks — call it early instead of nesting <code>if/else</code> all the way through the function.'
+  },
+  {
+    cat:'py',
+    q:'What is a decorator in Python?',
+    a:'A function that wraps another function, adding behaviour before or after it runs, without changing its code. Syntax: put <code>@decorator_name</code> on the line above the function definition.<br><br>Flask\'s <code>@app.route()</code> is a decorator — it wraps your function and registers its URL in Flask\'s routing table.'
+  },
+  {
+    cat:'both',
+    q:'What is the <code>if __name__ == "__main__":</code> pattern?',
+    a:'A Python guard that runs a block of code only when the file is executed directly, not when it\'s imported. In Flask apps:<pre><span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:\n    app.<span class="fn">run</span>(debug=<span class="kw">True</span>)</pre>This prevents the server from starting when <code>app.py</code> is imported by another file or by a WSGI server.'
+  },
+  {
+    cat:'fl',
+    q:'Where must Flask look for HTML template files?',
+    a:'Inside a folder named exactly <code>templates/</code>, placed next to the file that called <code>Flask(__name__)</code>. Flask does not look anywhere else by default. If the folder is named differently or in the wrong location, <code>render_template()</code> will raise <code>TemplateNotFound</code>.'
+  },
+  {
+    cat:'fl',
+    q:'What is the Flask development server and should you use it in production?',
+    a:'The server started by <code>app.run()</code> — a simple single-threaded server built into Flask for local development only. <strong>Never use it in production</strong>. In production, run Flask behind a proper WSGI server like Gunicorn, which can handle multiple simultaneous requests.'
+  },
+  {
+    cat:'fl',
+    q:'How can the same URL serve two different actions?',
+    a:'By registering it twice with different <code>methods</code>:<pre><span class="dec">@app.route</span>(<span class="str">"/notes"</span>, methods=[<span class="str">"GET"</span>])\n<span class="kw">def</span> <span class="fn">list_notes</span>(): ...\n\n<span class="dec">@app.route</span>(<span class="str">"/notes"</span>, methods=[<span class="str">"POST"</span>])\n<span class="kw">def</span> <span class="fn">add_note</span>(): ...</pre>Flask checks the HTTP method of each incoming request and calls the right function.'
+  },
+  {
+    cat:'both',
+    q:'What is an HTTP response? What does Flask do with your return value?',
+    a:'An HTTP response is what the server sends back to the browser after a request. It has a status code (200 OK, 404 Not Found, etc.), headers, and a body. Flask takes whatever your route function returns and packages it into a proper HTTP response — setting the right headers automatically.'
+  }
+];
+
+var known = new Set();
+var currentFilter = 'all';
+
+function getFiltered(){
+  return CARDS.filter(function(c,i){
+    if(currentFilter === 'all') return true;
+    if(currentFilter === 'unknown') return !known.has(i);
+    return c.cat === currentFilter;
+  }).map(function(c,_,arr){ return {card:c, idx:CARDS.indexOf(c)}; });
+}
+
+function updateProgress(){
+  var total = CARDS.length;
+  var k = known.size;
+  var pct = total ? k/total*100 : 0;
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('progText').textContent = k + ' / ' + total + ' known';
+}
+
+function renderGrid(){
+  var grid = document.getElementById('grid');
+  var summary = document.getElementById('summary');
+  var filtered = getFiltered();
+
+  if(filtered.length === 0 && currentFilter === 'unknown' && known.size > 0){
+    grid.style.display = 'none';
+    summary.style.display = 'block';
+    var pct = Math.round(known.size/CARDS.length*100);
+    document.getElementById('scoreNum').textContent = pct + '%';
+    var ring = document.querySelector('.score-ring');
+    ring.style.background = 'conic-gradient(var(--fl) '+pct+'%, var(--border) '+pct+'%)';
+    document.getElementById('summaryMsg').textContent =
+      known.size + ' of ' + CARDS.length + ' cards marked as known. ' +
+      (pct === 100 ? 'Perfect score!' : 'Keep reviewing the rest!');
+    return;
+  }
+
+  grid.style.display = '';
+  summary.style.display = 'none';
+  grid.innerHTML = '';
+
+  filtered.forEach(function(item){
+    var c = item.card, idx = item.idx;
+    var outer = document.createElement('div');
+    outer.className = 'card-outer' + (known.has(idx) ? ' known' : '');
+    outer.dataset.idx = idx;
+
+    var inner = document.createElement('div');
+    inner.className = 'card-inner';
+    // no 3D — card-back simply shows/hides via CSS
+
+    // FRONT
+    var front = document.createElement('div');
+    front.className = 'card-face card-front';
+    front.innerHTML =
+      '<span class="card-cat '+c.cat+'">'+(c.cat==='py'?'Python':c.cat==='fl'?'Flask':'Both')+'</span>' +
+      '<div class="card-q">'+c.q+'</div>' +
+      '<div class="flip-hint">tap to reveal answer</div>';
+
+    // BACK
+    var back = document.createElement('div');
+    back.className = 'card-face card-back';
+    back.innerHTML =
+      '<div class="card-a">'+c.a+'</div>' +
+      '<div class="card-knew">' +
+        '<button class="btn-knew" data-idx="'+idx+'">✓ Got it</button>' +
+        '<button class="btn-didnt" data-idx="'+idx+'">✗ Not yet</button>' +
+      '</div>';
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    outer.appendChild(inner);
+    grid.appendChild(outer);
+
+    // flip on card click (not button click)
+    outer.addEventListener('click', function(e){
+      if(e.target.classList.contains('btn-knew') || e.target.classList.contains('btn-didnt')) return;
+      outer.classList.toggle('flipped');
+    });
+
+    // got it
+    back.querySelector('.btn-knew').addEventListener('click', function(e){
+      e.stopPropagation();
+      known.add(idx);
+      outer.classList.add('known');
+      outer.classList.remove('flipped');
+      setTimeout(function(){
+        if(currentFilter === 'unknown') renderGrid();
+        updateProgress();
+      }, 300);
+      updateProgress();
+    });
+
+    // not yet
+    back.querySelector('.btn-didnt').addEventListener('click', function(e){
+      e.stopPropagation();
+      known.delete(idx);
+      outer.classList.remove('known', 'flipped');
+      updateProgress();
+    });
+  });
+
+  updateProgress();
+}
+
+// filters
+document.querySelectorAll('.filter-btn').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    currentFilter = btn.dataset.filter;
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    renderGrid();
+  });
+});
+
+// restart
+document.getElementById('restartBtn').addEventListener('click', function(){
+  known.clear();
+  currentFilter = 'all';
+  document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelector('[data-filter="all"]').classList.add('active');
+  renderGrid();
+});
+
+renderGrid();
+</script>
+</body>
+</html>
