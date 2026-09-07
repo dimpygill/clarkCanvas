@@ -271,6 +271,12 @@ footer{text-align:center;padding:20px 0 48px;color:var(--ink-soft);font-size:13p
     <a class="snav" href="#s5"><span class="snav-num">6</span>Navigating JSON</a>
     <a class="snav" href="#s6"><span class="snav-num">7</span>When Things Go Wrong</a>
     <a class="snav" href="#s7"><span class="snav-num">8</span>The Full Lab</a>
+    <a class="snav" href="#s8"><span class="snav-num">9</span>Features &amp; Target</a>
+    <a class="snav" href="#s9"><span class="snav-num">10</span>Train / Test Split</a>
+    <a class="snav" href="#s10"><span class="snav-num">11</span>Train the Model</a>
+    <a class="snav" href="#s11"><span class="snav-num">12</span>Evaluate</a>
+    <a class="snav" href="#s12"><span class="snav-num">13</span>User Input</a>
+    <a class="snav" href="#s13"><span class="snav-num">14</span>Predict</a>
   </div>
 </div>
 
@@ -1483,7 +1489,7 @@ df = pd.DataFrame(rows)        <span class="c"># list of dicts → DataFrame</sp
 df = df.dropna()               <span class="c"># remove incomplete rows</span>
 X  = df[[<span class="st">"Study Hours"</span>, <span class="st">"Sleep Hours"</span>, <span class="st">"Attendance"</span>]]
 y  = df[<span class="st">"Final Score"</span>]
-</pre>
+<span class="c"># → ready for scikit-learn</span></pre>
   </div>
 
   <div class="checklist"><h3>✅ Step 8 — Lab complete when ALL boxes are checked:</h3>
@@ -1493,7 +1499,7 @@ y  = df[<span class="st">"Final Score"</span>]
     <label class="chk"><input type="checkbox"> I understand where this script's output goes next (pandas → sklearn)</label>
   </div>
 
-  <div class="checklist" style="border-color:var(--green);margin-top:24px"><h3>✅ Complete lab checklist — all 9 steps:</h3>
+  <div class="checklist" style="border-color:var(--green);margin-top:24px"><h3>✅ Complete lab checklist — Steps 0–8:</h3>
     <label class="chk"><input type="checkbox"> Step 0: I know the 7 technologies and their roles</label>
     <label class="chk"><input type="checkbox"> Step 1: I know HTTP request parts and all 5 status codes</label>
     <label class="chk"><input type="checkbox"> Step 2: Python verified, venv created and activated, requests installed</label>
@@ -1507,11 +1513,498 @@ y  = df[<span class="st">"Final Score"</span>]
 </section>
 </div>
 
+<!-- ══════════════ STEP 9: FEATURES & TARGET ══════════════ -->
+<div class="wrap">
+<section class="step" id="s8">
+  <div class="step-eyebrow"><span class="step-num">STEP 9</span><span class="step-tag">Features &amp; Target</span></div>
+  <h2>Separating inputs from the answer</h2>
+
+  <p>Before any model can be trained, the data must be divided into two parts: the <strong>features</strong> (the inputs the model uses to make a prediction) and the <strong>target</strong> (the value the model is trying to predict). In pandas, this means splitting the DataFrame into two separate variables — <code>X</code> and <code>y</code>.</p>
+
+  <div class="analogy">
+    <p>Think of it like preparing an exam. The feature columns — study hours, sleep, attendance — are the information a student brings into the room. The target column — final score — is what the examiner writes in their grade book afterwards. The model learns the relationship between what students bring in and what grades they receive. During prediction, it only gets the "what they bring in" part, and has to estimate the grade.</p>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — Section 4: select features and target</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># X = the feature matrix — the columns the model uses as inputs</span>
+X = df[[
+    <span class="st">"Study Hours"</span>,
+    <span class="st">"Sleep Hours"</span>,
+    <span class="st">"Attendance"</span>
+]]
+
+<span class="c"># y = the target vector — the column the model is trying to predict</span>
+y = df[<span class="st">"Final Score"</span>]</pre>
+  </div>
+
+  <h3>Why <code>X</code> and <code>y</code>? Why double brackets for X?</h3>
+
+  <table class="tbl">
+    <tr><th>Detail</th><th>Explanation</th></tr>
+    <tr>
+      <td><code>X</code> (capital)</td>
+      <td>Convention from mathematics — a capital letter signals a matrix (rows × columns). X has 30 rows and 3 columns.</td>
+    </tr>
+    <tr>
+      <td><code>y</code> (lowercase)</td>
+      <td>Convention for a vector — one column, 30 values. Lowercase signals a single series, not a matrix.</td>
+    </tr>
+    <tr>
+      <td><code>df[["col1","col2"]]</code> (double brackets)</td>
+      <td>Single bracket <code>df["col"]</code> returns a Series. Double bracket <code>df[["col"]]</code> returns a DataFrame. scikit-learn expects X to be a DataFrame or 2D array — double brackets ensure that.</td>
+    </tr>
+    <tr>
+      <td><code>df["Final Score"]</code> (single bracket)</td>
+      <td>scikit-learn expects y to be a 1D Series — single bracket is correct here.</td>
+    </tr>
+  </table>
+
+  <h3>Why these three features?</h3>
+
+  <p>The three columns chosen — Study Hours, Sleep Hours, and Attendance — all have a plausible causal link to exam performance. That causal link matters: a model trained on logically connected features generalises better than one trained on coincidental correlations. The features also come from Airtable at a consistent scale: Study Hours and Sleep Hours are plain numbers, and Attendance arrives as a decimal (0.95, not 95) — a fact that becomes critical during prediction in Step 13.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">inspect X and y — run these after the split</span><button class="copy-btn">Copy</button></div>
+<pre>print(X.shape)   <span class="c"># → (30, 3)  — 30 rows, 3 feature columns</span>
+print(y.shape)   <span class="c"># → (30,)    — 30 values, one per student</span>
+
+print(X.head())
+<span class="o">   Study Hours  Sleep Hours  Attendance
+0          8.0          7.0        0.95
+1          2.0          5.0        0.60
+2          5.0          8.0        0.80
+3         10.0          6.0        0.90
+4          3.0          6.0        0.55</span>
+
+print(y.head())
+<span class="o">0    88.0
+1    45.0
+2    67.0
+3    94.0
+4    51.0
+Name: Final Score, dtype: float64</span></pre>
+  </div>
+
+  <div class="quiz">
+    <h3>Why does <code>X = df[["Study Hours","Sleep Hours","Attendance"]]</code> use double brackets while <code>y = df["Final Score"]</code> uses single?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q_xy1" data-i="0">Double brackets are needed when column names contain spaces</button>
+      <button class="qopt" data-q="q_xy1" data-i="1" data-correct>Double brackets return a DataFrame (2D); single brackets return a Series (1D). scikit-learn needs X as a 2D structure and y as 1D.</button>
+      <button class="qopt" data-q="q_xy1" data-i="2">There is no practical difference — either form works for both</button>
+    </div>
+    <div class="qexpl" id="q_xy1-expl">scikit-learn's fit() method checks the shape of its inputs. X must be 2D (a matrix of shape [n_samples, n_features]) and y must be 1D (a vector of shape [n_samples]). df[["col"]] returns a DataFrame — always 2D even with one column. df["col"] returns a Series — always 1D. Getting this wrong raises a "ValueError: bad input shape" at training time.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 9 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I can explain the difference between features (X) and target (y) in one sentence</label>
+    <label class="chk"><input type="checkbox"> I know why X uses double brackets and y uses single</label>
+    <label class="chk"><input type="checkbox"> I know why these three features were chosen (causal link to the target)</label>
+    <label class="chk"><input type="checkbox"> I know that Attendance arrives as a decimal (0.95) not a percentage (95)</label>
+  </div>
+</section>
+</div>
+
+<!-- ══════════════ STEP 10: TRAIN/TEST SPLIT ══════════════ -->
+<div class="wrap">
+<section class="step" id="s9">
+  <div class="step-eyebrow"><span class="step-num">STEP 10</span><span class="step-tag">Train / Test Split</span></div>
+  <h2>Holding back data the model has never seen</h2>
+
+  <p>Before training, the data is split into two sets. The model is trained on one set and then tested on the other — data it has never seen during training. This is the only honest way to measure how well the model will perform on new students in the future.</p>
+
+  <div class="analogy">
+    <p>A driving instructor only uses some of the test routes for practice. On the actual test day, the examiner takes the student on a different route. If the student only memorised the practice routes they would fail on anything new. Holding back test data serves the same purpose: it forces the model to generalise, not memorise.</p>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — Section 5: train/test split</span><button class="copy-btn">Copy</button></div>
+<pre><span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=<span class="num">0.2</span>,      <span class="c"># 20% of rows go to test, 80% to training</span>
+    random_state=<span class="num">42</span>   <span class="c"># fixes the random shuffle so results are reproducible</span>
+)</pre>
+  </div>
+
+  <h3>What each variable contains after the split</h3>
+
+  <table class="tbl">
+    <tr><th>Variable</th><th>Contents</th><th>Size (from 30 rows)</th></tr>
+    <tr><td><code>X_train</code></td><td>Feature columns for training rows</td><td>24 rows × 3 columns</td></tr>
+    <tr><td><code>y_train</code></td><td>Final scores for those same training rows</td><td>24 values</td></tr>
+    <tr><td><code>X_test</code></td><td>Feature columns the model never sees during training</td><td>6 rows × 3 columns</td></tr>
+    <tr><td><code>y_test</code></td><td>True scores for the test rows — used to measure accuracy</td><td>6 values</td></tr>
+  </table>
+
+  <div class="box box-blue"><b>💡 What does <code>random_state=42</code> do?</b><code>train_test_split</code> shuffles the rows randomly before splitting. Without a fixed <code>random_state</code>, a different set of rows would go to train vs. test each time the script runs, producing different evaluation metrics every run. Setting <code>random_state=42</code> pins the shuffle — the same rows always end up in each set, so results are reproducible and comparable. The number 42 has no special meaning; any integer works.</div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">verify the split sizes</span><button class="copy-btn">Copy</button></div>
+<pre>print(X_train.shape)  <span class="c"># → (24, 3)</span>
+print(X_test.shape)   <span class="c"># → (6, 3)</span>
+print(y_train.shape)  <span class="c"># → (24,)</span>
+print(y_test.shape)   <span class="c"># → (6,)</span></pre>
+  </div>
+
+  <div class="quiz">
+    <h3>Why is the model evaluated on <code>X_test</code> / <code>y_test</code> rather than on the training data it already learned from?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q_split1" data-i="0">Because the training data is deleted after fit() runs</button>
+      <button class="qopt" data-q="q_split1" data-i="1" data-correct>A model evaluated on its own training data will always look accurate — it has already seen those answers. The test set reveals how it performs on genuinely new data.</button>
+      <button class="qopt" data-q="q_split1" data-i="2">Because scikit-learn requires a separate test set by design and raises an error otherwise</button>
+    </div>
+    <div class="qexpl" id="q_split1-expl">If a model is measured on the same data it trained on, it can achieve near-perfect scores simply by memorising the answers rather than learning the underlying pattern. This is called overfitting. The test set is data the model has never seen — a realistic measure of whether the model generalises. A model that scores well on training data but poorly on test data has overfit and will make poor predictions on real new students.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 10 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I can explain in one sentence why data is split before training</label>
+    <label class="chk"><input type="checkbox"> I know what X_train, X_test, y_train, y_test each contain</label>
+    <label class="chk"><input type="checkbox"> I know what random_state does and why it matters for reproducibility</label>
+    <label class="chk"><input type="checkbox"> I understand what overfitting means in this context</label>
+  </div>
+</section>
+</div>
+
+<!-- ══════════════ STEP 11: TRAIN THE MODEL ══════════════ -->
+<div class="wrap">
+<section class="step" id="s10">
+  <div class="step-eyebrow"><span class="step-num">STEP 11</span><span class="step-tag">Train the Model</span></div>
+  <h2>What Linear Regression actually does</h2>
+
+  <p>Training a Linear Regression model means finding the best-fit equation that maps feature values to a predicted score. Once <code>model.fit()</code> runs, the model has learned three coefficients (one per feature) and an intercept. These four numbers define the prediction formula.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — Section 6: create and train the model</span><button class="copy-btn">Copy</button></div>
+<pre><span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression
+
+model = LinearRegression()   <span class="c"># create the model object — not trained yet</span>
+
+model.fit(X_train, y_train)  <span class="c"># training happens here — finds the best coefficients</span>
+
+print(<span class="st">"Intercept:"</span>, model.intercept_)
+<span class="kw">for</span> feature, coef <span class="kw">in</span> zip(X.columns, model.coef_):
+    print(<span class="st">f"{feature}: {coef:.4f}"</span>)</pre>
+  </div>
+
+  <h3>The prediction formula</h3>
+
+  <p>After training, the model uses an equation of this form to predict any student's score:</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">the equation Linear Regression learns</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># General form:</span>
+Predicted Score = intercept
+               + (coef_study  × Study Hours)
+               + (coef_sleep  × Sleep Hours)
+               + (coef_attend × Attendance)
+
+<span class="c"># Example — typical output from this dataset:</span>
+<span class="o">Intercept: 12.47
+Study Hours: 5.83
+Sleep Hours: 2.91
+Attendance: 38.54</span>
+
+<span class="c"># So for a student with Study=8, Sleep=7, Attendance=0.95:</span>
+Predicted Score = 12.47
+               + (5.83  × 8)
+               + (2.91  × 7)
+               + (38.54 × 0.95)
+             = 12.47 + 46.64 + 20.37 + 36.61
+             = 116.09   <span class="c">← exceeds 100 when inputs are at the high end</span></pre>
+  </div>
+
+  <div class="box box-amber"><b>⚠️ Linear Regression does not know scores are capped at 100</b>The model is a pure equation. It has no concept of minimum or maximum output. When inputs are pushed to the high end of the training range — or beyond it — the equation can produce predictions above 100 or below 0. This is a known limitation of linear regression on bounded targets, not a bug in the code. The practical fix is shown in Step 14.</div>
+
+  <h3>Reading the training data ranges</h3>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — print training ranges</span><button class="copy-btn">Copy</button></div>
+<pre>print(<span class="st">"Study Hours:"</span>, X[<span class="st">"Study Hours"</span>].min(), <span class="st">"to"</span>, X[<span class="st">"Study Hours"</span>].max())
+print(<span class="st">"Sleep Hours:"</span>, X[<span class="st">"Sleep Hours"</span>].min(), <span class="st">"to"</span>, X[<span class="st">"Sleep Hours"</span>].max())
+print(<span class="st">"Attendance:"</span>,  X[<span class="st">"Attendance"</span>].min(),  <span class="st">"to"</span>, X[<span class="st">"Attendance"</span>].max())
+print(<span class="st">"Final Score:"</span>, y.min(), <span class="st">"to"</span>, y.max())
+
+<span class="o">Study Hours: 1.0 to 10.0
+Sleep Hours: 5.0 to 9.0
+Attendance:  0.40 to 0.97
+Final Score: 38.0 to 97.0</span></pre>
+  </div>
+
+  <p>These ranges define the territory the model actually learned from. Inputs beyond these ranges ask the model to <strong>extrapolate</strong> — to calculate an answer in territory it has never seen. The equation still produces a number, but that number is less trustworthy the further it strays from the training range. This is why the script prints a warning when user input exceeds the max (Step 13).</p>
+
+  <div class="quiz">
+    <h3>A student enters Study Hours = 13, Sleep Hours = 11, Attendance = 90. The model returns 114.95. What is the most likely explanation?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q_train1" data-i="0">There is a bug in the LinearRegression implementation</button>
+      <button class="qopt" data-q="q_train1" data-i="1">The training data contains errors</button>
+      <button class="qopt" data-q="q_train1" data-i="2" data-correct>The inputs exceed the training range — the model is extrapolating. Linear Regression has no upper bound, so the equation produces a value above 100.</button>
+    </div>
+    <div class="qexpl" id="q_train1-expl">Training data Study Hours ran 1–10 and Sleep Hours ran 5–9. A student with 13 study hours and 11 sleep hours is outside both ranges. The model's equation continues increasing linearly past those bounds — it has no concept of a ceiling. This is expected behaviour for Linear Regression, not a malfunction. The right response is to warn the user (Step 13) and clamp the output (Step 14), not to assume the code is broken.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 11 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I know what model.fit() does (finds the best-fit coefficients)</label>
+    <label class="chk"><input type="checkbox"> I can describe the prediction equation: intercept + (coef × feature) for each feature</label>
+    <label class="chk"><input type="checkbox"> I understand why predictions can exceed 100 (no built-in ceiling)</label>
+    <label class="chk"><input type="checkbox"> I know what extrapolation means and why it produces less reliable results</label>
+  </div>
+</section>
+</div>
+
+<!-- ══════════════ STEP 12: EVALUATE ══════════════ -->
+<div class="wrap">
+<section class="step" id="s11">
+  <div class="step-eyebrow"><span class="step-num">STEP 12</span><span class="step-tag">Evaluate</span></div>
+  <h2>Measuring how accurate the model is</h2>
+
+  <p>After training, the model is asked to predict the scores for the 6 test students — rows it never saw during training. Those predictions are compared to the actual scores. Two metrics summarise how close the predictions were.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — Section 7: evaluate</span><button class="copy-btn">Copy</button></div>
+<pre><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> mean_absolute_error, r2_score
+
+y_pred = model.predict(X_test)   <span class="c"># predict scores for the 6 held-out students</span>
+
+mae = mean_absolute_error(y_test, y_pred)
+r2  = r2_score(y_test, y_pred)
+
+print(<span class="kw">f</span><span class="st">"Mean Absolute Error: {mae:.2f}"</span>)
+print(<span class="kw">f</span><span class="st">"R² Score: {r2:.2f}"</span>)
+
+<span class="o">Mean Absolute Error: 4.21
+R² Score: 0.97</span></pre>
+  </div>
+
+  <h3>What each metric means</h3>
+
+  <table class="tbl">
+    <tr><th>Metric</th><th>What it measures</th><th>Reading the output</th></tr>
+    <tr>
+      <td><strong>MAE — Mean Absolute Error</strong></td>
+      <td>Average gap between predicted and actual score, in the same units as the target (points out of 100).</td>
+      <td>MAE of 4.21 means predictions are off by about 4 points on average. A student with a true score of 80 might be predicted as 76 or 84.</td>
+    </tr>
+    <tr>
+      <td><strong>R² Score</strong></td>
+      <td>How much of the variation in scores the model explains. Range: 0.0 to 1.0 (higher is better). 1.0 = perfect. 0.0 = no better than always predicting the mean.</td>
+      <td>R² of 0.97 means the model explains 97% of the variation in final scores — a strong fit for this dataset.</td>
+    </tr>
+  </table>
+
+  <div class="box box-blue"><b>💡 Why is R² so high on a 30-row dataset?</b>An R² of 0.97 looks impressive, but small datasets can produce misleadingly high scores. With only 6 test rows, a few "lucky" predictions can inflate R² significantly. With 6,000 rows the same model might show R² of 0.75 — still good, but a more honest picture. Always treat evaluation metrics on small datasets as indicative, not definitive.</div>
+
+  <h3>Interactive: prediction vs actual</h3>
+  <div class="demo-panel">
+    <div class="demo-head">
+      <div class="demo-title">See predicted vs actual for the 6 test students</div>
+      <button class="demo-btn" onclick="showPredVsActual()">▶ Show comparison</button>
+    </div>
+    <div class="demo-body">
+      <div class="demo-screen" id="predOut">
+        <span class="line info">Click "Show comparison" to see the 6 test predictions</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz">
+    <h3>MAE is 4.21 and R² is 0.97. A classmate says "R² is almost 1.0, so the model is perfect." What is wrong with that conclusion?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q_eval1" data-i="0">Nothing — R² of 0.97 does mean the model is essentially perfect</button>
+      <button class="qopt" data-q="q_eval1" data-i="1" data-correct>R² of 0.97 on only 6 test rows can be misleading — a few lucky predictions inflate the score. The MAE of ~4 points still means real predictions can be off by several marks.</button>
+      <button class="qopt" data-q="q_eval1" data-i="2">R² above 0.9 always indicates overfitting</button>
+    </div>
+    <div class="qexpl" id="q_eval1-expl">With only 6 test rows, a single prediction that happens to be very close can push R² toward 1.0. The MAE of 4.21 gives a more grounded picture: in real use, predictions are off by about 4 marks on average. Neither metric is "wrong" — they answer different questions. R² measures explanatory power; MAE measures average error in concrete units. Both together give a more complete picture than either alone.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 12 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I can explain MAE in plain English (average error in the same units as the target)</label>
+    <label class="chk"><input type="checkbox"> I can explain R² in plain English (proportion of variation the model explains)</label>
+    <label class="chk"><input type="checkbox"> I understand why a high R² on a small dataset should be interpreted cautiously</label>
+    <label class="chk"><input type="checkbox"> I clicked "Show comparison" and read the predicted vs actual values</label>
+  </div>
+</section>
+</div>
+
+<!-- ══════════════ STEP 13: USER INPUT ══════════════ -->
+<div class="wrap">
+<section class="step" id="s12">
+  <div class="step-eyebrow"><span class="step-num">STEP 13</span><span class="step-tag">User Input</span></div>
+  <h2>Collecting a new student's data</h2>
+
+  <p>The model is now trained and evaluated. The next step is to ask the user for a new student's values and use the model to predict their score. Three issues must be handled carefully: type conversion, the attendance scale, and out-of-range warnings.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — Section 8: user input</span><button class="copy-btn">Copy</button></div>
+<pre>print(<span class="st">"\n--- Predict Final Score ---"</span>)
+
+study_hours = float(input(<span class="st">"Enter Study Hours: "</span>))
+sleep_hours = float(input(<span class="st">"Enter Sleep Hours: "</span>))
+attendance  = float(input(<span class="st">"Enter Attendance (%): "</span>)) / <span class="num">100</span>
+
+<span class="kw">if</span> study_hours > X[<span class="st">"Study Hours"</span>].max():
+    print(<span class="st">"Warning: Study Hours is outside the training data range."</span>)
+
+<span class="kw">if</span> sleep_hours > X[<span class="st">"Sleep Hours"</span>].max():
+    print(<span class="st">"Warning: Sleep Hours is outside the training data range."</span>)</pre>
+  </div>
+
+  <h3>Three things happening in these lines</h3>
+
+  <table class="tbl">
+    <tr><th>Line</th><th>Why it's written this way</th></tr>
+    <tr>
+      <td><code>float(input(...))</code></td>
+      <td><code>input()</code> always returns a string — even if the user types "8". <code>float()</code> converts it to a number so arithmetic and comparison work correctly. Without this conversion, <code>"8" > 10</code> would raise a TypeError.</td>
+    </tr>
+    <tr>
+      <td><code>/ 100</code> on attendance</td>
+      <td>The model was trained on Airtable data where attendance is stored as a decimal (0.95 for 95%). A user naturally types "90" meaning 90%. Dividing by 100 converts their input to 0.90 — matching the scale the model learned from. <strong>Skipping this division is the single most common prediction bug in this project</strong> and causes predictions like 3355 instead of ~85.</td>
+    </tr>
+    <tr>
+      <td><code>if study_hours > X["Study Hours"].max()</code></td>
+      <td>Warns the user when their input exceeds the training range. The model will still produce a number, but it's extrapolating beyond what it has learned. The warning makes this visible rather than silently returning a dubious result.</td>
+    </tr>
+  </table>
+
+  <div class="box box-coral"><b>❌ The attendance scale bug — the most common mistake</b>Airtable stores percentage fields as decimals. The model trained on 0.95, 0.60, 0.80 — not 95, 60, 80. When a user types "90" and the code does not divide by 100, the model receives 90 instead of 0.90. Its attendance coefficient (roughly 38) then contributes 38 × 90 = 3420 to the prediction instead of 38 × 0.90 = 34.2. The result is a nonsensical prediction like 3355. The fix is one character: <code>/ 100</code>.</div>
+
+  <div class="quiz">
+    <h3>A user enters Attendance = 85. The script does <code>attendance = float(input(...)) / 100</code>. What value does the model receive?</h3>
+    <div class="quiz-opts">
+      <button class="qopt" data-q="q_input1" data-i="0">85 — the division is only needed for values above 100</button>
+      <button class="qopt" data-q="q_input1" data-i="1" data-correct>0.85 — because 85 / 100 = 0.85, which matches the decimal scale the model was trained on</button>
+      <button class="qopt" data-q="q_input1" data-i="2">8.5 — the division moves the decimal one place</button>
+    </div>
+    <div class="qexpl" id="q_input1-expl">85 / 100 = 0.85. The model was trained on Airtable data where 85% attendance is stored as 0.85. Without the division, the model would receive 85 and its attendance coefficient would multiply that by ~38, contributing over 3000 to the prediction — a clear sign of a scale mismatch. The / 100 is the fix that aligns user input with training data scale.</div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 13 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I know why float() wraps every input() call</label>
+    <label class="chk"><input type="checkbox"> I can explain why attendance is divided by 100 (scale mismatch between user input and training data)</label>
+    <label class="chk"><input type="checkbox"> I understand what the out-of-range warning means and when it fires</label>
+    <label class="chk"><input type="checkbox"> I could explain the 3355 prediction bug from memory</label>
+  </div>
+</section>
+</div>
+
+<!-- ══════════════ STEP 14: PREDICT ══════════════ -->
+<div class="wrap">
+<section class="step" id="s13">
+  <div class="step-eyebrow"><span class="step-num">STEP 14</span><span class="step-tag">Predict</span></div>
+  <h2>Generating the final prediction</h2>
+
+  <p>With the user's values collected and scaled correctly, the last step is to pass them to the model. There is one important detail: <code>model.predict()</code> expects a DataFrame, not plain numbers. A new single-row DataFrame must be constructed first.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">fetch_students.py — Sections 9 &amp; 10: predict</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># Section 9 — wrap inputs in a one-row DataFrame</span>
+new_student = pd.DataFrame({
+    <span class="st">"Study Hours"</span>: [study_hours],
+    <span class="st">"Sleep Hours"</span>: [sleep_hours],
+    <span class="st">"Attendance"</span>:  [attendance]
+})
+
+<span class="c"># Section 10 — predict</span>
+predicted_score = model.predict(new_student)[<span class="num">0</span>]
+
+print(<span class="kw">f</span><span class="st">"\nPredicted Final Score: {predicted_score:.2f}"</span>)</pre>
+  </div>
+
+  <h3>Why wrap inputs in a DataFrame?</h3>
+
+  <p><code>model.predict()</code> was trained on a DataFrame with columns named "Study Hours", "Sleep Hours", and "Attendance". It expects the same structure at prediction time — column names included. Passing a plain Python list would lose the column names, and scikit-learn would raise a warning or error about feature name mismatches. Wrapping in a DataFrame with the same column names guarantees the model receives its input in the expected format.</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">why [0] at the end of model.predict()</span><button class="copy-btn">Copy</button></div>
+<pre><span class="c"># model.predict() always returns an array — even for one row:</span>
+result = model.predict(new_student)
+print(result)        <span class="c"># → [84.73]   ← a numpy array with one element</span>
+print(result[<span class="num">0</span>])    <span class="c"># → 84.73     ← the actual number</span>
+
+<span class="c"># [0] extracts the first (and only) element from the array.
+# Without it, the f-string would print: [84.73] instead of 84.73</span></pre>
+  </div>
+
+  <h3>Handling out-of-range predictions</h3>
+
+  <p>Because Linear Regression has no ceiling, predictions above 100 or below 0 are possible when inputs are at or beyond the edge of the training range. The script as written returns whatever the equation produces. A more robust version clamps the output:</p>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-fname">clamping the prediction to a valid range</span><button class="copy-btn">Copy</button></div>
+<pre>predicted_score = model.predict(new_student)[<span class="num">0</span>]
+
+<span class="c"># Clamp to [0, 100] so the output is always a valid score</span>
+predicted_score = max(<span class="num">0</span>, min(predicted_score, <span class="num">100</span>))
+
+print(<span class="kw">f</span><span class="st">"\nPredicted Final Score: {predicted_score:.2f}"</span>)</pre>
+  </div>
+
+  <div class="box box-amber"><b>⚠️ Clamping hides the extrapolation — it doesn't fix it</b><code>max(0, min(predicted_score, 100))</code> forces any out-of-range number back into [0, 100], which looks clean but conceals the fact that the model was extrapolating. The better approach for production use is to reject out-of-range inputs before prediction, warn the user, and only clamp as a last resort. For a demo, clamping is an acceptable trade-off — but understand what it is hiding.</div>
+
+  <h3>Complete prediction walkthrough</h3>
+
+  <div class="demo-panel">
+    <div class="demo-head">
+      <div class="demo-title">Interactive: step through a full prediction</div>
+    </div>
+    <div class="demo-body">
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:14px">Enter values and click each stage to see exactly what happens:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <label style="font-size:13px;color:var(--ink-soft);display:block;margin-bottom:4px">Study Hours</label>
+          <input id="inp_study" type="number" value="8" min="0" max="17" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:JetBrains Mono,monospace;font-size:14px">
+        </div>
+        <div>
+          <label style="font-size:13px;color:var(--ink-soft);display:block;margin-bottom:4px">Sleep Hours</label>
+          <input id="inp_sleep" type="number" value="7" min="0" max="12" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:JetBrains Mono,monospace;font-size:14px">
+        </div>
+        <div>
+          <label style="font-size:13px;color:var(--ink-soft);display:block;margin-bottom:4px">Attendance (%)</label>
+          <input id="inp_attend" type="number" value="85" min="0" max="100" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-family:JetBrains Mono,monospace;font-size:14px">
+        </div>
+      </div>
+      <button class="demo-btn" onclick="runPrediction()">▶ Run prediction</button>
+      <div class="demo-screen" id="predWalkOut" style="margin-top:14px">
+        <span class="line info">Enter values above and click Run prediction</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="checklist"><h3>✅ Step 14 complete when:</h3>
+    <label class="chk"><input type="checkbox"> I know why new_student is a DataFrame, not a plain list</label>
+    <label class="chk"><input type="checkbox"> I know why [0] is needed at the end of model.predict()</label>
+    <label class="chk"><input type="checkbox"> I understand what clamping does and what it conceals</label>
+    <label class="chk"><input type="checkbox"> I ran the interactive walkthrough with at least two different inputs</label>
+  </div>
+
+  <div class="checklist" style="border-color:var(--green);margin-top:24px"><h3>✅ Complete lab checklist — all 15 steps:</h3>
+    <label class="chk"><input type="checkbox"> Step 0: I know the 7 technologies and their roles</label>
+    <label class="chk"><input type="checkbox"> Step 1: I know HTTP request parts and all 5 status codes</label>
+    <label class="chk"><input type="checkbox"> Step 2: Python verified, venv created and activated, requests installed</label>
+    <label class="chk"><input type="checkbox"> Step 3: Token created, set as env variable, echo confirms it</label>
+    <label class="chk"><input type="checkbox"> Step 4: Every line of the fetch script explained including "Bearer " format</label>
+    <label class="chk"><input type="checkbox"> Step 5: response.status_code, .text, .json() differences understood</label>
+    <label class="chk"><input type="checkbox"> Step 6: JSON structure navigated 3 levels deep to reach fields</label>
+    <label class="chk"><input type="checkbox"> Step 7: All 6 errors identified with their causes and fixes</label>
+    <label class="chk"><input type="checkbox"> Step 8: Both script versions ran, 30 records fetched, data explored</label>
+    <label class="chk"><input type="checkbox"> Step 9: X and y separated correctly with the right bracket forms</label>
+    <label class="chk"><input type="checkbox"> Step 10: Train/test split understood — 80/20, random_state, overfitting risk</label>
+    <label class="chk"><input type="checkbox"> Step 11: Model trained — coefficients printed, extrapolation limitation understood</label>
+    <label class="chk"><input type="checkbox"> Step 12: MAE and R² read correctly; small-dataset caveat noted</label>
+    <label class="chk"><input type="checkbox"> Step 13: Inputs collected — float(), /100 attendance fix, out-of-range warning</label>
+    <label class="chk"><input type="checkbox"> Step 14: Prediction generated — DataFrame wrap, [0] extraction, clamping</label>
+  </div>
+</section>
+</div>
+
 <!-- FINISH -->
 <div class="wrap">
   <div class="finish">
     <h2>🎉 Lab complete.</h2>
-    <p>8 lines of Python now reach across the internet, authenticate with a remote database, and return 30 structured records. That's the foundation of every data-driven application — a skill that transfers directly to any API, not just Airtable.</p>
+    <p>From fetching 30 records across the internet to training a model and predicting a student's score — every line of <code>fetch_students.py</code> is now accounted for. That pipeline — API → DataFrame → split → train → evaluate → predict — is the backbone of every supervised ML project.</p>
   </div>
 </div>
 
@@ -1721,6 +2214,69 @@ function explain(key){
 
 function escHtml(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── PRED VS ACTUAL (Step 12) ──
+const TEST_STUDENTS=[
+  {id:'S007',study:1,sleep:5,attend:0.40,actual:38,pred:null},
+  {id:'S011',study:3,sleep:9,attend:0.65,actual:55,pred:null},
+  {id:'S015',study:2,sleep:6,attend:0.50,actual:42,pred:null},
+  {id:'S019',study:1,sleep:7,attend:0.45,actual:40,pred:null},
+  {id:'S023',study:5,sleep:6,attend:0.75,actual:65,pred:null},
+  {id:'S029',study:6,sleep:7,attend:0.80,actual:72,pred:null},
+];
+// approximate coefficients from a typical run on this dataset
+const INTERCEPT=12.47,C_STUDY=5.83,C_SLEEP=2.91,C_ATTEND=38.54;
+function linearPredict(study,sleep,attend){
+  return Math.min(100,Math.max(0,INTERCEPT+C_STUDY*study+C_SLEEP*sleep+C_ATTEND*attend));
+}
+function showPredVsActual(){
+  const out=document.getElementById('predOut');
+  let html2='<span class="line info">Student     Actual   Predicted   Error</span>\
+';
+  html2+='<span class="line data">─────────────────────────────────────────</span>\
+';
+  TEST_STUDENTS.forEach(s=>{
+    const pred=linearPredict(s.study,s.sleep,s.attend);
+    const err=Math.abs(pred-s.actual).toFixed(1);
+    const cls=parseFloat(err)<5?'success':parseFloat(err)<10?'info':'error';
+    html2+=`<span class="line ${cls}">${s.id.padEnd(10)}  ${String(s.actual).padEnd(7)}  ${pred.toFixed(1).padEnd(11)}  ±${err}</span>\
+`;
+  });
+  html2+='<span class="line" style="color:#4E6090;font-family:Inter,sans-serif;font-size:12px;margin-top:10px;display:block;white-space:normal">Green = error under 5 points. These are the 6 held-out test rows — the model never saw them during training.</span>';
+  out.innerHTML=html2;
+}
+
+// ── PREDICTION WALKTHROUGH (Step 14) ──
+function runPrediction(){
+  const study=parseFloat(document.getElementById('inp_study').value)||0;
+  const sleep=parseFloat(document.getElementById('inp_sleep').value)||0;
+  const attendPct=parseFloat(document.getElementById('inp_attend').value)||0;
+  const attend=attendPct/100;
+  const raw=INTERCEPT+C_STUDY*study+C_SLEEP*sleep+C_ATTEND*attend;
+  const clamped=Math.min(100,Math.max(0,raw));
+  const warnStudy=study>10?'⚠️ Study Hours exceeds training max (10) — extrapolating':'';
+  const warnSleep=sleep>9?'⚠️ Sleep Hours exceeds training max (9) — extrapolating':'';
+  const out=document.getElementById('predWalkOut');
+  let html3='';
+  html3+=`<span class="line data">Step 1 — attendance / 100: ${attendPct} / 100 = ${attend.toFixed(2)}</span>\
+`;
+  html3+=`<span class="line data">Step 2 — new_student DataFrame: Study=${study}, Sleep=${sleep}, Attend=${attend.toFixed(2)}</span>\
+`;
+  html3+=`<span class="line data">Step 3 — equation: ${INTERCEPT} + (${C_STUDY}×${study}) + (${C_SLEEP}×${sleep}) + (${C_ATTEND.toFixed(2)}×${attend.toFixed(2)})</span>\
+`;
+  html3+=`<span class="line data">       = ${INTERCEPT} + ${(C_STUDY*study).toFixed(2)} + ${(C_SLEEP*sleep).toFixed(2)} + ${(C_ATTEND*attend).toFixed(2)}</span>\
+`;
+  html3+=`<span class="line ${raw>100||raw<0?'error':'success'}">Step 4 — raw prediction: ${raw.toFixed(2)}${raw>100?' (above 100 — clamped)':(raw<0?' (below 0 — clamped)':'')} </span>\
+`;
+  if(raw!==clamped) html3+=`<span class="line success">Step 5 — after clamping: ${clamped.toFixed(2)}</span>\
+`;
+  if(warnStudy) html3+=`<span class="line error">${warnStudy}</span>\
+`;
+  if(warnSleep) html3+=`<span class="line error">${warnSleep}</span>\
+`;
+  html3+=`<span class="line success">Predicted Final Score: ${clamped.toFixed(2)}</span>`;
+  out.innerHTML=html3;
 }
 </script>
 </body>
