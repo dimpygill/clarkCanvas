@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Mood Matcher — Tutorial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f4f6fc;
+      --surface:   #ffffff;
+      --surface2:  #eef1fa;
+      --border:    #dde3f0;
+      --bstrong:   #c3cde8;
+      --navy:      #0d1b2a;
+      --blue:      #2563eb;
+      --blue-dim:  #1d4ed8;
+      --blue-bg:   #eff6ff;
+      --text:      #111827;
+      --text2:     #4b5563;
+      --text3:     #9ca3af;
+      --green:     #15803d;
+      --green-bg:  #f0fdf4;
+      --green-bd:  #bbf7d0;
+      --amber:     #92400e;
+      --amber-bg:  #fffbeb;
+      --amber-bd:  #fde68a;
+      --purple:    #5b21b6;
+      --purple-bg: #f5f3ff;
+      --purple-bd: #ddd6fe;
+      --red:       #dc2626;
+      --red-bg:    #fef2f2;
+      --red-bd:    #fca5a5;
+      --mono:      'DM Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+      --radius:    8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .layout { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 230px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 0;
+    }
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text3);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 0 1.25rem .75rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: .75rem;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 1.25rem;
+      font-size: 13px;
+      color: var(--text2);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all .15s;
+    }
+    .nav-link:hover { background: var(--bg); color: var(--text); }
+    .nav-link.active { border-left-color: var(--blue); color: var(--blue); background: var(--blue-bg); font-weight: 500; }
+    .nav-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--surface2);
+      color: var(--text3);
+      font-size: 11px;
+      font-family: var(--mono);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .nav-link.active .nav-num { background: var(--blue); color: #fff; }
+
+    /* ── Main ── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 3rem 4rem 6rem;
+      max-width: 860px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--navy);
+      border-radius: 20px;
+      padding: 2.5rem 3rem 2.25rem;
+      margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: -80px; bottom: -80px;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37,99,235,.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(255,255,255,.45);
+      font-family: var(--mono);
+      margin-bottom: 1rem;
+    }
+    .pip { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+    .hero h1 { font-size: 28px; font-weight: 300; color: #fff; letter-spacing: -.4px; line-height: 1.2; margin-bottom: .5rem; }
+    .hero h1 strong { font-weight: 500; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.5); max-width: 460px; line-height: 1.65; margin-bottom: 1.5rem; }
+    .hero-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hero-pill { font-size: 12px; font-family: var(--mono); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,.15); color: rgba(255,255,255,.55); }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .progress-bg { flex: 1; height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--blue); border-radius: 99px; transition: width .4s ease; }
+    .progress-label { font-size: 13px; color: var(--text3); font-family: var(--mono); white-space: nowrap; }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 4rem; scroll-margin-top: 2rem; }
+    .section-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 1.5rem; }
+    .step-badge {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--navy);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .section-title { font-size: 22px; font-weight: 500; color: var(--text); letter-spacing: -.3px; margin-bottom: 2px; }
+    .section-sub { font-size: 13px; color: var(--text3); font-family: var(--mono); }
+
+    p { color: var(--text2); margin-bottom: 1rem; }
+    p:last-child { margin-bottom: 0; }
+
+    hr.divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+    /* ── Technology cards ── */
+    .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 1.25rem 0; }
+    .tech-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.1rem 1.25rem;
+    }
+    .tech-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; font-family: var(--mono); }
+    .tech-why  { font-size: 13px; color: var(--text2); line-height: 1.55; }
+    .tech-pill {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .pill-builtin  { background: var(--green-bg);  color: var(--green); }
+    .pill-install  { background: var(--blue-bg);   color: var(--blue-dim); }
+    .pill-external { background: var(--purple-bg); color: var(--purple); }
+
+    /* ── File tree ── */
+    .file-tree {
+      background: var(--navy);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 2.1;
+      margin: 1.25rem 0;
+    }
+    .ft-dir  { color: rgba(255,255,255,.45); }
+    .ft-file { color: #93c5fd; }
+    .ft-hi   { color: #fde68a; }
+    .ft-cm   { color: rgba(255,255,255,.25); margin-left: 1rem; }
+
+    /* ── Code blocks ── */
+    .code-wrap { margin: 1.25rem 0; }
+    .code-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--navy);
+      border-radius: 10px 10px 0 0;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-family: var(--mono);
+      color: rgba(255,255,255,.4);
+    }
+    .code-top .fname { color: rgba(255,255,255,.7); }
+    .copy-btn {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: transparent;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      font-family: var(--mono);
+      transition: all .15s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .copy-btn.copied { color: #4ade80; border-color: #4ade80; }
+
+    pre {
+      background: #0f1e30;
+      border-radius: 0 0 10px 10px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.85;
+    }
+
+    /* syntax colours */
+    .kw  { color: #c084fc; }
+    .fn  { color: #60a5fa; }
+    .st  { color: #86efac; }
+    .cm  { color: #3d5a7a; font-style: italic; }
+    .nm  { color: #fbbf24; }
+    .op  { color: #94a3b8; }
+    .var { color: #e2e8f0; }
+
+    /* ── Line-by-line annotation table ── */
+    .anno-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      margin: 1.25rem 0;
+    }
+    .anno-table th {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      text-align: left;
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text2);
+    }
+    .anno-table td {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      vertical-align: top;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+    .anno-table tr:nth-child(even) td { background: var(--bg); }
+    .anno-table td:first-child {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--blue-dim);
+      white-space: nowrap;
+      width: 38%;
+    }
+
+    /* inline code */
+    .ic {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--blue-dim);
+    }
+
+    /* ── Callouts ── */
+    .callout {
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 14px;
+      line-height: 1.65;
+      display: flex;
+      gap: 12px;
+    }
+    .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .callout.info    { background: var(--blue-bg);   border: 1px solid #bfdbfe; color: #1e3a8a; }
+    .callout.tip     { background: var(--green-bg);  border: 1px solid var(--green-bd); color: #14532d; }
+    .callout.warning { background: var(--amber-bg);  border: 1px solid var(--amber-bd); color: var(--amber); }
+    .callout.concept { background: var(--purple-bg); border: 1px solid var(--purple-bd); color: #3b0764; }
+    .callout strong  { font-weight: 500; display: block; margin-bottom: 4px; }
+
+    /* ── Flow ── */
+    .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 1.5rem 0; }
+    .flow-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      font-size: 13px;
+      text-align: center;
+      min-width: 100px;
+    }
+    .flow-box .fb-sub  { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 3px; }
+    .flow-box .fb-main { font-weight: 500; color: var(--text); font-size: 13px; }
+    .flow-box.hi { background: var(--blue-bg); border-color: #93c5fd; }
+    .flow-box.hi .fb-main { color: var(--blue-dim); }
+    .flow-arrow { color: var(--text3); font-size: 18px; padding: 0 4px; }
+
+    /* ── Terminal output ── */
+    .terminal {
+      background: #0f1e30;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.85;
+      margin: 1.25rem 0;
+    }
+    .t-prompt { color: #4ade80; }
+    .t-cmd    { color: #e2e8f0; }
+    .t-out    { color: #94a3b8; }
+    .t-hi     { color: #fbbf24; }
+
+    /* ── Quiz ── */
+    .quiz-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .quiz-q { font-weight: 500; color: var(--text); margin-bottom: 1rem; font-size: 14px; }
+    .quiz-opts { display: flex; flex-direction: column; gap: 8px; }
+    .qopt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      font-size: 14px;
+      color: var(--text2);
+      cursor: pointer;
+      font-family: var(--sans);
+      text-align: left;
+      width: 100%;
+      transition: all .15s;
+    }
+    .qopt:hover { border-color: var(--bstrong); background: var(--surface); }
+    .qopt.correct { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+    .qopt.wrong   { background: var(--red-bg);   border-color: var(--red-bd);   color: var(--red); }
+    .qopt .okey {
+      width: 24px; height: 24px;
+      border-radius: 4px;
+      background: var(--surface2);
+      color: var(--text3);
+      font-size: 12px;
+      font-family: var(--mono);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .qopt.correct .okey { background: var(--green); color: #fff; }
+    .qopt.wrong   .okey { background: var(--red);   color: #fff; }
+    .quiz-fb { font-size: 13px; margin-top: 10px; padding: 10px 14px; border-radius: var(--radius); display: none; line-height: 1.6; }
+    .quiz-fb.show { display: block; }
+    .quiz-fb.ok  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
+    .quiz-fb.bad { background: var(--red-bg);   color: var(--red);   border: 1px solid var(--red-bd); }
+
+    /* ── Completion ── */
+    .completion {
+      background: var(--navy);
+      border-radius: 16px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      margin-top: 4rem;
+    }
+    .completion h2 { font-size: 22px; font-weight: 500; color: #fff; margin-bottom: .5rem; }
+    .completion p  { color: rgba(255,255,255,.5); font-size: 14px; max-width: 400px; margin: 0 auto 1.5rem; }
+    .ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 10px; margin-top: 1.25rem; text-align: left; }
+    .ext-card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 14px; }
+    .ext-card .ext-t { font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 4px; }
+    .ext-card p { font-size: 12px; color: rgba(255,255,255,.4); margin: 0; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { padding: 2rem 1.25rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Movie Mood Matcher</div>
+    <a class="nav-link active" href="#s0" data-s="0"><span class="nav-num">0</span>Overview</a>
+    <a class="nav-link" href="#s1" data-s="1"><span class="nav-num">1</span>Technologies used</a>
+    <a class="nav-link" href="#s2" data-s="2"><span class="nav-num">2</span>Project files</a>
+    <a class="nav-link" href="#s3" data-s="3"><span class="nav-num">3</span>Imports & setup</a>
+    <a class="nav-link" href="#s4" data-s="4"><span class="nav-num">4</span>The dictionary</a>
+    <a class="nav-link" href="#s5" data-s="5"><span class="nav-num">5</span>The API client</a>
+    <a class="nav-link" href="#s6" data-s="6"><span class="nav-num">6</span>extract_mood()</a>
+    <a class="nav-link" href="#s7" data-s="7"><span class="nav-num">7</span>main()</a>
+    <a class="nav-link" href="#s8" data-s="8"><span class="nav-num">8</span>Running it</a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="eyebrow"><div class="pip"></div>Terminal · Python · Claude API</div>
+      <h1>Movie <strong>mood</strong> matcher</h1>
+      <p class="hero-sub">A line-by-line walkthrough of every piece of this project — what each technology is, why it's there, and exactly what every line of code does.</p>
+      <div class="hero-pills">
+        <span class="hero-pill">Python dictionaries</span>
+        <span class="hero-pill">Anthropic SDK</span>
+        <span class="hero-pill">JSON parsing</span>
+        <span class="hero-pill">f-strings</span>
+        <span class="hero-pill">python-dotenv</span>
+        <span class="hero-pill">venv</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-bg"><div class="progress-fill" id="pfill" style="width:0%"></div></div>
+      <div class="progress-label" id="plabel">0 / 8 steps</div>
+    </div>
+
+    <!-- ── 0: Overview ── -->
+    <div class="section" id="s0">
+      <div class="section-header">
+        <div class="step-badge">0</div>
+        <div>
+          <div class="section-title">What this project does</div>
+          <div class="section-sub">The full picture in plain language</div>
+        </div>
+      </div>
+
+      <p>You type how you're feeling into the terminal. Python sends that to Claude, the AI figures out which mood keyword matches what you said, and then Python looks that keyword up in a dictionary to find a movie recommendation.</p>
+
+      <div class="flow">
+        <div class="flow-box"><div class="fb-sub">terminal</div><div class="fb-main">You type a feeling</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box hi"><div class="fb-sub">matcher.py</div><div class="fb-main">Claude API call</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box hi"><div class="fb-sub">matcher.py</div><div class="fb-main">Dictionary lookup</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box"><div class="fb-sub">terminal</div><div class="fb-main">Movie printed</div></div>
+      </div>
+
+      <p>The entire project is one Python file and one <code class="ic">.env</code> file. No website, no database, no complicated setup.</p>
+
+      <div class="callout concept">
+        <div class="callout-icon">💡</div>
+        <div><strong>The key insight</strong>
+        The dictionary does the actual lookup — it knows nothing about natural language. The AI's only job is to convert whatever the user typed into one clean keyword that matches a dictionary key. This is exactly how dictionaries are used in real applications.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ── 1: Technologies ── -->
+    <div class="section" id="s1">
+      <div class="section-header">
+        <div class="step-badge">1</div>
+        <div>
+          <div class="section-title">Technologies used</div>
+          <div class="section-sub">What each tool is and why it's in this project</div>
+        </div>
+      </div>
+
+      <div class="tech-grid">
+        <div class="tech-card">
+          <div class="tech-pill pill-builtin">built into Python</div>
+          <div class="tech-name">os</div>
+          <div class="tech-why">Reads environment variables — used to fetch the API key from <code class="ic">.env</code>.</div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-pill pill-builtin">built into Python</div>
+          <div class="tech-name">json</div>
+          <div class="tech-why">Converts the text Claude returns into a Python dictionary we can read.</div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-pill pill-install">pip install</div>
+          <div class="tech-name">anthropic</div>
+          <div class="tech-why">The official Python library for talking to Claude. Handles the HTTP request for you.</div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-pill pill-install">pip install</div>
+          <div class="tech-name">python-dotenv</div>
+          <div class="tech-why">Reads your <code class="ic">.env</code> file and loads the API key into the program so you never hardcode secrets.</div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-pill pill-external">Anthropic platform</div>
+          <div class="tech-name">Claude API</div>
+          <div class="tech-why">The AI that reads free-text feelings and maps them to a dictionary key. Responds in JSON.</div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-pill pill-builtin">built into Python</div>
+          <div class="tech-name">venv</div>
+          <div class="tech-why">Creates an isolated environment so the packages you install don't clash with other projects.</div>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">✅</div>
+        <div><strong>Only two packages to install</strong>
+        <code class="ic">anthropic</code> and <code class="ic">python-dotenv</code>. Everything else (<code class="ic">os</code>, <code class="ic">json</code>) is already part of Python — no installation needed.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ── 2: Files ── -->
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="step-badge">2</div>
+        <div>
+          <div class="section-title">Project files</div>
+          <div class="section-sub">What each file is for</div>
+        </div>
+      </div>
+
+      <div class="file-tree">
+        <div><span class="ft-dir">movie-mood-simple/</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-hi">matcher.py</span><span class="ft-cm">← the entire program lives here</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-file">requirements.txt</span><span class="ft-cm">← tells pip what to install</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-file">.env</span><span class="ft-cm">← your secret API key</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-file">.env.example</span><span class="ft-cm">← safe template to share</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-file">.gitignore</span><span class="ft-cm">← tells Git what to skip</span></div>
+      </div>
+
+      <table class="anno-table">
+        <thead><tr><th>File</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>matcher.py</td><td>The whole program — dictionary, API call, and terminal output all in one file.</td></tr>
+          <tr><td>requirements.txt</td><td>Lists the two packages to install. Running <code class="ic">pip install -r requirements.txt</code> reads this file and installs them.</td></tr>
+          <tr><td>.env</td><td>Stores your <code class="ic">ANTHROPIC_API_KEY</code>. Never share or commit this file.</td></tr>
+          <tr><td>.env.example</td><td>A placeholder version of <code class="ic">.env</code> with the key removed — safe to share and commit.</td></tr>
+          <tr><td>.gitignore</td><td>Tells Git which files and folders to skip when saving to GitHub. Without it, secrets, generated files, and hundreds of megabytes of packages would all get uploaded.</td></tr>
+        </tbody>
+      </table>
+
+      <p>The <code class="ic">.gitignore</code> in this project contains three entries. Each is excluded for a different reason:</p>
+
+      <table class="anno-table">
+        <thead><tr><th>Entry</th><th>Why it's ignored</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>.env</td>
+            <td>Contains your secret API key. If this file were uploaded to GitHub it would be publicly visible — anyone could use your key and run up your bill. This is the most important entry in the file.</td>
+          </tr>
+          <tr>
+            <td>venv/</td>
+            <td>Your virtual environment folder can be 50–200MB and contain thousands of files — the actual installed copies of every package. There is no point uploading all of that. Anyone who clones your project can recreate it in seconds by running <code class="ic">pip install -r requirements.txt</code>. That is exactly why <code class="ic">requirements.txt</code> exists — it is the lightweight shopping list, <code class="ic">venv/</code> is the shopping itself. Share the list, not the bags.</td>
+          </tr>
+          <tr>
+            <td>__pycache__/ and *.pyc</td>
+            <td>Every time Python runs a <code class="ic">.py</code> file it compiles it into a faster binary format and saves it in a <code class="ic">__pycache__</code> folder as a <code class="ic">.pyc</code> file. These are machine-generated — you never write them, Python creates them automatically. They get recreated the next time the code runs, so there is nothing to save. They also contain absolute file paths from your computer, which makes them useless on anyone else's machine anyway. The <code class="ic">*.pyc</code> pattern catches any compiled files that end up outside the cache folder.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-icon">✅</div>
+        <div><strong>The general rule for .gitignore</strong>
+        If a file is auto-generated, can be recreated easily, is specific to your machine, or contains secrets — leave it out of Git. Only commit files that a human wrote and that are needed to understand or run the project.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ── 3: Imports ── -->
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="step-badge">3</div>
+        <div>
+          <div class="section-title">Imports and setup</div>
+          <div class="section-sub">matcher.py — the first six lines</div>
+        </div>
+      </div>
+
+      <p>Every Python program starts by declaring what it needs. These lines load the tools the rest of the file depends on.</p>
+
+      <div class="code-wrap">
+        <div class="code-top"><span class="fname">matcher.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">import</span> <span class="var">os</span>
+<span class="kw">import</span> <span class="var">json</span>
+<span class="kw">import</span> <span class="var">anthropic</span>
+<span class="kw">from</span> <span class="var">dotenv</span> <span class="kw">import</span> <span class="var">load_dotenv</span>
+
+<span class="fn">load_dotenv</span><span class="op">()</span></pre>
+      </div>
+
+      <table class="anno-table">
+        <thead><tr><th>Line</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>import os</td><td>Loads Python's built-in <code class="ic">os</code> module. We use it on one line: <code class="ic">os.environ.get("ANTHROPIC_API_KEY")</code> — which reads the API key from the environment.</td></tr>
+          <tr><td>import json</td><td>Loads Python's built-in <code class="ic">json</code> module. Claude returns its answer as a JSON string. <code class="ic">json.loads()</code> converts that string into a Python dictionary we can work with.</td></tr>
+          <tr><td>import anthropic</td><td>Loads the Anthropic SDK — the library that handles sending requests to Claude and receiving responses. Without this you'd have to write raw HTTP requests yourself.</td></tr>
+          <tr><td>from dotenv import load_dotenv</td><td>Imports just the <code class="ic">load_dotenv</code> function from the <code class="ic">python-dotenv</code> package. <code class="ic">from X import Y</code> is how you pull one specific thing out of a library.</td></tr>
+          <tr><td>load_dotenv()</td><td>Reads your <code class="ic">.env</code> file and loads everything in it into <code class="ic">os.environ</code>. After this line runs, <code class="ic">os.environ.get("ANTHROPIC_API_KEY")</code> works. This must be called before any code that needs the key.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div><strong>import vs from X import Y</strong>
+        <code class="ic">import os</code> loads the whole module — you then access things inside it as <code class="ic">os.environ</code>. <code class="ic">from dotenv import load_dotenv</code> pulls out just one function — so you can call it as <code class="ic">load_dotenv()</code> instead of <code class="ic">dotenv.load_dotenv()</code>. Both styles are valid.</div>
+      </div>
+
+      <!-- Quiz 1 -->
+      <div class="quiz-card">
+        <div class="quiz-q">Why must <code class="ic">load_dotenv()</code> be called before the API client is created?</div>
+        <div class="quiz-opts">
+          <button class="qopt" onclick="qa(this,false,'q1')"><span class="okey">A</span>It installs the anthropic package</button>
+          <button class="qopt" onclick="qa(this,true,'q1')"><span class="okey">B</span>It loads the API key into os.environ — if it hasn't run yet, os.environ.get("ANTHROPIC_API_KEY") returns None</button>
+          <button class="qopt" onclick="qa(this,false,'q1')"><span class="okey">C</span>It connects to the internet</button>
+          <button class="qopt" onclick="qa(this,false,'q1')"><span class="okey">D</span>It is not important, the order doesn't matter</button>
+        </div>
+        <div class="quiz-fb ok" id="q1-ok">Correct. <code class="ic">load_dotenv()</code> must run first so the key is available in <code class="ic">os.environ</code> by the time the next line tries to read it.</div>
+        <div class="quiz-fb bad" id="q1-bad">Think about what <code class="ic">load_dotenv()</code> does — it puts the key into <code class="ic">os.environ</code>. If the client is created before that happens, the key is still missing and the client is created with <code class="ic">None</code>.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ── 4: Dictionary ── -->
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="step-badge">4</div>
+        <div>
+          <div class="section-title">The Python dictionary</div>
+          <div class="section-sub">matcher.py — MOVIES</div>
+        </div>
+      </div>
+
+      <p>This is the core of the project. A dictionary maps mood keywords to movie data. The AI never picks the movie — it just figures out the right keyword, and then Python does a simple lookup.</p>
+
+      <div class="code-wrap">
+        <div class="code-top"><span class="fname">matcher.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="var">MOVIES</span> <span class="op">=</span> <span class="op">{</span>
+    <span class="st">"happy"</span><span class="op">:</span>    <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"The Grand Budapest Hotel"</span><span class="op">,</span> <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Comedy · Adventure"</span><span class="op">,</span> <span class="st">"year"</span><span class="op">:</span> <span class="st">"2014"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"sad"</span><span class="op">:</span>      <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Inside Out"</span><span class="op">,</span>               <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Animation · Drama"</span><span class="op">,</span>  <span class="st">"year"</span><span class="op">:</span> <span class="st">"2015"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"scared"</span><span class="op">:</span>   <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Get Out"</span><span class="op">,</span>                  <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Horror · Thriller"</span><span class="op">,</span>  <span class="st">"year"</span><span class="op">:</span> <span class="st">"2017"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"romantic"</span><span class="op">:</span> <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Crazy Rich Asians"</span><span class="op">,</span>        <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Romance · Comedy"</span><span class="op">,</span>   <span class="st">"year"</span><span class="op">:</span> <span class="st">"2018"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"bored"</span><span class="op">:</span>    <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Inception"</span><span class="op">,</span>                <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Sci-Fi · Thriller"</span><span class="op">,</span>  <span class="st">"year"</span><span class="op">:</span> <span class="st">"2010"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"excited"</span><span class="op">:</span>  <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Everything Everywhere All at Once"</span><span class="op">,</span> <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Action · Sci-Fi"</span><span class="op">,</span> <span class="st">"year"</span><span class="op">:</span> <span class="st">"2022"</span><span class="op">}</span><span class="op">,</span>
+<span class="op">}</span></pre>
+      </div>
+
+      <table class="anno-table">
+        <thead><tr><th>Concept</th><th>Explanation</th></tr></thead>
+        <tbody>
+          <tr><td>MOVIES = { }</td><td>Creates a dictionary called <code class="ic">MOVIES</code>. The uppercase name is a Python convention meaning this value never changes — it's a constant.</td></tr>
+          <tr><td>"happy": { ... }</td><td>One key-value pair. The key is <code class="ic">"happy"</code> (a string). The value is another dictionary containing the movie details. This is called a nested dictionary.</td></tr>
+          <tr><td>{"title": ..., "genre": ..., "year": ...}</td><td>The inner dictionary. It has three keys of its own: <code class="ic">title</code>, <code class="ic">genre</code>, and <code class="ic">year</code>. Each maps to a string value.</td></tr>
+          <tr><td>Six entries total</td><td>Six moods the AI can detect: happy, sad, scared, romantic, bored, excited. If the AI detects anything else, the lookup returns <code class="ic">None</code> and the program shows a helpful message.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout concept">
+        <div class="callout-icon">💡</div>
+        <div><strong>Why all-caps for MOVIES?</strong>
+        In Python, variables written in ALL_CAPS are treated as constants — values that are defined once and never changed. It's a convention, not enforced by the language, but it tells anyone reading the code "don't modify this."</div>
+      </div>
+
+      <!-- Quiz 2 -->
+      <div class="quiz-card">
+        <div class="quiz-q">What does <code class="ic">MOVIES["sad"]["title"]</code> return?</div>
+        <div class="quiz-opts">
+          <button class="qopt" onclick="qa(this,false,'q2')"><span class="okey">A</span>"sad"</button>
+          <button class="qopt" onclick="qa(this,true,'q2')"><span class="okey">B</span>"Inside Out"</button>
+          <button class="qopt" onclick="qa(this,false,'q2')"><span class="okey">C</span>The whole inner dictionary</button>
+          <button class="qopt" onclick="qa(this,false,'q2')"><span class="okey">D</span>A KeyError</button>
+        </div>
+        <div class="quiz-fb ok" id="q2-ok">Correct. <code class="ic">MOVIES["sad"]</code> returns the inner dictionary <code class="ic">{"title": "Inside Out", ...}</code>, and then <code class="ic">["title"]</code> pulls out just the title string.</div>
+        <div class="quiz-fb bad" id="q2-bad">Work through it step by step. <code class="ic">MOVIES["sad"]</code> gives you the inner dictionary. Then <code class="ic">["title"]</code> looks up the title key inside that inner dictionary.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ── 5: API client ── -->
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="step-badge">5</div>
+        <div>
+          <div class="section-title">The API client</div>
+          <div class="section-sub">matcher.py — connecting to Claude</div>
+        </div>
+      </div>
+
+      <p>Before calling Claude we create a <em>client</em> — an object that knows your API key and handles the connection for you.</p>
+
+      <div class="code-wrap">
+        <div class="code-top"><span class="fname">matcher.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="var">client</span> <span class="op">=</span> <span class="var">anthropic</span><span class="op">.</span><span class="fn">Anthropic</span><span class="op">(</span><span class="var">api_key</span><span class="op">=</span><span class="var">os</span><span class="op">.</span><span class="var">environ</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="st">"ANTHROPIC_API_KEY"</span><span class="op">)</span><span class="op">)</span></pre>
+      </div>
+
+      <table class="anno-table">
+        <thead><tr><th>Part</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>anthropic.Anthropic()</td><td>Creates an Anthropic client object from the SDK. Think of it like opening a phone line to Claude — you set it up once, then use it to make as many calls as you want.</td></tr>
+          <tr><td>api_key=...</td><td>Tells the client which account to bill. Every request must include this — it's how Anthropic knows who is calling.</td></tr>
+          <tr><td>os.environ.get("ANTHROPIC_API_KEY")</td><td>Reads the value of <code class="ic">ANTHROPIC_API_KEY</code> from the environment. <code class="ic">load_dotenv()</code> put it there a few lines earlier. <code class="ic">.get()</code> returns <code class="ic">None</code> instead of crashing if the key is missing.</td></tr>
+          <tr><td>client = ...</td><td>Stores the connected client in a variable so the rest of the program can use it to make API calls.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div><strong>Never write the key directly in code</strong>
+        Writing <code class="ic">api_key="sk-ant-xxxx"</code> directly in the file means the key is visible to anyone who sees the file. Always read it from <code class="ic">os.environ</code> instead.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ── 6: extract_mood ── -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="step-badge">6</div>
+        <div>
+          <div class="section-title">The extract_mood() function</div>
+          <div class="section-sub">matcher.py — calling Claude and parsing the response</div>
+        </div>
+      </div>
+
+      <p>This function takes whatever the user typed, sends it to Claude, and gets back a mood keyword and a movie blurb. It's the bridge between natural language and the dictionary.</p>
+
+      <div class="code-wrap">
+        <div class="code-top"><span class="fname">matcher.py — extract_mood()</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">def</span> <span class="fn">extract_mood</span><span class="op">(</span><span class="var">user_input</span><span class="op">)</span><span class="op">:</span>
+    <span class="var">keys</span> <span class="op">=</span> <span class="st">", "</span><span class="op">.</span><span class="fn">join</span><span class="op">(</span><span class="var">MOVIES</span><span class="op">.</span><span class="fn">keys</span><span class="op">()</span><span class="op">)</span>
+
+    <span class="var">prompt</span> <span class="op">=</span> <span class="st">f"""The user says: "{</span><span class="var">user_input</span><span class="st">}"
+
+Map their mood to exactly one of these dictionary keys: {</span><span class="var">keys</span><span class="st">}
+
+Respond with JSON only, no explanation:
+{{"mood": "&lt;one of the keys above, or null if none fit&gt;",
+  "blurb": "&lt;one sentence recommending the matched movie&gt;"}}"""</span>
+
+    <span class="var">message</span> <span class="op">=</span> <span class="var">client</span><span class="op">.</span><span class="var">messages</span><span class="op">.</span><span class="fn">create</span><span class="op">(</span>
+        <span class="var">model</span><span class="op">=</span><span class="st">"claude-opus-4-5"</span><span class="op">,</span>
+        <span class="var">max_tokens</span><span class="op">=</span><span class="nm">200</span><span class="op">,</span>
+        <span class="var">messages</span><span class="op">=[{</span><span class="st">"role"</span><span class="op">:</span> <span class="st">"user"</span><span class="op">,</span> <span class="st">"content"</span><span class="op">:</span> <span class="var">prompt</span><span class="op">}]</span>
+    <span class="op">)</span>
+
+    <span class="var">data</span> <span class="op">=</span> <span class="var">json</span><span class="op">.</span><span class="fn">loads</span><span class="op">(</span><span class="var">message</span><span class="op">.</span><span class="var">content</span><span class="op">[</span><span class="nm">0</span><span class="op">].</span><span class="var">text</span><span class="op">.</span><span class="fn">strip</span><span class="op">()</span><span class="op">)</span>
+    <span class="kw">return</span> <span class="var">data</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="st">"mood"</span><span class="op">)</span><span class="op">,</span> <span class="var">data</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="st">"blurb"</span><span class="op">,</span> <span class="st">""</span><span class="op">)</span></pre>
+      </div>
+
+      <table class="anno-table">
+        <thead><tr><th>Line</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>def extract_mood(user_input):</td><td>Defines a function called <code class="ic">extract_mood</code>. It accepts one argument — the text the user typed — and gives it the name <code class="ic">user_input</code> inside the function.</td></tr>
+          <tr><td>keys = ", ".join(MOVIES.keys())</td><td><code class="ic">MOVIES.keys()</code> returns all the mood words: <code class="ic">["happy", "sad", "scared", ...]</code>. <code class="ic">", ".join(...)</code> joins them into one string: <code class="ic">"happy, sad, scared, romantic, bored, excited"</code>. This gets injected into the prompt so Claude knows what the valid options are.</td></tr>
+          <tr><td>prompt = f"""..."""</td><td>An f-string — a string that can contain <code class="ic">{variable}</code> placeholders. Python replaces <code class="ic">{user_input}</code> and <code class="ic">{keys}</code> with their actual values before sending. The triple quotes <code class="ic">"""</code> let the string span multiple lines.</td></tr>
+          <tr><td>client.messages.create(...)</td><td>Sends the prompt to Claude and waits for a response. This is where the internet call actually happens.</td></tr>
+          <tr><td>model="claude-opus-4-5"</td><td>Specifies which Claude model to use. Different models have different speeds and costs — Opus is the most capable.</td></tr>
+          <tr><td>max_tokens=200</td><td>Limits how long Claude's response can be. 200 tokens is plenty for a short JSON object. This keeps the cost low and prevents runaway responses.</td></tr>
+          <tr><td>messages=[{"role": "user", "content": prompt}]</td><td>The conversation history sent to Claude. <code class="ic">role</code> is always <code class="ic">"user"</code> here since we're sending a question. <code class="ic">content</code> is the prompt text.</td></tr>
+          <tr><td>message.content[0].text</td><td>Claude's response. <code class="ic">content</code> is a list of response blocks — we take the first one (<code class="ic">[0]</code>) and read its <code class="ic">text</code> property. This gives us the raw JSON string Claude returned.</td></tr>
+          <tr><td>.strip()</td><td>Removes any leading or trailing whitespace from the string. Claude sometimes adds a newline at the end — this cleans it up before parsing.</td></tr>
+          <tr><td>json.loads(...)</td><td>Converts the JSON string <code class="ic">{"mood": "sad", "blurb": "..."}</code> into a Python dictionary. After this line, <code class="ic">data</code> is a regular Python dict we can read with <code class="ic">data["mood"]</code>.</td></tr>
+          <tr><td>return data.get("mood"), data.get("blurb", "")</td><td>Returns two values at once — the mood keyword and the blurb. <code class="ic">.get("blurb", "")</code> means "return the blurb, or an empty string if it's missing." Python lets functions return multiple values separated by a comma.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div><strong>Why ask Claude for JSON?</strong>
+        JSON is a structured format Python can parse reliably with <code class="ic">json.loads()</code>. If we just asked Claude to "say the mood word", it might reply with "The mood is sad." or "sad!" — inconsistent text that's hard to extract cleanly. Asking for JSON gives us a predictable structure every time.</div>
+      </div>
+
+      <!-- Quiz 3 -->
+      <div class="quiz-card">
+        <div class="quiz-q">Why do we pass <code class="ic">keys</code> into the prompt instead of writing the mood words directly in the prompt text?</div>
+        <div class="quiz-opts">
+          <button class="qopt" onclick="qa(this,false,'q3')"><span class="okey">A</span>To make the code shorter</button>
+          <button class="qopt" onclick="qa(this,true,'q3')"><span class="okey">B</span>So the prompt automatically includes any new moods we add to MOVIES — we only have to update one place</button>
+          <button class="qopt" onclick="qa(this,false,'q3')"><span class="okey">C</span>Because Claude can't read hardcoded strings</button>
+          <button class="qopt" onclick="qa(this,false,'q3')"><span class="okey">D</span>To reduce the number of tokens used</button>
+        </div>
+        <div class="quiz-fb ok" id="q3-ok">Exactly. If you add <code class="ic">"nostalgic"</code> to <code class="ic">MOVIES</code>, the prompt updates automatically because it reads <code class="ic">MOVIES.keys()</code> every time. No need to edit the prompt separately.</div>
+        <div class="quiz-fb bad" id="q3-bad">Think about what happens when you add a new mood. If the keys were hardcoded in the prompt string, you'd have to remember to update the prompt too — two places to change instead of one.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ── 7: main() ── -->
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="step-badge">7</div>
+        <div>
+          <div class="section-title">The main() function</div>
+          <div class="section-sub">matcher.py — user input, dictionary lookup, terminal output</div>
+        </div>
+      </div>
+
+      <p>This is the part the user actually sees. It collects input, calls <code class="ic">extract_mood()</code>, does the dictionary lookup, and prints the result.</p>
+
+      <div class="code-wrap">
+        <div class="code-top"><span class="fname">matcher.py — main()</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="kw">def</span> <span class="fn">main</span><span class="op">()</span><span class="op">:</span>
+    <span class="fn">print</span><span class="op">(</span><span class="st">"\n🎬  Movie Mood Matcher"</span><span class="op">)</span>
+    <span class="fn">print</span><span class="op">(</span><span class="st">"─"</span> <span class="op">*</span> <span class="nm">30</span><span class="op">)</span>
+
+    <span class="var">user_input</span> <span class="op">=</span> <span class="fn">input</span><span class="op">(</span><span class="st">"\nHow are you feeling? "</span><span class="op">)</span>
+
+    <span class="kw">if not</span> <span class="var">user_input</span><span class="op">.</span><span class="fn">strip</span><span class="op">()</span><span class="op">:</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">"Please describe how you're feeling."</span><span class="op">)</span>
+        <span class="kw">return</span>
+
+    <span class="fn">print</span><span class="op">(</span><span class="st">"\nThinking...\n"</span><span class="op">)</span>
+
+    <span class="var">mood</span><span class="op">,</span> <span class="var">blurb</span> <span class="op">=</span> <span class="fn">extract_mood</span><span class="op">(</span><span class="var">user_input</span><span class="op">)</span>
+    <span class="var">movie</span> <span class="op">=</span> <span class="var">MOVIES</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="var">mood</span><span class="op">)</span>
+
+    <span class="kw">if</span> <span class="var">movie</span> <span class="kw">is</span> <span class="kw">None</span><span class="op">:</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">f"Mood detected : {</span><span class="var">mood</span><span class="st">}"</span><span class="op">)</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">"Sorry, that mood isn't in the dictionary yet."</span><span class="op">)</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">f'Try adding: "{</span><span class="var">mood</span><span class="st">}": {{"title": "...", "genre": "...", "year": "..."}}'</span><span class="op">)</span>
+    <span class="kw">else</span><span class="op">:</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">f"🎯 Mood detected : {</span><span class="var">mood</span><span class="st">}"</span><span class="op">)</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">f"🎥 Movie         : {</span><span class="var">movie</span><span class="op">[</span><span class="st">'title'</span><span class="op">]</span><span class="st">}"</span><span class="op">)</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">f"🎭 Genre         : {</span><span class="var">movie</span><span class="op">[</span><span class="st">'genre'</span><span class="op">]</span><span class="st">}"</span><span class="op">)</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">f"📅 Year          : {</span><span class="var">movie</span><span class="op">[</span><span class="st">'year'</span><span class="op">]</span><span class="st">}"</span><span class="op">)</span>
+        <span class="fn">print</span><span class="op">(</span><span class="st">f"💬 Why           : {</span><span class="var">blurb</span><span class="st">}"</span><span class="op">)</span>
+
+    <span class="fn">print</span><span class="op">()</span>
+
+
+<span class="kw">if</span> <span class="var">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span><span class="op">:</span>
+    <span class="fn">main</span><span class="op">()</span></pre>
+      </div>
+
+      <table class="anno-table">
+        <thead><tr><th>Line</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>def main():</td><td>Defines the main function — the entry point of the program. Everything the user interacts with happens here.</td></tr>
+          <tr><td>print("\n🎬  Movie Mood Matcher")</td><td>Prints the title to the terminal. <code class="ic">\n</code> is a newline character — it adds a blank line before the text for breathing room.</td></tr>
+          <tr><td>print("─" * 30)</td><td>Prints a horizontal line made of 30 dash characters. <code class="ic">"─" * 30</code> repeats the string 30 times — a quick way to draw a divider.</td></tr>
+          <tr><td>user_input = input("How are you feeling? ")</td><td>Pauses the program and waits for the user to type something and press Enter. Whatever they type is stored in <code class="ic">user_input</code>.</td></tr>
+          <tr><td>if not user_input.strip():</td><td>Checks if the user pressed Enter without typing anything. <code class="ic">.strip()</code> removes spaces — so even pressing the space bar counts as empty. <code class="ic">if not</code> means "if this is empty".</td></tr>
+          <tr><td>return</td><td>Exits the function immediately. Nothing below this line runs. Used here to stop the program cleanly when there's no input.</td></tr>
+          <tr><td>mood, blurb = extract_mood(user_input)</td><td>Calls the function we wrote earlier and receives two return values at once. Python unpacks them into two separate variables: <code class="ic">mood</code> gets the keyword, <code class="ic">blurb</code> gets the recommendation sentence.</td></tr>
+          <tr><td>movie = MOVIES.get(mood)</td><td>The dictionary lookup. <code class="ic">.get()</code> returns the inner dictionary if the key exists, or <code class="ic">None</code> if it doesn't. This is the core operation the whole project is built around.</td></tr>
+          <tr><td>if movie is None:</td><td>Handles the case where the AI returned a mood that isn't a key in the dictionary. Shows a helpful message and suggests the exact code to add the new mood.</td></tr>
+          <tr><td>f"🎯 Mood detected : {mood}"</td><td>An f-string. Python replaces <code class="ic">{mood}</code> with the actual value of the variable — for example <code class="ic">"sad"</code>. The emoji is just a character in the string.</td></tr>
+          <tr><td>movie['title']</td><td>Reads the <code class="ic">title</code> key from the inner dictionary. Since <code class="ic">movie</code> is a dictionary like <code class="ic">{"title": "Inside Out", ...}</code>, this returns <code class="ic">"Inside Out"</code>.</td></tr>
+          <tr><td>if __name__ == "__main__":</td><td>Python sets <code class="ic">__name__</code> to <code class="ic">"__main__"</code> when you run a file directly. This line means "only call main() if this file was run directly, not if it was imported by another file." It's the standard way to make a Python file runnable.</td></tr>
+          <tr><td>main()</td><td>Calls the <code class="ic">main()</code> function to actually start the program.</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Quiz 4 -->
+      <div class="quiz-card">
+        <div class="quiz-q">What happens if <code class="ic">MOVIES.get(mood)</code> returns <code class="ic">None</code>?</div>
+        <div class="quiz-opts">
+          <button class="qopt" onclick="qa(this,false,'q4')"><span class="okey">A</span>The program crashes with a KeyError</button>
+          <button class="qopt" onclick="qa(this,false,'q4')"><span class="okey">B</span>It prints the movie anyway</button>
+          <button class="qopt" onclick="qa(this,true,'q4')"><span class="okey">C</span>The if movie is None: block runs, showing a message that the mood isn't in the dictionary yet</button>
+          <button class="qopt" onclick="qa(this,false,'q4')"><span class="okey">D</span>Python automatically adds the mood to the dictionary</button>
+        </div>
+        <div class="quiz-fb ok" id="q4-ok">Correct. <code class="ic">.get()</code> never crashes — it returns <code class="ic">None</code> for missing keys, and the <code class="ic">if movie is None</code> block handles it gracefully by telling the user how to add the new mood.</div>
+        <div class="quiz-fb bad" id="q4-bad">A crash would happen with <code class="ic">MOVIES[mood]</code> if the key is missing. But <code class="ic">.get()</code> returns <code class="ic">None</code> instead, and the <code class="ic">if movie is None</code> check handles that case safely.</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- ── 8: Running ── -->
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="step-badge">8</div>
+        <div>
+          <div class="section-title">Running the project</div>
+          <div class="section-sub">Setup commands and expected output</div>
+        </div>
+      </div>
+
+      <p>Run these commands once from inside the <code class="ic">movie-mood-simple/</code> folder. After the first time, you only need steps 2 and 5.</p>
+
+      <div class="code-wrap">
+        <div class="code-top"><span class="fname">Terminal — Windows</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cm"># Step 1 — create a virtual environment</span>
+python -m venv venv
+
+<span class="cm"># Step 2 — activate it (you'll see (venv) in your prompt)</span>
+venv\Scripts\activate
+
+<span class="cm"># Step 3 — install packages</span>
+pip install -r requirements.txt
+
+<span class="cm"># Step 4 — create your .env file</span>
+copy .env.example .env
+<span class="cm"># open .env and set ANTHROPIC_API_KEY=sk-ant-xxxxx</span>
+
+<span class="cm"># Step 5 — run the program</span>
+python matcher.py</pre>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-top"><span class="fname">Terminal — Mac / Linux</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre><span class="cm"># Step 1</span>
+python3 -m venv venv
+
+<span class="cm"># Step 2</span>
+source venv/bin/activate
+
+<span class="cm"># Step 3</span>
+pip install -r requirements.txt
+
+<span class="cm"># Step 4</span>
+cp .env.example .env
+<span class="cm"># open .env and set ANTHROPIC_API_KEY=sk-ant-xxxxx</span>
+
+<span class="cm"># Step 5</span>
+python matcher.py</pre>
+      </div>
+
+      <p>Here's what a successful run looks like:</p>
+
+      <div class="terminal">
+        <div><span class="t-prompt">(venv)</span> <span class="t-cmd">python matcher.py</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-out">🎬  Movie Mood Matcher</span></div>
+        <div><span class="t-out">──────────────────────────────</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-out">How are you feeling? </span><span class="t-cmd">I feel kind of gloomy today</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-out">Thinking...</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-hi">🎯 Mood detected : sad</span></div>
+        <div><span class="t-hi">🎥 Movie         : Inside Out</span></div>
+        <div><span class="t-hi">🎭 Genre         : Animation · Drama</span></div>
+        <div><span class="t-hi">📅 Year          : 2015</span></div>
+        <div><span class="t-hi">💬 Why           : A deeply moving film for when life feels heavy.</span></div>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div><strong>Common errors</strong><br/>
+        <strong>ModuleNotFoundError</strong> — the venv is not active. Run the activate command first.<br/>
+        <strong>AuthenticationError</strong> — the API key in <code class="ic">.env</code> is missing or incorrect.<br/>
+        <strong>No such file: requirements.txt</strong> — you're not inside the <code class="ic">movie-mood-simple/</code> folder. Run <code class="ic">cd movie-mood-simple</code> first.</div>
+      </div>
+    </div>
+
+    <!-- Completion -->
+    <div class="completion">
+      <h2>You've covered the whole project</h2>
+      <p>Every line of code, every file, and every technology — from the dictionary lookup to the AI API call.</p>
+      <div class="ext-grid">
+        <div class="ext-card">
+          <div class="ext-t">Add a new mood</div>
+          <p>Add a key to MOVIES in matcher.py. The prompt updates automatically — no other changes needed.</p>
+        </div>
+        <div class="ext-card">
+          <div class="ext-t">List all moods</div>
+          <p>Try <code class="ic">print(list(MOVIES.keys()))</code> anywhere in main() to see all available moods.</p>
+        </div>
+        <div class="ext-card">
+          <div class="ext-t">Loop over the dict</div>
+          <p>Add <code class="ic">for mood, movie in MOVIES.items(): print(mood, "→", movie["title"])</code> to print the whole dictionary.</p>
+        </div>
+        <div class="ext-card">
+          <div class="ext-t">Change the domain</div>
+          <p>Replace movies with songs, books, or restaurants — the dictionary structure stays identical.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function qa(btn, correct, qid) {
+    document.querySelectorAll(`[data-q="${qid}"]`).forEach(b => { b.disabled = true; b.onclick = null; });
+    document.querySelectorAll(`.qopt`).forEach(b => { if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(qid)) { b.disabled = true; } });
+    btn.classList.add(correct ? 'correct' : 'wrong');
+    document.getElementById(qid + '-ok').classList.toggle('show', correct);
+    document.getElementById(qid + '-bad').classList.toggle('show', !correct);
+    btn.closest('.quiz-card').querySelectorAll('.qopt').forEach(b => b.disabled = true);
+  }
+
+  function copyCode(btn) {
+    const pre = btn.closest('.code-wrap').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('.nav-link[data-s]');
+  const total = sections.length;
+
+  function updateNav() {
+    let current = 0;
+    sections.forEach((s, i) => {
+      if (s.getBoundingClientRect().top < window.innerHeight * 0.45) current = i;
+    });
+    navLinks.forEach(n => n.classList.remove('active'));
+    const active = document.querySelector(`.nav-link[data-s="${current}"]`);
+    if (active) active.classList.add('active');
+    const pct = Math.round(((current + 1) / total) * 100);
+    document.getElementById('pfill').style.width = pct + '%';
+    document.getElementById('plabel').textContent = `${current + 1} / ${total} steps`;
+  }
+
+  window.addEventListener('scroll', updateNav, { passive: true });
+  updateNav();
+</script>
+</body>
+</html>
