@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Mood Matcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:     #0d1b2a;
+      --blue:     #2563eb;
+      --blue-dim: #1d4ed8;
+      --bg:       #f4f6fc;
+      --surface:  #ffffff;
+      --surface2: #f0f3fb;
+      --border:   #dde3f0;
+      --bstrong:  #c3cde8;
+      --text:     #111827;
+      --text2:    #4b5563;
+      --text3:    #9ca3af;
+      --green:    #16a34a;
+      --green-bg: #dcfce7;
+      --red:      #dc2626;
+      --red-bg:   #fee2e2;
+      --radius:   8px;
+      --mono:     'DM Mono', monospace;
+      --sans:     'DM Sans', sans-serif;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .page { max-width: 700px; margin: 0 auto; }
+
+    /* Hero */
+    .hero {
+      background: var(--navy);
+      border-radius: 20px;
+      padding: 2.5rem 2.5rem 2rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: -60px; top: -60px;
+      width: 240px; height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37,99,235,.3) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: rgba(255,255,255,.5);
+      font-family: var(--mono);
+      margin-bottom: 1rem;
+    }
+    .pip {
+      width: 6px; height: 6px;
+      background: #4ade80;
+      border-radius: 50%;
+      animation: pip 2.4s ease-in-out infinite;
+    }
+    @keyframes pip { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 300;
+      color: #fff;
+      letter-spacing: -.4px;
+      margin-bottom: .5rem;
+    }
+    .hero h1 strong { font-weight: 500; }
+    .hero p { font-size: 14px; color: rgba(255,255,255,.5); line-height: 1.65; max-width: 400px; }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text3);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    /* Mood chips */
+    .mood-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.25rem; }
+    .mood-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      background: var(--surface2);
+      font-size: 13px;
+      color: var(--text2);
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: border-color .15s, background .15s;
+    }
+    .mood-chip:hover { border-color: var(--bstrong); background: var(--bg); }
+    .mood-chip.active { background: #eff6ff; border-color: var(--blue); color: var(--blue-dim); font-weight: 500; }
+
+    /* Input */
+    .divider { display: flex; align-items: center; gap: 10px; margin: 1rem 0; }
+    .divider hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+    .divider span { font-size: 12px; color: var(--text3); white-space: nowrap; }
+
+    .input-row { display: flex; gap: 8px; }
+    .input-row input {
+      flex: 1;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0 14px;
+      font-size: 14px;
+      font-family: var(--sans);
+      background: var(--surface2);
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s, background .15s;
+    }
+    .input-row input:focus { border-color: var(--blue); background: var(--surface); }
+    .input-row input::placeholder { color: var(--text3); }
+    .btn-match {
+      height: 40px;
+      padding: 0 20px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: var(--sans);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .btn-match:hover { background: var(--blue-dim); }
+    .btn-match:disabled { opacity: .5; cursor: not-allowed; }
+
+    .field-error { font-size: 12px; color: var(--red); margin-top: 6px; display: none; }
+
+    /* Flash / server error */
+    .alert {
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      margin-bottom: 1rem;
+      border: 1px solid #fca5a5;
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    /* Result */
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .result-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .pill {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .pill-mood { background: #eff6ff; color: var(--blue-dim); }
+    .pill-ok   { background: var(--green-bg); color: var(--green); }
+    .lookup {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text3);
+      margin-left: auto;
+    }
+    .lookup span { color: var(--blue); }
+    .movie-title {
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -.3px;
+      margin-bottom: 4px;
+    }
+    .movie-meta {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text3);
+      margin-bottom: 1rem;
+    }
+    .movie-blurb {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.7;
+      border-left: 3px solid var(--bstrong);
+      padding-left: 14px;
+    }
+
+    /* Not found */
+    .not-found {
+      background: var(--red-bg);
+      border: 1px solid #fca5a5;
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .not-found strong { color: var(--red); display: block; margin-bottom: 6px; font-size: 14px; }
+    .not-found p { font-size: 13px; color: #7f1d1d; line-height: 1.6; }
+    .not-found code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: rgba(220,38,38,.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 6px;
+    }
+
+    /* Dictionary viewer */
+    .dict-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+    .dict-top {
+      background: var(--navy);
+      color: rgba(255,255,255,.5);
+      padding: 8px 14px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dict-top .lang { color: rgba(255,255,255,.3); font-size: 11px; }
+    .dict-row {
+      display: flex;
+      align-items: center;
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      transition: background .2s;
+    }
+    .dict-row:last-child { border-bottom: none; }
+    .dict-row.hit { background: #eff6ff; }
+    .dict-key   { color: #2563eb; min-width: 110px; }
+    .dict-colon { color: var(--text3); margin: 0 8px; }
+    .dict-val   { color: var(--text2); }
+    .dict-row.hit .dict-key,
+    .dict-row.hit .dict-val { color: #1d4ed8; font-weight: 500; }
+    .dict-matched {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: var(--green-bg);
+      color: var(--green);
+      font-family: var(--sans);
+    }
+    .dict-foot {
+      background: var(--surface2);
+      color: var(--text3);
+      padding: 6px 14px;
+      font-size: 11px;
+    }
+
+    @media (max-width: 520px) {
+      .hero { padding: 1.75rem 1.25rem 1.5rem; }
+      .hero h1 { font-size: 22px; }
+      .input-row { flex-direction: column; }
+      .btn-match { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Server-side error -->
+  {% if error %}
+    <div class="alert">{{ error }}</div>
+  {% endif %}
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="eyebrow">
+      <div class="pip"></div>
+      Python dictionary · Claude API
+    </div>
+    <h1>Movie <strong>mood</strong> matcher</h1>
+    <p>Describe how you're feeling. The AI extracts your mood and looks it up in a Python dictionary to find your perfect film.</p>
+  </div>
+
+  <!-- Input card -->
+  <div class="card">
+    <div class="card-label">How are you feeling?</div>
+
+    <div class="mood-grid">
+      <button type="button" class="mood-chip" data-mood="happy">😄 Happy</button>
+      <button type="button" class="mood-chip" data-mood="sad">😢 Sad</button>
+      <button type="button" class="mood-chip" data-mood="scared">😱 Scared</button>
+      <button type="button" class="mood-chip" data-mood="romantic">💕 Romantic</button>
+      <button type="button" class="mood-chip" data-mood="bored">😑 Bored</button>
+      <button type="button" class="mood-chip" data-mood="excited">🤩 Excited</button>
+    </div>
+
+    <div class="divider">
+      <hr /><span>or describe it in your own words</span><hr />
+    </div>
+
+    <form method="POST" action="/" id="moodForm">
+      <div class="input-row">
+        <input
+          type="text"
+          name="mood_input"
+          id="moodInput"
+          placeholder="I feel kind of gloomy today…"
+          value="{{ mood_input or '' }}"
+          autocomplete="off"
+        />
+        <button type="submit" class="btn-match" id="matchBtn">Match mood</button>
+      </div>
+      <div class="field-error" id="fieldError"></div>
+    </form>
+  </div>
+
+  <!-- Result -->
+  {% if result %}
+    <div class="result-card">
+      <div class="result-top">
+        <span class="pill pill-mood">{{ result.mood }}</span>
+        <span class="pill pill-ok">match found</span>
+        <span class="lookup">movies[<span>"{{ result.mood }}"</span>]</span>
+      </div>
+      <div class="movie-title">{{ result.title }}</div>
+      <div class="movie-meta">{{ result.genre }} · {{ result.year }}</div>
+      <div class="movie-blurb">{{ result.blurb }}</div>
+    </div>
+  {% endif %}
+
+  {% if not_found_mood %}
+    <div class="not-found">
+      <strong>Mood not in dictionary</strong>
+      <p>
+        The AI detected "<strong>{{ not_found_mood }}</strong>" but that key doesn't exist yet.
+        Try adding it to <code>matcher.py</code>:
+      </p>
+      <code>movies["{{ not_found_mood }}"] = {"title": "...", "genre": "...", "year": "..."}</code>
+    </div>
+  {% endif %}
+
+  <!-- Dictionary viewer -->
+  <div class="card">
+    <div class="card-label">The Python dictionary — matcher.py</div>
+    <div class="dict-wrap">
+      <div class="dict-top">
+        <span>MOVIES = &#123;</span>
+        <span class="lang">Python</span>
+      </div>
+      {% for key, data in movies.items() %}
+        <div class="dict-row {% if result and result.mood == key %}hit{% endif %}">
+          <span class="dict-key">"{{ key }}"</span>
+          <span class="dict-colon">:</span>
+          <span class="dict-val">&#123; "title": "{{ data.title }}", ... &#125;</span>
+          {% if result and result.mood == key %}
+            <span class="dict-matched">← matched</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <div class="dict-foot">MOVIES.get(mood, None)  →  returns value or None if key missing</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Mood chip → fill input
+  document.querySelectorAll(".mood-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      document.querySelectorAll(".mood-chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+      document.getElementById("moodInput").value = "I'm feeling " + chip.dataset.mood + " today";
+      document.getElementById("fieldError").style.display = "none";
+    });
+  });
+
+  // Client-side empty guard
+  document.getElementById("moodForm").addEventListener("submit", function(e) {
+    const val = document.getElementById("moodInput").value.trim();
+    const err = document.getElementById("fieldError");
+    if (!val) {
+      e.preventDefault();
+      err.textContent = "Describe how you're feeling first.";
+      err.style.display = "block";
+      return;
+    }
+    err.style.display = "none";
+    const btn = document.getElementById("matchBtn");
+    btn.disabled = true;
+    btn.textContent = "Matching…";
+  });
+
+  // Re-activate chip if server echoes back a matching mood
+  const echoed = "{{ mood_input or '' }}".toLowerCase();
+  document.querySelectorAll(".mood-chip").forEach(chip => {
+    if (echoed.includes(chip.dataset.mood)) chip.classList.add("active");
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Mood Matcher — Tutorial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f4f6fc;
+      --surface:   #ffffff;
+      --surface2:  #eef1fa;
+      --border:    #dde3f0;
+      --bstrong:   #c3cde8;
+      --navy:      #0d1b2a;
+      --blue:      #2563eb;
+      --blue-dim:  #1d4ed8;
+      --blue-bg:   #eff6ff;
+      --text:      #111827;
+      --text2:     #4b5563;
+      --text3:     #9ca3af;
+      --green:     #15803d;
+      --green-bg:  #f0fdf4;
+      --green-bd:  #bbf7d0;
+      --amber:     #92400e;
+      --amber-bg:  #fffbeb;
+      --amber-bd:  #fde68a;
+      --purple:    #6d28d9;
+      --purple-bg: #f5f3ff;
+      --purple-bd: #ddd6fe;
+      --mono:      'DM Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+      --radius:    8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar nav ── */
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 0;
+    }
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text3);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 0 1.25rem .75rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: .75rem;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 1.25rem;
+      font-size: 13px;
+      color: var(--text2);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all .15s;
+      cursor: pointer;
+    }
+    .nav-item:hover { background: var(--bg); color: var(--text); }
+    .nav-item.active { border-left-color: var(--blue); color: var(--blue); background: var(--blue-bg); font-weight: 500; }
+    .nav-num {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--surface2);
+      color: var(--text3);
+      font-size: 11px;
+      font-family: var(--mono);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .nav-item.active .nav-num { background: var(--blue); color: #fff; }
+    .nav-item.done .nav-num  { background: var(--green-bg); color: var(--green); }
+
+    /* ── Main content ── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 3rem 4rem 6rem;
+      max-width: 860px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: var(--navy);
+      border-radius: 20px;
+      padding: 2.5rem 3rem 2.25rem;
+      margin-bottom: 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      right: -80px; bottom: -80px;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37,99,235,.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: rgba(255,255,255,.45);
+      font-family: var(--mono);
+      margin-bottom: 1rem;
+    }
+    .pip { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+    .hero h1 {
+      font-size: 32px;
+      font-weight: 300;
+      color: #fff;
+      letter-spacing: -.5px;
+      line-height: 1.2;
+      margin-bottom: .6rem;
+    }
+    .hero h1 strong { font-weight: 500; }
+    .hero-sub { font-size: 15px; color: rgba(255,255,255,.5); max-width: 480px; line-height: 1.6; margin-bottom: 1.75rem; }
+    .hero-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hero-pill {
+      font-size: 12px;
+      font-family: var(--mono);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.15);
+      color: rgba(255,255,255,.6);
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .progress-bar-bg {
+      flex: 1;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 99px;
+      transition: width .4s ease;
+    }
+    .progress-label { font-size: 13px; color: var(--text3); font-family: var(--mono); white-space: nowrap; }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 4rem;
+      scroll-margin-top: 2rem;
+    }
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 1.5rem;
+    }
+    .step-badge {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--navy);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -.3px;
+      margin-bottom: 2px;
+    }
+    .section-sub { font-size: 13px; color: var(--text3); font-family: var(--mono); }
+
+    p { color: var(--text2); margin-bottom: 1rem; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── File tree ── */
+    .file-tree {
+      background: var(--navy);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      font-family: var(--mono);
+      font-size: 13px;
+      margin: 1.25rem 0;
+      line-height: 2;
+    }
+    .ft-dir  { color: rgba(255,255,255,.5); }
+    .ft-file { color: #93c5fd; }
+    .ft-comment { color: rgba(255,255,255,.28); margin-left: 1rem; }
+    .ft-highlight { color: #fde68a; }
+
+    /* ── Code blocks ── */
+    .code-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--navy);
+      border-radius: 10px 10px 0 0;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-family: var(--mono);
+      color: rgba(255,255,255,.4);
+      margin-top: 1.25rem;
+    }
+    .code-label .filename { color: rgba(255,255,255,.7); }
+    .copy-btn {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: transparent;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      font-family: var(--mono);
+      transition: all .15s;
+    }
+    .copy-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .copy-btn.copied { color: #4ade80; border-color: #4ade80; }
+
+    pre {
+      background: #0f1e30;
+      border-radius: 0 0 10px 10px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.75;
+      margin-bottom: 1.25rem;
+    }
+    pre.standalone { border-radius: 10px; margin-top: 1.25rem; }
+    code { font-family: var(--mono); }
+
+    /* Syntax colours */
+    .kw  { color: #c084fc; }   /* keyword */
+    .fn  { color: #60a5fa; }   /* function */
+    .st  { color: #86efac; }   /* string */
+    .cm  { color: #475569; font-style: italic; } /* comment */
+    .nm  { color: #fbbf24; }   /* number / constant */
+    .op  { color: #94a3b8; }   /* operator / punctuation */
+    .var { color: #e2e8f0; }   /* variable */
+    .imp { color: #f472b6; }   /* import keyword */
+
+    /* Inline code */
+    .ic {
+      font-family: var(--mono);
+      font-size: 13px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--blue-dim);
+    }
+
+    /* ── Callout boxes ── */
+    .callout {
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 14px;
+      line-height: 1.65;
+      display: flex;
+      gap: 12px;
+    }
+    .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .callout.info    { background: var(--blue-bg);   border: 1px solid #bfdbfe; color: #1e3a8a; }
+    .callout.tip     { background: var(--green-bg);  border: 1px solid var(--green-bd); color: #14532d; }
+    .callout.warning { background: var(--amber-bg);  border: 1px solid var(--amber-bd); color: var(--amber); }
+    .callout.concept { background: var(--purple-bg); border: 1px solid var(--purple-bd); color: #3b0764; }
+    .callout strong  { font-weight: 500; display: block; margin-bottom: 4px; }
+
+    /* ── Concept table ── */
+    .concept-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      margin: 1.25rem 0;
+    }
+    .concept-table th {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      text-align: left;
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text2);
+    }
+    .concept-table td {
+      border: 1px solid var(--border);
+      padding: 9px 14px;
+      color: var(--text2);
+      vertical-align: top;
+    }
+    .concept-table tr:nth-child(even) td { background: var(--bg); }
+    .concept-table td:first-child { font-family: var(--mono); font-size: 12px; color: var(--blue-dim); }
+
+    /* ── Flow diagram ── */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+    }
+    .flow-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      font-size: 13px;
+      text-align: center;
+      min-width: 110px;
+    }
+    .flow-box .fb-label { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 3px; }
+    .flow-box .fb-name  { font-weight: 500; color: var(--text); }
+    .flow-box.highlight { background: var(--blue-bg); border-color: #93c5fd; }
+    .flow-box.highlight .fb-name { color: var(--blue-dim); }
+    .flow-arrow { color: var(--text3); font-size: 18px; padding: 0 6px; }
+
+    /* ── Checklist ── */
+    .checklist { list-style: none; margin: 1.25rem 0; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--text2);
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist li::before {
+      content: '';
+      width: 18px; height: 18px;
+      border: 1.5px solid var(--bstrong);
+      border-radius: 4px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── Quiz ── */
+    .quiz-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .quiz-q { font-weight: 500; margin-bottom: 1rem; color: var(--text); }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .quiz-opt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text2);
+      background: var(--bg);
+      transition: all .15s;
+      text-align: left;
+      font-family: var(--sans);
+      width: 100%;
+    }
+    .quiz-opt:hover { border-color: var(--bstrong); background: var(--surface); }
+    .quiz-opt.correct { background: var(--green-bg); border-color: var(--green-bd); color: var(--green); }
+    .quiz-opt.wrong   { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+    .quiz-opt .opt-key {
+      width: 24px; height: 24px;
+      border-radius: 4px;
+      background: var(--surface2);
+      color: var(--text3);
+      font-size: 12px;
+      font-family: var(--mono);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .quiz-opt.correct .opt-key { background: var(--green); color: #fff; }
+    .quiz-opt.wrong   .opt-key { background: #dc2626; color: #fff; }
+    .quiz-feedback { font-size: 13px; margin-top: 10px; padding: 10px 14px; border-radius: var(--radius); display: none; }
+    .quiz-feedback.show { display: block; }
+    .quiz-feedback.ok  { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
+    .quiz-feedback.bad { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+
+    /* ── Divider ── */
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+
+    /* ── Completion banner ── */
+    .completion {
+      background: var(--navy);
+      border-radius: 16px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      margin-top: 4rem;
+    }
+    .completion h2 { font-size: 22px; font-weight: 500; color: #fff; margin-bottom: .5rem; }
+    .completion p  { color: rgba(255,255,255,.5); font-size: 14px; max-width: 400px; margin: 0 auto 1.5rem; }
+    .ext-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 1.25rem;
+      text-align: left;
+    }
+    .ext-card {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .ext-card .ext-title { font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 4px; }
+    .ext-card p { font-size: 12px; color: rgba(255,255,255,.45); margin: 0; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { padding: 2rem 1.25rem 4rem; }
+      .hero { padding: 1.75rem 1.5rem 1.5rem; }
+      .hero h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-title">Movie Mood Matcher</div>
+    <a class="nav-item active" href="#s0" data-section="0">
+      <span class="nav-num">0</span> Overview
+    </a>
+    <a class="nav-item" href="#s1" data-section="1">
+      <span class="nav-num">1</span> Project structure
+    </a>
+    <a class="nav-item" href="#s2" data-section="2">
+      <span class="nav-num">2</span> The dictionary
+    </a>
+    <a class="nav-item" href="#s3" data-section="3">
+      <span class="nav-num">3</span> Calling the Claude API
+    </a>
+    <a class="nav-item" href="#s4" data-section="4">
+      <span class="nav-num">4</span> The Flask app
+    </a>
+    <a class="nav-item" href="#s5" data-section="5">
+      <span class="nav-num">5</span> The HTML template
+    </a>
+    <a class="nav-item" href="#s6" data-section="6">
+      <span class="nav-num">6</span> Running the project
+    </a>
+    <a class="nav-item" href="#s7" data-section="7">
+      <span class="nav-num">7</span> Extend it
+    </a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-eyebrow"><div class="pip"></div> Python · Flask · Claude API</div>
+      <h1>Movie <strong>mood</strong> matcher</h1>
+      <p class="hero-sub">A complete walkthrough of every file in this project — from the Python dictionary at its core to the Flask web server and the AI API call that ties it all together.</p>
+      <div class="hero-pills">
+        <span class="hero-pill">Python dictionaries</span>
+        <span class="hero-pill">Flask routing</span>
+        <span class="hero-pill">Anthropic API</span>
+        <span class="hero-pill">Jinja2 templates</span>
+        <span class="hero-pill">venv</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">0 / 7 steps</div>
+    </div>
+
+    <!-- ── Section 0: Overview ── -->
+    <div class="section" id="s0">
+      <div class="section-header">
+        <div class="step-badge">0</div>
+        <div>
+          <div class="section-title">What this project does</div>
+          <div class="section-sub">The full picture before we look at any code</div>
+        </div>
+      </div>
+
+      <p>This project is a web app where you type how you're feeling and it recommends a movie. The interesting part is <em>how</em> it works — a Python dictionary does the actual lookup, and the Claude AI figures out which dictionary key matches what you typed.</p>
+
+      <p>Here's the full flow from user input to movie recommendation:</p>
+
+      <div class="flow">
+        <div class="flow-box">
+          <div class="fb-label">browser</div>
+          <div class="fb-name">User types mood</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <div class="fb-label">app.py</div>
+          <div class="fb-name">Flask receives form</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box highlight">
+          <div class="fb-label">matcher.py</div>
+          <div class="fb-name">Claude API call</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box highlight">
+          <div class="fb-label">matcher.py</div>
+          <div class="fb-name">Dict lookup</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <div class="fb-label">index.html</div>
+          <div class="fb-name">Result shown</div>
+        </div>
+      </div>
+
+      <div class="callout concept">
+        <div class="callout-icon">💡</div>
+        <div><strong>Why use a dictionary here?</strong>
+        The dictionary is the <em>logic layer</em> of this app. The AI's only job is to extract a single keyword from what the user typed. Once it has that keyword, Python does a simple dictionary lookup — <code class="ic">MOVIES.get(mood)</code> — to find the result. This is exactly how dictionaries are used in real applications: fast key-to-value lookups.</div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 1: Project structure ── -->
+    <div class="section" id="s1">
+      <div class="section-header">
+        <div class="step-badge">1</div>
+        <div>
+          <div class="section-title">Project structure</div>
+          <div class="section-sub">What each file does</div>
+        </div>
+      </div>
+
+      <p>The project is intentionally flat — only six files and one folder. Each file has exactly one job.</p>
+
+      <div class="file-tree">
+        <div><span class="ft-dir">movie-mood-matcher/</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-highlight">app.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment">← web server, routes only</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-highlight">matcher.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment">← dictionary + Claude API logic</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-file">requirements.txt</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment">← packages to install</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-file">.env</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment">← your API key (never share this)</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-file">.gitignore</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment">← keeps .env out of Git</span></div>
+        <div>&nbsp;&nbsp;<span class="ft-dir">templates/</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-highlight">index.html</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-comment">← the UI (Flask renders this)</span></div>
+      </div>
+
+      <table class="concept-table">
+        <thead>
+          <tr><th>File</th><th>Responsibility</th><th>Why separate?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>app.py</td><td>HTTP routing — receives requests, calls matcher, sends response</td><td>Keeps web logic away from business logic</td></tr>
+          <tr><td>matcher.py</td><td>The dictionary and the Claude API call</td><td>Can be tested and changed without touching the web layer</td></tr>
+          <tr><td>templates/index.html</td><td>Everything the user sees</td><td>Designers can edit the UI without touching Python</td></tr>
+          <tr><td>.env</td><td>Stores your secret API key</td><td>Secrets never go in source code</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div><strong>Never put your API key directly in Python code.</strong>
+        If you push that code to GitHub, your key is public. Always load it from <code class="ic">.env</code> using <code class="ic">python-dotenv</code>, which is exactly what this project does.</div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 2: The Dictionary ── -->
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="step-badge">2</div>
+        <div>
+          <div class="section-title">The Python dictionary</div>
+          <div class="section-sub">matcher.py — the core data structure</div>
+        </div>
+      </div>
+
+      <p>The dictionary is the heart of this project. Open <code class="ic">matcher.py</code> and the first thing you'll see is <code class="ic">MOVIES</code>.</p>
+
+      <div class="code-label">
+        <span class="filename">matcher.py</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">import</span> <span class="var">os</span>
+<span class="kw">import</span> <span class="var">json</span>
+<span class="kw">import</span> <span class="var">anthropic</span>
+
+<span class="cm"># Each key is a mood string.</span>
+<span class="cm"># Each value is a nested dictionary with movie details.</span>
+<span class="var">MOVIES</span> <span class="op">=</span> <span class="op">{</span>
+    <span class="st">"happy"</span><span class="op">:</span>    <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"The Grand Budapest Hotel"</span><span class="op">,</span> <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Comedy · Adventure"</span><span class="op">,</span> <span class="st">"year"</span><span class="op">:</span> <span class="st">"2014"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"sad"</span><span class="op">:</span>      <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Inside Out"</span><span class="op">,</span>               <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Animation · Drama"</span><span class="op">,</span>  <span class="st">"year"</span><span class="op">:</span> <span class="st">"2015"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"scared"</span><span class="op">:</span>   <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Get Out"</span><span class="op">,</span>                  <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Horror · Thriller"</span><span class="op">,</span>  <span class="st">"year"</span><span class="op">:</span> <span class="st">"2017"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"romantic"</span><span class="op">:</span> <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Crazy Rich Asians"</span><span class="op">,</span>        <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Romance · Comedy"</span><span class="op">,</span>   <span class="st">"year"</span><span class="op">:</span> <span class="st">"2018"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"bored"</span><span class="op">:</span>    <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Inception"</span><span class="op">,</span>                <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Sci-Fi · Thriller"</span><span class="op">,</span>  <span class="st">"year"</span><span class="op">:</span> <span class="st">"2010"</span><span class="op">}</span><span class="op">,</span>
+    <span class="st">"excited"</span><span class="op">:</span>  <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Everything Everywhere All at Once"</span><span class="op">,</span> <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Action · Sci-Fi"</span><span class="op">,</span> <span class="st">"year"</span><span class="op">:</span> <span class="st">"2022"</span><span class="op">}</span><span class="op">,</span>
+<span class="op">}</span></pre>
+
+      <p>Notice that the values are themselves dictionaries — this is called a <strong>nested dictionary</strong>. Each mood key maps to an inner dictionary with three fields: <code class="ic">title</code>, <code class="ic">genre</code>, and <code class="ic">year</code>.</p>
+
+      <table class="concept-table">
+        <thead>
+          <tr><th>Dictionary concept</th><th>Where it appears in this project</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Key-value pair</td><td><code class="ic">"happy": {...}</code> — mood is the key, movie data is the value</td></tr>
+          <tr><td>Nested dictionary</td><td>Each value is itself a dictionary: <code class="ic">{"title": "...", "genre": "...", "year": "..."}</code></td></tr>
+          <tr><td>.get() with default</td><td><code class="ic">MOVIES.get(mood)</code> returns <code class="ic">None</code> if the key doesn't exist — no crash</td></tr>
+          <tr><td>Iterating with .items()</td><td>Used in the HTML template to render every row in the dictionary viewer</td></tr>
+          <tr><td>Checking membership</td><td>The not-found state triggers when <code class="ic">MOVIES.get(mood)</code> returns <code class="ic">None</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <div class="callout-icon">✅</div>
+        <div><strong>Why .get() instead of MOVIES[mood]?</strong>
+        Using square brackets — <code class="ic">MOVIES["melancholy"]</code> — raises a <code class="ic">KeyError</code> and crashes if the key doesn't exist. The <code class="ic">.get()</code> method returns <code class="ic">None</code> instead, which we can handle gracefully and show a helpful message to the user.</div>
+      </div>
+
+      <!-- Quiz 1 -->
+      <div class="quiz-card">
+        <div class="quiz-q">What does <code class="ic">MOVIES.get("angry")</code> return if "angry" is not a key in the dictionary?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this, false, 'q1')" data-q="q1">
+            <span class="opt-key">A</span> It raises a KeyError and crashes
+          </button>
+          <button class="quiz-opt" onclick="answer(this, true, 'q1')" data-q="q1">
+            <span class="opt-key">B</span> It returns None
+          </button>
+          <button class="quiz-opt" onclick="answer(this, false, 'q1')" data-q="q1">
+            <span class="opt-key">C</span> It returns an empty string
+          </button>
+          <button class="quiz-opt" onclick="answer(this, false, 'q1')" data-q="q1">
+            <span class="opt-key">D</span> It returns False
+          </button>
+        </div>
+        <div class="quiz-feedback ok" id="q1-ok">Correct. <code class="ic">.get()</code> returns <code class="ic">None</code> by default when a key is missing. You can also supply a fallback: <code class="ic">MOVIES.get("angry", "Mood not found")</code>.</div>
+        <div class="quiz-feedback bad" id="q1-bad">Not quite. <code class="ic">MOVIES["angry"]</code> would raise a KeyError, but <code class="ic">MOVIES.get("angry")</code> safely returns <code class="ic">None</code>.</div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 3: Claude API ── -->
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="step-badge">3</div>
+        <div>
+          <div class="section-title">Calling the Claude API</div>
+          <div class="section-sub">matcher.py — extract_mood() and get_movie()</div>
+        </div>
+      </div>
+
+      <p>The dictionary only understands exact keys like <code class="ic">"happy"</code> or <code class="ic">"sad"</code>. But users type things like <em>"I feel kind of gloomy today"</em>. That's where the AI comes in — it reads the free-text input and maps it to one of our dictionary keys.</p>
+
+      <div class="code-label">
+        <span class="filename">matcher.py — setting up the client</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># os.environ.get() reads the key from your .env file.</span>
+<span class="cm"># python-dotenv loads .env automatically when app.py starts.</span>
+<span class="var">client</span> <span class="op">=</span> <span class="var">anthropic</span><span class="op">.</span><span class="fn">Anthropic</span><span class="op">(</span><span class="var">api_key</span><span class="op">=</span><span class="var">os</span><span class="op">.</span><span class="var">environ</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="st">"ANTHROPIC_API_KEY"</span><span class="op">)</span><span class="op">)</span></pre>
+
+      <div class="code-label">
+        <span class="filename">matcher.py — extract_mood()</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">def</span> <span class="fn">extract_mood</span><span class="op">(</span><span class="var">user_input</span><span class="op">:</span> <span class="var">str</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="var">tuple</span><span class="op">[</span><span class="var">str</span> <span class="op">|</span> <span class="kw">None</span><span class="op">,</span> <span class="var">str</span><span class="op">]</span><span class="op">:</span>
+    <span class="cm"># Build a string of all valid keys to include in the prompt.</span>
+    <span class="var">keys</span> <span class="op">=</span> <span class="st">", "</span><span class="op">.</span><span class="fn">join</span><span class="op">(</span><span class="var">MOVIES</span><span class="op">.</span><span class="fn">keys</span><span class="op">()</span><span class="op">)</span>
+    <span class="cm"># keys = "happy, sad, scared, romantic, bored, excited"</span>
+
+    <span class="var">prompt</span> <span class="op">=</span> <span class="st">f"""The user says: "{</span><span class="var">user_input</span><span class="st">}"
+
+Your job is to map their mood to exactly one of these dictionary keys: {</span><span class="var">keys</span><span class="st">}
+
+Respond with a JSON object only — no explanation, no markdown fences:
+{{"mood": "&lt;one of the keys above, or null if none fit&gt;",
+  "blurb": "&lt;one sentence recommending the matched movie&gt;"}}}"""</span>
+
+    <span class="cm"># Send the prompt to Claude and get a response.</span>
+    <span class="var">message</span> <span class="op">=</span> <span class="var">client</span><span class="op">.</span><span class="var">messages</span><span class="op">.</span><span class="fn">create</span><span class="op">(</span>
+        <span class="var">model</span><span class="op">=</span><span class="st">"claude-opus-4-5"</span><span class="op">,</span>
+        <span class="var">max_tokens</span><span class="op">=</span><span class="nm">200</span><span class="op">,</span>
+        <span class="var">messages</span><span class="op">=[{</span><span class="st">"role"</span><span class="op">:</span> <span class="st">"user"</span><span class="op">,</span> <span class="st">"content"</span><span class="op">:</span> <span class="var">prompt</span><span class="op">}]</span>
+    <span class="op">)</span>
+
+    <span class="cm"># The response is a JSON string. Parse it.</span>
+    <span class="var">raw</span>  <span class="op">=</span> <span class="var">message</span><span class="op">.</span><span class="var">content</span><span class="op">[</span><span class="nm">0</span><span class="op">].</span><span class="var">text</span><span class="op">.</span><span class="fn">strip</span><span class="op">()</span>
+    <span class="var">data</span> <span class="op">=</span> <span class="var">json</span><span class="op">.</span><span class="fn">loads</span><span class="op">(</span><span class="var">raw</span><span class="op">)</span>
+    <span class="kw">return</span> <span class="var">data</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="st">"mood"</span><span class="op">)</span><span class="op">,</span> <span class="var">data</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="st">"blurb"</span><span class="op">,</span> <span class="st">""</span><span class="op">)</span></pre>
+
+      <div class="code-label">
+        <span class="filename">matcher.py — get_movie()</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">def</span> <span class="fn">get_movie</span><span class="op">(</span><span class="var">mood</span><span class="op">:</span> <span class="var">str</span> <span class="op">|</span> <span class="kw">None</span><span class="op">,</span> <span class="var">blurb</span><span class="op">:</span> <span class="var">str</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="var">dict</span> <span class="op">|</span> <span class="kw">None</span><span class="op">:</span>
+    <span class="var">movie</span> <span class="op">=</span> <span class="var">MOVIES</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="var">mood</span><span class="op">)</span>   <span class="cm"># ← the dictionary lookup</span>
+    <span class="kw">if</span> <span class="var">movie</span> <span class="kw">is</span> <span class="kw">None</span><span class="op">:</span>
+        <span class="kw">return</span> <span class="kw">None</span>
+    <span class="kw">return</span> <span class="op">{</span><span class="st">"mood"</span><span class="op">:</span> <span class="var">mood</span><span class="op">,</span> <span class="st">"blurb"</span><span class="op">:</span> <span class="var">blurb</span><span class="op">,</span> <span class="op">**</span><span class="var">movie</span><span class="op">}</span></pre>
+
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div><strong>What is **movie?</strong>
+        The <code class="ic">**</code> operator unpacks a dictionary into keyword arguments. So <code class="ic">{"mood": mood, "blurb": blurb, **movie}</code> merges the mood and blurb with the movie's title, genre, and year — into one flat dictionary that's easier for the template to use.</div>
+      </div>
+
+      <table class="concept-table">
+        <thead>
+          <tr><th>Line</th><th>What it does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>keys = ", ".join(...)</td><td>Builds <code class="ic">"happy, sad, scared, ..."</code> from the dictionary keys — injected into the prompt so Claude knows what's valid</td></tr>
+          <tr><td>client.messages.create()</td><td>Sends the prompt to Claude and waits for a response</td></tr>
+          <tr><td>max_tokens=200</td><td>Limits the response length — we only need a short JSON object, not an essay</td></tr>
+          <tr><td>message.content[0].text</td><td>The raw text Claude returned — a JSON string like <code class="ic">{"mood": "sad", "blurb": "..."}</code></td></tr>
+          <tr><td>json.loads(raw)</td><td>Converts that JSON string into a Python dictionary so we can read the values</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Quiz 2 -->
+      <div class="quiz-card">
+        <div class="quiz-q">Why do we pass <code class="ic">keys</code> into the prompt instead of hardcoding mood names there?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this, false, 'q2')" data-q="q2">
+            <span class="opt-key">A</span> To make the prompt shorter
+          </button>
+          <button class="quiz-opt" onclick="answer(this, true, 'q2')" data-q="q2">
+            <span class="opt-key">B</span> So the prompt automatically updates when we add or remove moods from the dictionary
+          </button>
+          <button class="quiz-opt" onclick="answer(this, false, 'q2')" data-q="q2">
+            <span class="opt-key">C</span> Because Claude can't read hardcoded strings
+          </button>
+          <button class="quiz-opt" onclick="answer(this, false, 'q2')" data-q="q2">
+            <span class="opt-key">D</span> To save API tokens
+          </button>
+        </div>
+        <div class="quiz-feedback ok" id="q2-ok">Exactly. If you add <code class="ic">"nostalgic"</code> to <code class="ic">MOVIES</code>, the prompt updates automatically — no need to change the prompt text by hand.</div>
+        <div class="quiz-feedback bad" id="q2-bad">Think about what happens when you add a new mood to the dictionary. If the keys were hardcoded in the prompt, you'd have to update two places instead of one.</div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 4: Flask ── -->
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="step-badge">4</div>
+        <div>
+          <div class="section-title">The Flask app</div>
+          <div class="section-sub">app.py — routing and request handling</div>
+        </div>
+      </div>
+
+      <p>Flask is a lightweight Python web framework. <code class="ic">app.py</code> has one job: receive HTTP requests from the browser, call the right functions, and send back a rendered HTML page.</p>
+
+      <div class="code-label">
+        <span class="filename">app.py</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="kw">from</span> <span class="var">flask</span> <span class="kw">import</span> <span class="var">Flask</span><span class="op">,</span> <span class="var">render_template</span><span class="op">,</span> <span class="var">request</span>
+<span class="kw">from</span> <span class="var">dotenv</span> <span class="kw">import</span> <span class="var">load_dotenv</span>
+<span class="kw">from</span> <span class="var">matcher</span> <span class="kw">import</span> <span class="var">extract_mood</span><span class="op">,</span> <span class="var">get_movie</span><span class="op">,</span> <span class="var">MOVIES</span>
+
+<span class="fn">load_dotenv</span><span class="op">()</span>   <span class="cm"># reads ANTHROPIC_API_KEY from .env into os.environ</span>
+
+<span class="var">app</span> <span class="op">=</span> <span class="fn">Flask</span><span class="op">(</span><span class="var">__name__</span><span class="op">)</span>
+<span class="var">app</span><span class="op">.</span><span class="var">secret_key</span> <span class="op">=</span> <span class="st">"dev-secret"</span>
+
+<span class="op">@</span><span class="var">app</span><span class="op">.</span><span class="fn">route</span><span class="op">(</span><span class="st">"/"</span><span class="op">,</span> <span class="var">methods</span><span class="op">=[</span><span class="st">"GET"</span><span class="op">,</span> <span class="st">"POST"</span><span class="op">]</span><span class="op">)</span>
+<span class="kw">def</span> <span class="fn">index</span><span class="op">()</span><span class="op">:</span>
+    <span class="var">result</span>         <span class="op">=</span> <span class="kw">None</span>
+    <span class="var">not_found_mood</span> <span class="op">=</span> <span class="kw">None</span>
+    <span class="var">mood_input</span>     <span class="op">=</span> <span class="kw">None</span>
+    <span class="var">error</span>          <span class="op">=</span> <span class="kw">None</span>
+
+    <span class="kw">if</span> <span class="var">request</span><span class="op">.</span><span class="var">method</span> <span class="op">==</span> <span class="st">"POST"</span><span class="op">:</span>
+        <span class="cm"># Read what the user typed into the form field named "mood_input".</span>
+        <span class="var">mood_input</span> <span class="op">=</span> <span class="var">request</span><span class="op">.</span><span class="var">form</span><span class="op">.</span><span class="fn">get</span><span class="op">(</span><span class="st">"mood_input"</span><span class="op">,</span> <span class="st">""</span><span class="op">)</span><span class="op">.</span><span class="fn">strip</span><span class="op">()</span>
+
+        <span class="kw">if not</span> <span class="var">mood_input</span><span class="op">:</span>
+            <span class="var">error</span> <span class="op">=</span> <span class="st">"Describe how you're feeling first."</span>
+        <span class="kw">else</span><span class="op">:</span>
+            <span class="kw">try</span><span class="op">:</span>
+                <span class="var">mood</span><span class="op">,</span> <span class="var">blurb</span> <span class="op">=</span> <span class="fn">extract_mood</span><span class="op">(</span><span class="var">mood_input</span><span class="op">)</span>   <span class="cm"># AI call</span>
+                <span class="var">result</span> <span class="op">=</span> <span class="fn">get_movie</span><span class="op">(</span><span class="var">mood</span><span class="op">,</span> <span class="var">blurb</span><span class="op">)</span>            <span class="cm"># dict lookup</span>
+                <span class="kw">if</span> <span class="var">result</span> <span class="kw">is</span> <span class="kw">None</span><span class="op">:</span>
+                    <span class="var">not_found_mood</span> <span class="op">=</span> <span class="var">mood</span> <span class="kw">or</span> <span class="st">"unknown"</span>
+            <span class="kw">except</span> <span class="var">Exception</span> <span class="kw">as</span> <span class="var">e</span><span class="op">:</span>
+                <span class="var">error</span> <span class="op">=</span> <span class="st">f"Something went wrong: {</span><span class="var">e</span><span class="st">}"</span>
+
+    <span class="kw">return</span> <span class="fn">render_template</span><span class="op">(</span>
+        <span class="st">"index.html"</span><span class="op">,</span>
+        <span class="var">result</span><span class="op">=</span><span class="var">result</span><span class="op">,</span>
+        <span class="var">not_found_mood</span><span class="op">=</span><span class="var">not_found_mood</span><span class="op">,</span>
+        <span class="var">mood_input</span><span class="op">=</span><span class="var">mood_input</span><span class="op">,</span>
+        <span class="var">error</span><span class="op">=</span><span class="var">error</span><span class="op">,</span>
+        <span class="var">movies</span><span class="op">=</span><span class="var">MOVIES</span><span class="op">,</span>   <span class="cm"># passed to the template to render the dict viewer</span>
+    <span class="op">)</span>
+
+<span class="kw">if</span> <span class="var">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span><span class="op">:</span>
+    <span class="var">app</span><span class="op">.</span><span class="fn">run</span><span class="op">(</span><span class="var">debug</span><span class="op">=</span><span class="kw">True</span><span class="op">)</span></pre>
+
+      <table class="concept-table">
+        <thead>
+          <tr><th>Concept</th><th>Explanation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>@app.route("/")</td><td>Registers the URL <code class="ic">/</code> — so visiting <code class="ic">http://127.0.0.1:5000</code> calls this function</td></tr>
+          <tr><td>methods=["GET", "POST"]</td><td>GET = page load. POST = form submission. Same URL handles both.</td></tr>
+          <tr><td>request.method == "POST"</td><td>Only run the AI logic when the user actually submitted the form</td></tr>
+          <tr><td>request.form.get()</td><td>Reads the value from the HTML form field whose <code class="ic">name</code> attribute is <code class="ic">"mood_input"</code></td></tr>
+          <tr><td>render_template()</td><td>Finds <code class="ic">templates/index.html</code>, fills in the Jinja2 variables, returns finished HTML</td></tr>
+          <tr><td>try / except</td><td>If the API call fails (bad key, no internet), shows a friendly error instead of crashing</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout concept">
+        <div class="callout-icon">💡</div>
+        <div><strong>GET vs POST — why does it matter?</strong>
+        When you first visit the page the browser sends a GET request — no form data, so we just show the empty UI. When you click "Match mood" the browser sends a POST request with the form data attached. The <code class="ic">if request.method == "POST"</code> check separates these two cases cleanly.</div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 5: HTML Template ── -->
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="step-badge">5</div>
+        <div>
+          <div class="section-title">The HTML template</div>
+          <div class="section-sub">templates/index.html — Jinja2 and the UI</div>
+        </div>
+      </div>
+
+      <p>The HTML file lives inside the <code class="ic">templates/</code> folder. Flask requires that exact folder name. The file uses <strong>Jinja2</strong> — a templating language that lets you embed Python-like expressions directly inside HTML.</p>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div><strong>This is why opening index.html directly shows raw code.</strong>
+        A browser reads HTML, not Jinja2. The <code class="ic">{{ }}</code> and <code class="ic">{% %}</code> tags are instructions for Flask, not the browser. Always open the app through <code class="ic">http://127.0.0.1:5000</code>.</div>
+      </div>
+
+      <p>Here are the key Jinja2 patterns used in this project:</p>
+
+      <div class="code-label">
+        <span class="filename">templates/index.html — displaying the result</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm">&lt;!-- {% if %} checks whether Flask passed a result --&gt;</span>
+<span class="op">{% if</span> <span class="var">result</span> <span class="op">%}</span>
+  &lt;div class="result-card"&gt;
+    &lt;div class="movie-title"&gt;<span class="op">{{</span> <span class="var">result.title</span> <span class="op">}}</span>&lt;/div&gt;
+    &lt;div class="movie-meta"&gt;<span class="op">{{</span> <span class="var">result.genre</span> <span class="op">}}</span> · <span class="op">{{</span> <span class="var">result.year</span> <span class="op">}}</span>&lt;/div&gt;
+    &lt;div class="movie-blurb"&gt;<span class="op">{{</span> <span class="var">result.blurb</span> <span class="op">}}</span>&lt;/div&gt;
+  &lt;/div&gt;
+<span class="op">{% endif %}</span></pre>
+
+      <div class="code-label">
+        <span class="filename">templates/index.html — looping over the dictionary</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm">&lt;!-- Flask passed movies=MOVIES so we can loop over it here --&gt;</span>
+<span class="op">{% for</span> <span class="var">key</span><span class="op">,</span> <span class="var">data</span> <span class="kw">in</span> <span class="var">movies</span><span class="op">.</span><span class="fn">items</span><span class="op">() %}</span>
+  &lt;div class="dict-row <span class="op">{% if</span> <span class="var">result</span> <span class="kw">and</span> <span class="var">result</span><span class="op">.</span><span class="var">mood</span> <span class="op">==</span> <span class="var">key</span> <span class="op">%}</span>hit<span class="op">{% endif %}</span>"&gt;
+    &lt;span class="dict-key"&gt;"<span class="op">{{</span> <span class="var">key</span> <span class="op">}}</span>"&lt;/span&gt;
+    &lt;span class="dict-val"&gt;<span class="op">{{</span> <span class="var">data</span><span class="op">.</span><span class="var">title</span> <span class="op">}}</span>&lt;/span&gt;
+  &lt;/div&gt;
+<span class="op">{% endfor %}</span></pre>
+
+      <div class="code-label">
+        <span class="filename">templates/index.html — the form</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre>&lt;form <span class="var">method</span><span class="op">=</span><span class="st">"POST"</span> <span class="var">action</span><span class="op">=</span><span class="st">"/"</span>&gt;
+  &lt;input
+    <span class="var">type</span><span class="op">=</span><span class="st">"text"</span>
+    <span class="var">name</span><span class="op">=</span><span class="st">"mood_input"</span>         <span class="cm">&lt;!-- must match request.form.get("mood_input") in app.py --&gt;</span>
+    <span class="var">value</span><span class="op">=</span><span class="st">"</span><span class="op">{{</span> <span class="var">mood_input</span> <span class="kw">or</span> <span class="st">''</span> <span class="op">}}</span><span class="st">"</span>  <span class="cm">&lt;!-- re-fills the input after a POST --&gt;</span>
+  /&gt;
+  &lt;button <span class="var">type</span><span class="op">=</span><span class="st">"submit"</span>&gt;Match mood&lt;/button&gt;
+&lt;/form&gt;</pre>
+
+      <table class="concept-table">
+        <thead>
+          <tr><th>Jinja2 syntax</th><th>What it does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>{{ variable }}</td><td>Outputs a Python value into the HTML</td></tr>
+          <tr><td>{% if condition %} ... {% endif %}</td><td>Conditionally renders a block of HTML</td></tr>
+          <tr><td>{% for key, data in movies.items() %}</td><td>Loops over the dictionary, giving access to each key and value</td></tr>
+          <tr><td>{{ result.title }}</td><td>Accesses the <code class="ic">title</code> field inside the <code class="ic">result</code> dictionary</td></tr>
+          <tr><td>{{ mood_input or '' }}</td><td>Uses Python's <code class="ic">or</code> to show an empty string if <code class="ic">mood_input</code> is None</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Quiz 3 -->
+      <div class="quiz-card">
+        <div class="quiz-q">In <code class="ic">index.html</code>, what does <code class="ic">{% if result and result.mood == key %}</code> do?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this, false, 'q3')" data-q="q3">
+            <span class="opt-key">A</span> It checks if the user typed a mood
+          </button>
+          <button class="quiz-opt" onclick="answer(this, false, 'q3')" data-q="q3">
+            <span class="opt-key">B</span> It hides the dictionary viewer
+          </button>
+          <button class="quiz-opt" onclick="answer(this, true, 'q3')" data-q="q3">
+            <span class="opt-key">C</span> It adds the "hit" CSS class to the matched dictionary row to highlight it
+          </button>
+          <button class="quiz-opt" onclick="answer(this, false, 'q3')" data-q="q3">
+            <span class="opt-key">D</span> It loops over all the keys
+          </button>
+        </div>
+        <div class="quiz-feedback ok" id="q3-ok">Correct. It applies the <code class="ic">hit</code> class only to the row whose key matches the AI's result — turning that row blue so students can see exactly which key was looked up.</div>
+        <div class="quiz-feedback bad" id="q3-bad">Look again at where this tag appears — it's inside the <code class="ic">{% for %}</code> loop, on the <code class="ic">class</code> attribute of each row. It adds the <code class="ic">hit</code> class to highlight the matched row.</div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 6: Running ── -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="step-badge">6</div>
+        <div>
+          <div class="section-title">Running the project</div>
+          <div class="section-sub">Setup commands from scratch</div>
+        </div>
+      </div>
+
+      <p>Run these commands once, in order, from inside the <code class="ic">movie-mood-matcher/</code> folder.</p>
+
+      <div class="code-label">
+        <span class="filename">Terminal — Mac / Linux</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># 1. Create a virtual environment</span>
+python3 -m venv venv
+
+<span class="cm"># 2. Activate it — you'll see (venv) in your prompt</span>
+source venv/bin/activate
+
+<span class="cm"># 3. Install packages</span>
+pip install -r requirements.txt
+
+<span class="cm"># 4. Create .env and add your key</span>
+cp .env.example .env
+<span class="cm"># open .env and set: ANTHROPIC_API_KEY=sk-ant-xxxxx</span>
+
+<span class="cm"># 5. Start Flask</span>
+python app.py</pre>
+
+      <div class="code-label">
+        <span class="filename">Terminal — Windows</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># 1. Create a virtual environment</span>
+python -m venv venv
+
+<span class="cm"># 2. Activate it</span>
+venv\Scripts\activate
+
+<span class="cm"># 3. Install packages</span>
+pip install -r requirements.txt
+
+<span class="cm"># 4. Create .env and add your key</span>
+copy .env.example .env
+<span class="cm"># open .env and set: ANTHROPIC_API_KEY=sk-ant-xxxxx</span>
+
+<span class="cm"># 5. Start Flask</span>
+python app.py</pre>
+
+      <p>Then open <code class="ic">http://127.0.0.1:5000</code> in your browser. You should see the full UI.</p>
+
+      <div class="callout tip">
+        <div class="callout-icon">✅</div>
+        <div><strong>Next time you work on it</strong> — you only need steps 2 and 5. The venv and packages are already installed. Just activate and run.</div>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div><strong>Common errors</strong><br/>
+        <strong>ModuleNotFoundError</strong> — you're not inside the venv. Run the activate command first.<br/>
+        <strong>AuthenticationError</strong> — check that <code class="ic">.env</code> exists in the project root and the key is correct with no spaces.<br/>
+        <strong>No such file or directory: requirements.txt</strong> — you're not inside the <code class="ic">movie-mood-matcher/</code> folder. Run <code class="ic">cd movie-mood-matcher</code> first.</div>
+      </div>
+    </div>
+
+    <hr class="section-divider" />
+
+    <!-- ── Section 7: Extend ── -->
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="step-badge">7</div>
+        <div>
+          <div class="section-title">Extend the project</div>
+          <div class="section-sub">Dictionary exercises to go further</div>
+        </div>
+      </div>
+
+      <p>These exercises use dictionary operations directly. Each one is a small change to <code class="ic">matcher.py</code>.</p>
+
+      <div class="code-label">
+        <span class="filename">Exercise 1 — Add a new mood</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># Add this entry to MOVIES in matcher.py:</span>
+<span class="st">"nostalgic"</span><span class="op">:</span> <span class="op">{</span><span class="st">"title"</span><span class="op">:</span> <span class="st">"Stand By Me"</span><span class="op">,</span> <span class="st">"genre"</span><span class="op">:</span> <span class="st">"Drama"</span><span class="op">,</span> <span class="st">"year"</span><span class="op">:</span> <span class="st">"1986"</span><span class="op">}</span><span class="op">,</span>
+
+<span class="cm"># The prompt in extract_mood() picks it up automatically</span>
+<span class="cm"># because it reads MOVIES.keys() — no other changes needed.</span></pre>
+
+      <div class="code-label">
+        <span class="filename">Exercise 2 — List all moods</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># Add this function to matcher.py:</span>
+<span class="kw">def</span> <span class="fn">list_moods</span><span class="op">()</span> <span class="op">-&gt;</span> <span class="var">list</span><span class="op">:</span>
+    <span class="kw">return</span> <span class="var">list</span><span class="op">(</span><span class="var">MOVIES</span><span class="op">.</span><span class="fn">keys</span><span class="op">()</span><span class="op">)</span>
+    <span class="cm"># returns: ['happy', 'sad', 'scared', 'romantic', 'bored', 'excited']</span></pre>
+
+      <div class="code-label">
+        <span class="filename">Exercise 3 — Iterate with .items()</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># Print every mood and its movie title:</span>
+<span class="kw">for</span> <span class="var">mood</span><span class="op">,</span> <span class="var">movie</span> <span class="kw">in</span> <span class="var">MOVIES</span><span class="op">.</span><span class="fn">items</span><span class="op">()</span><span class="op">:</span>
+    <span class="fn">print</span><span class="op">(</span><span class="st">f"{</span><span class="var">mood</span><span class="st">} → {</span><span class="var">movie</span><span class="op">[</span><span class="st">'title'</span><span class="op">]</span><span class="st">}"</span><span class="op">)</span>
+
+<span class="cm"># Output:</span>
+<span class="cm"># happy → The Grand Budapest Hotel</span>
+<span class="cm"># sad → Inside Out</span>
+<span class="cm"># ...</span></pre>
+
+      <div class="code-label">
+        <span class="filename">Exercise 4 — Check membership with 'in'</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="cm"># Check if a key exists before looking it up:</span>
+<span class="kw">if</span> <span class="st">"happy"</span> <span class="kw">in</span> <span class="var">MOVIES</span><span class="op">:</span>
+    <span class="fn">print</span><span class="op">(</span><span class="st">"We have a movie for that mood"</span><span class="op">)</span>
+
+<span class="cm"># This is equivalent to checking MOVIES.get("happy") is not None</span></pre>
+    </div>
+
+    <!-- ── Completion ── -->
+    <div class="completion">
+      <h2>You've covered the whole project</h2>
+      <p>From the Python dictionary at its core to the Flask server, the Claude API call, and the Jinja2 template.</p>
+      <div class="ext-grid">
+        <div class="ext-card">
+          <div class="ext-title">Add more moods</div>
+          <p>Add entries to MOVIES in matcher.py — the prompt and UI update automatically.</p>
+        </div>
+        <div class="ext-card">
+          <div class="ext-title">Top 3 picks</div>
+          <p>Change the dictionary values to lists of movies and return all three.</p>
+        </div>
+        <div class="ext-card">
+          <div class="ext-title">Swap the domain</div>
+          <p>Replace movies with songs, books, or recipes — the dictionary structure stays identical.</p>
+        </div>
+        <div class="ext-card">
+          <div class="ext-title">Persist with JSON</div>
+          <p>Save MOVIES to a .json file and load it at startup — dictionaries and JSON are almost identical.</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ── Quiz logic ──
+  function answer(btn, correct, qid) {
+    const opts = document.querySelectorAll(`[data-q="${qid}"]`);
+    opts.forEach(o => o.disabled = true);
+    btn.classList.add(correct ? 'correct' : 'wrong');
+    const ok  = document.getElementById(qid + '-ok');
+    const bad = document.getElementById(qid + '-bad');
+    if (correct) { ok.classList.add('show'); }
+    else         { bad.classList.add('show'); }
+  }
+
+  // ── Copy code ──
+  function copyCode(btn) {
+    const pre = btn.closest('.code-label').nextElementSibling;
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  // ── Scroll spy + progress ──
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item[data-section]');
+  const total    = sections.length;
+
+  function updateNav() {
+    let current = 0;
+    sections.forEach((s, i) => {
+      if (s.getBoundingClientRect().top < window.innerHeight * 0.4) current = i;
+    });
+    navItems.forEach(n => n.classList.remove('active'));
+    const active = document.querySelector(`[data-section="${current}"]`);
+    if (active) active.classList.add('active');
+
+    const pct = Math.round(((current + 1) / total) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressLabel').textContent = `${current + 1} / ${total} steps`;
+  }
+
+  window.addEventListener('scroll', updateNav, { passive: true });
+  updateNav();
+</script>
+</body>
+</html>
