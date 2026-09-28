@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>In-Class Activity: Calculating Regression Metrics by Hand</title>
+<style>
+  :root{
+    --bg:#f7fbff; --card:#ffffff; --ink:#243044; --muted:#5e6b7f;
+    --blue:#315fba; --blue2:#eaf2ff; --line:#d9e3f0; --green:#eaf8f1;
+    --yellow:#fff9e8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:Arial, Helvetica, sans-serif; line-height:1.55;
+  }
+  .page{max-width:1050px;margin:0 auto;padding:32px 22px 60px}
+  .hero{
+    background:linear-gradient(135deg,#eef6ff,#ffffff);
+    border:1px solid var(--line); border-radius:18px; padding:30px;
+    margin-bottom:24px;
+  }
+  h1{font-size:2rem;margin:0 0 8px;color:#223b6b}
+  h2{color:#294f98;margin-top:32px;border-bottom:2px solid #dce8fa;padding-bottom:7px}
+  h3{color:#355b9e;margin-top:24px}
+  p{margin:10px 0}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:22px; margin:18px 0; box-shadow:0 3px 12px rgba(30,55,90,.04);
+  }
+  .formula{
+    background:var(--blue2); border-left:4px solid var(--blue);
+    padding:12px 15px; border-radius:8px; margin:12px 0; font-weight:600;
+  }
+  .note{background:var(--yellow);border:1px solid #eee0ad;border-radius:10px;padding:14px}
+  .answer{background:var(--green);border:1px solid #cfe8dc;border-radius:10px;padding:14px;margin:12px 0}
+  table{width:100%;border-collapse:collapse;margin:16px 0;background:#fff}
+  th{background:#eaf2ff;color:#263f70}
+  th,td{border:1px solid #cfdbea;padding:9px;text-align:center}
+  td:first-child,th:first-child{text-align:left}
+  .blank{height:28px}
+  .section-label{
+    display:inline-block;background:#dfeaff;color:#2d559e;padding:5px 10px;
+    border-radius:999px;font-weight:700;font-size:.88rem
+  }
+  .solution-start{
+    margin-top:52px;padding:24px;background:#edf8f4;border:2px solid #cce8dc;
+    border-radius:16px;
+  }
+  .small{font-size:.94rem;color:var(--muted)}
+  ul{padding-left:22px}
+  @media print{
+    body{background:#fff}.page{max-width:none;padding:12px}.card,.hero{box-shadow:none}
+    .solution-start{break-before:page}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="hero">
+    <span class="section-label">In-Class Participation Activity</span>
+    <h1>Calculating Regression Metrics by Hand</h1>
+    <p><strong>Scenario:</strong> Predicting Hospital ER Patient Demand</p>
+    <p>In previous projects, the computer calculated regression evaluation metrics for you. In this activity, you will calculate the metrics yourself so you can understand where the values come from.</p>
+    <p><strong>Submission:</strong> Complete the activity during class and upload your work. Completed submissions receive full participation points.</p>
+  </div>
+
+  <div class="card">
+    <h2>The Problem</h2>
+    <p>A hospital uses a regression model to predict how many patients will arrive at its Emergency Room each day. The table shows the actual number of patients and the number predicted by the model.</p>
+    <table>
+      <tr><th>Day</th><th>Actual Patients</th><th>Predicted Patients</th></tr>
+      <tr><td>Monday</td><td>100</td><td>90</td></tr>
+      <tr><td>Tuesday</td><td>120</td><td>130</td></tr>
+      <tr><td>Wednesday</td><td>140</td><td>130</td></tr>
+      <tr><td>Thursday</td><td>160</td><td>170</td></tr>
+      <tr><td>Friday</td><td>180</td><td>170</td></tr>
+    </table>
+    <p>Calculate <strong>MAE, MSE, RMSE, MAPE, and R²</strong>. Show your calculations.</p>
+  </div>
+
+  <div class="card">
+    <h2>Part 1 — Calculate the Errors</h2>
+    <div class="formula">Error = Actual − Predicted</div>
+    <div class="formula">Absolute Error = |Error|</div>
+    <div class="formula">Squared Error = Error²</div>
+    <div class="formula">Absolute Percentage Error = (|Error| ÷ Actual) × 100</div>
+    <table>
+      <tr><th>Day</th><th>Actual</th><th>Predicted</th><th>Error</th><th>|Error|</th><th>Error²</th><th>Absolute % Error</th></tr>
+      <tr><td>Monday</td><td>100</td><td>90</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>Tuesday</td><td>120</td><td>130</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>Wednesday</td><td>140</td><td>130</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>Thursday</td><td>160</td><td>170</td><td></td><td></td><td></td><td></td></tr>
+      <tr><td>Friday</td><td>180</td><td>170</td><td></td><td></td><td></td><td></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Part 2 — MAE</h2>
+    <p><strong>Question:</strong> On average, how far are our predictions from the actual values?</p>
+    <div class="formula">MAE = Sum of Absolute Errors ÷ Number of Observations</div>
+    <p><strong>Calculation:</strong> ______________________________________________</p>
+    <p><strong>MAE = __________ patients</strong></p>
+    <p>What does this value mean?</p><p>____________________________________________________________</p>
+  </div>
+
+  <div class="card">
+    <h2>Part 3 — MSE</h2>
+    <p>MSE squares errors before averaging them, causing larger errors to have more influence.</p>
+    <div class="formula">MSE = Sum of Squared Errors ÷ Number of Observations</div>
+    <p><strong>Calculation:</strong> ______________________________________________</p>
+    <p><strong>MSE = __________</strong></p>
+  </div>
+
+  <div class="card">
+    <h2>Part 4 — RMSE</h2>
+    <p>RMSE takes the square root of MSE, bringing the result back to the original unit.</p>
+    <div class="formula">RMSE = √MSE</div>
+    <p><strong>RMSE = √__________ = __________ patients</strong></p>
+  </div>
+
+  <div class="card">
+    <h2>Part 5 — MAPE</h2>
+    <p><strong>Question:</strong> On average, what percentage off are our predictions?</p>
+    <div class="formula">MAPE = Sum of Absolute Percentage Errors ÷ Number of Observations</div>
+    <p><strong>Calculation:</strong> ______________________________________________</p>
+    <p><strong>MAPE = __________ %</strong></p>
+    <p>What does this value mean?</p><p>____________________________________________________________</p>
+  </div>
+
+  <div class="card">
+    <h2>Part 6 — R²</h2>
+    <p>R² compares our regression model with a simple baseline that predicts the <strong>average actual patient count every day</strong>.</p>
+
+    <h3>Step 1: Calculate the Mean</h3>
+    <div class="formula">Mean = Sum of Actual Values ÷ Number of Observations</div>
+    <p>Mean = (100 + 120 + 140 + 160 + 180) ÷ 5 = <strong>__________ patients</strong></p>
+
+    <h3>Step 2: Calculate Total Squared Variation</h3>
+    <div class="formula">(Actual − Mean)²</div>
+    <table>
+      <tr><th>Day</th><th>Actual</th><th>Mean</th><th>Actual − Mean</th><th>(Actual − Mean)²</th></tr>
+      <tr><td>Monday</td><td>100</td><td></td><td></td><td></td></tr>
+      <tr><td>Tuesday</td><td>120</td><td></td><td></td><td></td></tr>
+      <tr><td>Wednesday</td><td>140</td><td></td><td></td><td></td></tr>
+      <tr><td>Thursday</td><td>160</td><td></td><td></td><td></td></tr>
+      <tr><td>Friday</td><td>180</td><td></td><td></td><td></td></tr>
+      <tr><th>TOTAL</th><td></td><td></td><td></td><td><strong>__________</strong></td></tr>
+    </table>
+
+    <h3>Step 3: Calculate Residual Squared Error</h3>
+    <p>Add the Error² values from Part 1.</p>
+    <p><strong>Residual Squared Error = __________</strong></p>
+
+    <h3>Step 4: Calculate R²</h3>
+    <div class="formula">R² = 1 − (Residual Squared Error ÷ Total Squared Variation)</div>
+    <p>R² = 1 − (__________ ÷ __________) = <strong>__________</strong></p>
+    <p>What does this R² value mean?</p><p>____________________________________________________________</p>
+  </div>
+
+  <div class="card">
+    <h2>Final Results</h2>
+    <table>
+      <tr><th>Metric</th><th>Your Result</th><th>What It Tells Us</th></tr>
+      <tr><td>MAE</td><td></td><td>How far off are we on average?</td></tr>
+      <tr><td>MSE</td><td></td><td>Average squared error; larger errors have more influence.</td></tr>
+      <tr><td>RMSE</td><td></td><td>Error in patients, with extra influence from larger errors.</td></tr>
+      <tr><td>MAPE</td><td></td><td>What percentage off are we on average?</td></tr>
+      <tr><td>R²</td><td></td><td>How much variation is explained compared with predicting the mean?</td></tr>
+    </table>
+  </div>
+
+  <div class="solution-start">
+    <span class="section-label">Solution &amp; Explanation</span>
+    <h1>Check Your Calculations</h1>
+    <p>Use this section after completing the activity. The goal is to understand both the calculation and what each resulting number means.</p>
+  </div>
+
+  <div class="card">
+    <h2>Step 1 — Completed Error Table</h2>
+    <table>
+      <tr><th>Day</th><th>Actual</th><th>Predicted</th><th>Error</th><th>|Error|</th><th>Error²</th><th>Absolute % Error</th></tr>
+      <tr><td>Monday</td><td>100</td><td>90</td><td>10</td><td>10</td><td>100</td><td>10.00%</td></tr>
+      <tr><td>Tuesday</td><td>120</td><td>130</td><td>−10</td><td>10</td><td>100</td><td>8.33%</td></tr>
+      <tr><td>Wednesday</td><td>140</td><td>130</td><td>10</td><td>10</td><td>100</td><td>7.14%</td></tr>
+      <tr><td>Thursday</td><td>160</td><td>170</td><td>−10</td><td>10</td><td>100</td><td>6.25%</td></tr>
+      <tr><td>Friday</td><td>180</td><td>170</td><td>10</td><td>10</td><td>100</td><td>5.56%</td></tr>
+    </table>
+    <p>Every prediction is <strong>10 patients away</strong> from the actual value, even though some errors are positive and some are negative.</p>
+  </div>
+
+  <div class="card">
+    <h2>MAE Solution</h2>
+    <p><strong>MAE = (10 + 10 + 10 + 10 + 10) ÷ 5 = 10 patients</strong></p>
+    <div class="answer"><strong>Interpretation:</strong> The model's predictions are off by 10 patients on average.</div>
+  </div>
+
+  <div class="card">
+    <h2>MSE Solution</h2>
+    <p><strong>MSE = (100 + 100 + 100 + 100 + 100) ÷ 5 = 100</strong></p>
+    <div class="answer"><strong>Interpretation:</strong> The average squared error is 100. MSE is in squared units and gives larger errors more influence.</div>
+  </div>
+
+  <div class="card">
+    <h2>RMSE Solution</h2>
+    <p><strong>RMSE = √100 = 10 patients</strong></p>
+    <div class="answer"><strong>Interpretation:</strong> RMSE returns the result to the original unit—patients—while retaining the squared-error approach.</div>
+    <p class="small">MAE and RMSE are both 10 here because every error has exactly the same size. If one error were much larger, RMSE would react more strongly.</p>
+  </div>
+
+  <div class="card">
+    <h2>MAPE Solution</h2>
+    <p><strong>MAPE = (10.00 + 8.33 + 7.14 + 6.25 + 5.56) ÷ 5</strong></p>
+    <p><strong>MAPE = 37.28 ÷ 5 ≈ 7.46%</strong></p>
+    <div class="answer"><strong>Interpretation:</strong> The model's predictions are off by approximately 7.46% on average.</div>
+    <p>The error is always 10 patients, but the percentage differs because 10 patients is a larger percentage of 100 than of 180.</p>
+  </div>
+
+  <div class="card">
+    <h2>R² Solution</h2>
+    <h3>1. Mean Actual Patient Count</h3>
+    <p><strong>Mean = (100 + 120 + 140 + 160 + 180) ÷ 5 = 140 patients</strong></p>
+    <p>A simple baseline would therefore predict <strong>140 patients every day</strong>.</p>
+
+    <h3>2. Total Squared Variation</h3>
+    <table>
+      <tr><th>Day</th><th>Actual</th><th>Mean</th><th>Actual − Mean</th><th>(Actual − Mean)²</th></tr>
+      <tr><td>Monday</td><td>100</td><td>140</td><td>−40</td><td>1,600</td></tr>
+      <tr><td>Tuesday</td><td>120</td><td>140</td><td>−20</td><td>400</td></tr>
+      <tr><td>Wednesday</td><td>140</td><td>140</td><td>0</td><td>0</td></tr>
+      <tr><td>Thursday</td><td>160</td><td>140</td><td>20</td><td>400</td></tr>
+      <tr><td>Friday</td><td>180</td><td>140</td><td>40</td><td>1,600</td></tr>
+      <tr><th>TOTAL</th><td></td><td></td><td></td><td><strong>4,000</strong></td></tr>
+    </table>
+
+    <h3>3. Residual Squared Error</h3>
+    <p><strong>100 + 100 + 100 + 100 + 100 = 500</strong></p>
+
+    <h3>4. R² Calculation</h3>
+    <p><strong>R² = 1 − (500 ÷ 4,000)</strong></p>
+    <p><strong>R² = 1 − 0.125 = 0.875 = 87.5%</strong></p>
+    <div class="answer"><strong>Interpretation:</strong> The regression model explains about 87.5% of the observed variation in daily ER patient counts compared with simply predicting the average of 140 patients every day.</div>
+    <div class="note"><strong>Important:</strong> R² = 87.5% does <strong>not</strong> mean the model is “87.5% accurate.” R² describes explained variation.</div>
+  </div>
+
+  <div class="card">
+    <h2>Final Answer Summary</h2>
+    <table>
+      <tr><th>Metric</th><th>Result</th><th>Meaning</th></tr>
+      <tr><td><strong>MAE</strong></td><td><strong>10 patients</strong></td><td>Predictions are off by 10 patients on average.</td></tr>
+      <tr><td><strong>MSE</strong></td><td><strong>100</strong></td><td>Average squared error; larger errors would have more influence.</td></tr>
+      <tr><td><strong>RMSE</strong></td><td><strong>10 patients</strong></td><td>Error in patient units using squared-error weighting.</td></tr>
+      <tr><td><strong>MAPE</strong></td><td><strong>7.46%</strong></td><td>Predictions are off by about 7.46% on average.</td></tr>
+      <tr><td><strong>R²</strong></td><td><strong>0.875 (87.5%)</strong></td><td>About 87.5% of observed variation is explained relative to the mean baseline.</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Key Takeaway</h2>
+    <p>We used the <strong>same actual values and the same predictions</strong> for every metric, but each metric gave us different information:</p>
+    <ul>
+      <li><strong>MAE:</strong> How far off are we on average?</li>
+      <li><strong>MSE:</strong> What is the average squared error?</li>
+      <li><strong>RMSE:</strong> What is the error in the original unit while giving larger errors extra influence?</li>
+      <li><strong>MAPE:</strong> What percentage off are we on average?</li>
+      <li><strong>R²:</strong> How much observed variation does the model explain compared with predicting the mean?</li>
+    </ul>
+    <p><strong>The metrics are not five different ways of saying the same thing. They answer different questions about the same model.</strong></p>
+  </div>
+</div>
+</body>
+</html>
