@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Load and Display Student CSV Data with pandas</title><style>body{font:17px/1.65 system-ui,Arial;color:#19364a;background:#edf3f7;margin:0}main{max-width:950px;margin:32px auto;background:white;padding:36px;border-radius:14px}h1,h2{color:#125c76}h1{line-height:1.25}h2{margin-top:32px}li{margin:10px 0}pre{background:#102b3b;color:#eef8ff;border-radius:9px;padding:20px;overflow:auto;font:15px/1.6 Consolas,monospace}code{font-family:Consolas,monospace}.note{padding:16px;background:#e9f7ef;border-left:4px solid #24895d}table{border-collapse:collapse;width:100%}td,th{padding:9px;border:1px solid #d5e1e8;text-align:left}th{background:#edf6fa}@media(max-width:650px){main{margin:12px;padding:20px}}@media print{body{background:white}main{margin:0;padding:0}pre{background:#f1f1f1;color:black;white-space:pre-wrap}}</style></head><body><main><h1>Load and Display Student CSV Data with pandas</h1><p><strong>Goal:</strong> Read student records from a CSV file into a pandas DataFrame and display the data stored in that DataFrame.</p><h2>Before you begin</h2><ol><li>Save the provided <code>students.csv</code> file in your project folder.</li><li>Open that folder in VS Code.</li><h2>Input file: students.csv</h2><p>The file contains 10 records and these five columns:</p><table><tr><th>Column</th><th>Meaning</th></tr><tr><td>StudentID</td><td>Student identifier</td></tr><tr><td>Name</td><td>Student name</td></tr><tr><td>Age</td><td>Age in years</td></tr><tr><td>Major</td><td>Area of study</td></tr><tr><td>GPA</td><td>Grade point average</td></tr></table><p>If you need to recreate the CSV file, save the following text as <code>students.csv</code>. The header is not a student record.</p><pre><code>StudentID,Name,Age,Major,GPA
+101,Asha,18,Computer Science,3.8
+102,Ben,20,Mathematics,3.2
+103,Cara,19,Biology,3.9
+104,Dev,22,Computer Science,3.1
+105,Emma,18,Business,3.5
+106,Farah,21,Nursing,3.7
+107,Gurpreet,20,Engineering,3.4
+108,Hannah,19,Psychology,3.6
+109,Ivan,23,Mathematics,2.9
+110,Jasmin,21,Computer Science,3.8</code></pre><h2>Your task</h2><ol><li>Create a Python file named <code>load_students.py</code>.</li><li>Import pandas using the alias <code>pd</code>.</li><li>Use the pandas <code>read_csv()</code> function to read <code>students.csv</code>.</li><li>Store the returned DataFrame in a variable named <code>students</code>.</li><li>Display all 10 records from the <code>students</code> DataFrame, including all five column headings.</li><li>Hide the DataFrame’s row index labels in the displayed output.</li><li>Run your program and compare the result with the expected output below.</li></ol><p class="note"><strong>Display hint:</strong> A DataFrame’s <code>to_string(index=False)</code> method formats the entire table as text without displaying the row index labels. Use <code>print()</code> to display that text. This does not remove the index from the DataFrame.</p><h2>Run your program</h2><p>Open the terminal in the folder containing both files and run:</p><pre><code>python load_students.py</code></pre><h2>Expected output</h2><pre> StudentID     Name  Age            Major  GPA
+       101     Asha   18 Computer Science  3.8
+       102      Ben   20      Mathematics  3.2
+       103     Cara   19          Biology  3.9
+       104      Dev   22 Computer Science  3.1
+       105     Emma   18         Business  3.5
+       106    Farah   21          Nursing  3.7
+       107 Gurpreet   20      Engineering  3.4
+       108   Hannah   19       Psychology  3.6
+       109     Ivan   23      Mathematics  2.9
+       110   Jasmin   21 Computer Science  3.8</pre><p>Minor spacing differences are acceptable. All 10 student records, all five headings, and their values must be visible. There should be no separate column of row index labels such as 0, 1, 2, and so on.</p><h2>Requirements</h2><ul><li>Read the records from the CSV file; do not type the records directly into your Python program.</li><li>Display the data from the loaded DataFrame.
