@@ -1,0 +1,839 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>pandas DataFrames, CSV Files, and Airtable</title><style>*{box-sizing:border-box}body{font:17px/1.7 system-ui,Arial;background:#eff4f8;color:#20394a;margin:0}header{background:#12445d;color:white;padding:42px max(22px,calc((100% - 1000px)/2))}h1{font-size:38px;line-height:1.2}main{max-width:1040px;margin:auto;padding:20px}section{background:white;border:1px solid #d9e4eb;border-radius:12px;padding:26px;margin:20px 0}h2{color:#126b80;line-height:1.35}h3{font-size:18px}pre{background:#142c3d;color:#edf7ff;padding:18px;border-radius:8px;font:14px/1.6 Consolas,monospace;overflow:auto}pre.out{background:#edf8f1;color:#163d2b;border-left:4px solid #24885b}code{font-family:Consolas,monospace}li{margin:9px 0}table{border-collapse:collapse;width:100%;font-size:15px}th,td{border:1px solid #dce5eb;text-align:left;padding:10px;vertical-align:top}th{background:#e9f4f8}.note{background:#fff4d9;border-left:4px solid #d59b27;padding:15px}a{color:#097086}@media(max-width:650px){main{padding:8px}section{padding:16px}h1{font-size:29px}table{display:block;overflow:auto}}@media print{body{background:white}header{background:white;color:black;padding:10px}section{border:0}pre{white-space:pre-wrap;background:#f3f3f3;color:black}}</style></head><body><header><h1>pandas DataFrames, CSV Files, and Airtable</h1><p>Create • View • Add • Update • Remove • Sort • Read and save CSV • Upload</p>
+   </header><main><section><h2>1. Essential terms</h2><ul><li><strong>pandas:</strong> a Python library for working with tables.</li><li><strong>DataFrame:</strong> a table object containing rows and columns.</li><li><strong>Series:</strong> a one-dimensional collection; selecting one DataFrame column usually produces a Series.</li><li><strong>Row:</strong> one record, such as one student.</li><li><strong>Column:</strong> one attribute, such as Name or GPA.</li><li><strong>Index:</strong> the labels attached to rows. Default labels are 0, 1, 2, and so on. A StudentID column is separate from the index unless you explicitly make it the index.</li><li><strong>Header:</strong> a row in a CSV containing column names.</li><li><strong>Function:</strong> an operation such as <code>pd.read_csv()</code>, provided by pandas.</li><li><strong>Method:</strong> an operation on an object, such as <code>df.head()</code>.</li><li><strong>Attribute:</strong> information accessed without parentheses, such as <code>df.shape</code>.</li></ul><p>Every worked example below contains a complete program. Run examples separately. Local outputs were checked with pandas 2.2.3; display details can vary across versions.</p></section><section><h2>2. Installation and running programs</h2><ol><li>Open your project folder in VS Code.</li><li>Open its terminal and install the packages:</li></ol><pre><code>python -m pip install pandas requests</code></pre><ol start="3"><li>Create a Python file such as <code>example.py</code>.</li><li>Copy one complete example into it.</li><li>Run <code>python example.py</code> from the same folder.</li></ol><p>If your Python command is <code>py</code>, use it instead of <code>python</code>. Do not name your files <code>pandas.py</code> or <code>requests.py</code>.</p></section><section><h2>3. Create a DataFrame</h2><p>A Python <strong>dictionary</strong> uses keys and values. In <code>{"Name": ["Asha", "Ben"]}</code>, <code>"Name"</code> is a key, and the list <code>["Asha", "Ben"]</code> is its value. Square brackets define a list; curly braces define this dictionary. <code>pd.DataFrame()</code> converts it to a table.</p><ul><li>Each dictionary key becomes a column name.</li><li>Each list provides that column’s values.</li><li>Lists must have equal lengths.</li><li>The first items across all lists form the first row.</li></ul></section><section><h2>Example 1: Create from a dictionary of lists</h2><p>Display the DataFrame with its default row index.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df.to_string())</code></pre><h3>Expected output</h3><pre class="out">   StudentID  Name  Age  GPA
+0        101  Asha   18  3.8
+1        102   Ben   20  3.2
+2        103  Cara   19  3.9</pre></section><section><h2>Example 2: Create from a list of rows</h2><p>Specify column names using <code>columns</code>. Each inner list is a complete row.</p><h3>Complete program</h3><pre><code>import pandas as pd
+rows = [[101, &quot;Asha&quot;, 3.8], [102, &quot;Ben&quot;, 3.2]]
+df = pd.DataFrame(rows, columns=[&quot;StudentID&quot;, &quot;Name&quot;, &quot;GPA&quot;])
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  GPA
+       101 Asha  3.8
+       102  Ben  3.2</pre></section><section><h2>Example 3: Create an empty table</h2><p>An empty table can have column names before it has any records.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.DataFrame(columns=[&quot;StudentID&quot;, &quot;Name&quot;, &quot;Age&quot;, &quot;GPA&quot;])
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out">Empty DataFrame
+Columns: [StudentID, Name, Age, GPA]
+Index: []</pre></section><section><h2>4. View and select data</h2><p><code>to_string()</code> formats the whole table for text output. <code>index=False</code> hides row labels in that output; it does not delete the index. <code>loc</code> selects by labels, and <code>iloc</code> selects by positions starting at zero.</p></section><section><h2>Example 4: View all records</h2><p>Show the entire table without row labels.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9</pre></section><section><h2>Example 5: View the first two rows</h2><p><code>head(2)</code> returns up to two initial rows.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df.head(2).to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2</pre></section><section><h2>Example 6: View the final row</h2><p><code>tail(1)</code> returns the final row.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df.tail(1).to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       103 Cara   19  3.9</pre></section><section><h2>Example 7: Find table size and column names</h2><p><code>shape</code> reports (rows, columns).</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df.shape)
+print(list(df.columns))</code></pre><h3>Expected output</h3><pre class="out">(3, 4)
+[&#x27;StudentID&#x27;, &#x27;Name&#x27;, &#x27;Age&#x27;, &#x27;GPA&#x27;]</pre></section><section><h2>Example 8: Select one column</h2><p>The result is a Series.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df[&quot;Name&quot;].to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out">Asha
+ Ben
+Cara</pre></section><section><h2>Example 9: Select two columns</h2><p>The inner brackets form a list of column names; the outer brackets select them.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df[[&quot;Name&quot;, &quot;GPA&quot;]].to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out">Name  GPA
+Asha  3.8
+ Ben  3.2
+Cara  3.9</pre></section><section><h2>Example 10: Select a labeled cell</h2><p>Row label 1 identifies Ben in this table.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df.loc[1, &quot;Name&quot;])</code></pre><h3>Expected output</h3><pre class="out">Ben</pre></section><section><h2>Example 11: Select a positional cell</h2><p>Position 2 is the third row; column position 3 is GPA.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df.iloc[2, 3])</code></pre><h3>Expected output</h3><pre class="out">3.9</pre></section><section><h2>Example 12: Filter rows</h2><p>The comparison produces True/False for each row. Keep rows with GPA at least 3.5.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df[df[&quot;GPA&quot;] &gt;= 3.5].to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       103 Cara   19  3.9</pre></section><section><h2>Example 13: Combine conditions</h2><p>Use & for element-by-element AND and parentheses around each condition.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(df[(df[&quot;Age&quot;] &gt;= 19) &amp; (df[&quot;GPA&quot;] &gt;= 3.5)].to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       103 Cara   19  3.9</pre></section><section><h2>Example 14: Calculate simple summaries</h2><p><code>mean()</code> calculates the average; <code>max()</code> finds the highest value.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+print(&quot;Average GPA:&quot;, round(df[&quot;GPA&quot;].mean(), 2))
+print(&quot;Highest GPA:&quot;, df[&quot;GPA&quot;].max())</code></pre><h3>Expected output</h3><pre class="out">Average GPA: 3.63
+Highest GPA: 3.9</pre></section><section><h2>5. Add rows and columns</h2><p><code>pd.concat()</code> joins tables. <code>ignore_index=True</code> gives the joined table fresh row labels. This avoids accidentally overwriting a row with an existing label. Older examples using <code>df.append()</code> should use <code>pd.concat()</code> instead.</p></section><section><h2>Example 15: Add one row</h2><p>Build a one-row DataFrame, then join it to the existing table.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+new_row = pd.DataFrame([{&quot;StudentID&quot;: 104, &quot;Name&quot;: &quot;Dev&quot;, &quot;Age&quot;: 22, &quot;GPA&quot;: 3.1}])
+df = pd.concat([df, new_row], ignore_index=True)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9
+       104  Dev   22  3.1</pre></section><section><h2>Example 16: Add several rows</h2><p>Each dictionary describes one new student.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+new_rows = pd.DataFrame([
+    {&quot;StudentID&quot;: 104, &quot;Name&quot;: &quot;Dev&quot;, &quot;Age&quot;: 22, &quot;GPA&quot;: 3.1},
+    {&quot;StudentID&quot;: 105, &quot;Name&quot;: &quot;Emma&quot;, &quot;Age&quot;: 18, &quot;GPA&quot;: 3.5}
+])
+df = pd.concat([df, new_rows], ignore_index=True)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9
+       104  Dev   22  3.1
+       105 Emma   18  3.5</pre></section><section><h2>Example 17: Add a column</h2><p>A single value fills the new column for every row.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df[&quot;College&quot;] = &quot;Clark&quot;
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA College
+       101 Asha   18  3.8   Clark
+       102  Ben   20  3.2   Clark
+       103 Cara   19  3.9   Clark</pre></section><section><h2>Example 18: Add a calculated column</h2><p>Each GPA is compared with 3.5.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df[&quot;Honors&quot;] = df[&quot;GPA&quot;] &gt;= 3.5
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA  Honors
+       101 Asha   18  3.8    True
+       102  Ben   20  3.2   False
+       103 Cara   19  3.9    True</pre></section><section><h2>6. Update existing data</h2><p>Assignment using <code>df.loc[rows, columns] = value</code> changes the selected cells. Find a person by StudentID when possible; row labels can change after sorting or resetting. An update condition may match zero, one, or multiple rows.</p></section><section><h2>Example 19: Update one cell by row label</h2><p>Change Ben’s GPA.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df.loc[1, &quot;GPA&quot;] = 3.6
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.6
+       103 Cara   19  3.9</pre></section><section><h2>Example 20: Update by StudentID</h2><p>This condition finds the student whose ID is 102.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df.loc[df[&quot;StudentID&quot;] == 102, &quot;GPA&quot;] = 3.6
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.6
+       103 Cara   19  3.9</pre></section><section><h2>Example 21: Update two values in a record</h2><p>The values correspond to the column names in the same order.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df.loc[df[&quot;StudentID&quot;] == 102, [&quot;Age&quot;, &quot;GPA&quot;]] = [21, 3.6]
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   21  3.6
+       103 Cara   19  3.9</pre></section><section><h2>Example 22: Rename a column</h2><p>Keep the returned table by assigning it back to df.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = df.rename(columns={&quot;Name&quot;: &quot;StudentName&quot;})
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID StudentName  Age  GPA
+       101        Asha   18  3.8
+       102         Ben   20  3.2
+       103        Cara   19  3.9</pre></section><section><h2>7. Remove rows and columns</h2><p><code>drop()</code> returns a changed table by default. Keep it with assignment. Dropping by index label and filtering by a student identifier are different operations.</p></section><section><h2>Example 23: Remove a row by label</h2><p>Remove the row labeled 1. Remaining index labels are preserved.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = df.drop(index=1)
+print(df.to_string())</code></pre><h3>Expected output</h3><pre class="out">   StudentID  Name  Age  GPA
+0        101  Asha   18  3.8
+2        103  Cara   19  3.9</pre></section><section><h2>Example 24: Remove a student by identifier</h2><p>Keep every record except StudentID 102; then reset row labels.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = df[df[&quot;StudentID&quot;] != 102].reset_index(drop=True)
+print(df.to_string())</code></pre><h3>Expected output</h3><pre class="out">   StudentID  Name  Age  GPA
+0        101  Asha   18  3.8
+1        103  Cara   19  3.9</pre></section><section><h2>Example 25: Remove a column</h2><p>Remove Age while keeping the other columns.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = df.drop(columns=[&quot;Age&quot;])
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  GPA
+       101 Asha  3.8
+       102  Ben  3.2
+       103 Cara  3.9</pre></section><section><h2>8. Sort records</h2><p><code>sort_values()</code> sorts by column values. It preserves row labels. <code>ascending=True</code> means smallest first; <code>False</code> means largest first.</p></section><section><h2>Example 26: Sort alphabetically</h2><p>Sort by Name and keep the sorted table.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = df.sort_values(&quot;Name&quot;)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9</pre></section><section><h2>Example 27: Sort GPA highest first</h2><p>Use descending order.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = df.sort_values(&quot;GPA&quot;, ascending=False)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       103 Cara   19  3.9
+       101 Asha   18  3.8
+       102  Ben   20  3.2</pre></section><section><h2>Example 28: Sort by two columns</h2><p>Sort Age ascending, then GPA descending within equal ages.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = df.sort_values([&quot;Age&quot;, &quot;GPA&quot;], ascending=[True, False])
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       103 Cara   19  3.9
+       102  Ben   20  3.2</pre></section><section><h2>Example 29: Reset labels after sorting</h2><p><code>drop=True</code> prevents the previous labels from being added as an extra column.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = df.sort_values(&quot;GPA&quot;, ascending=False).reset_index(drop=True)
+print(df.to_string())</code></pre><h3>Expected output</h3><pre class="out">   StudentID  Name  Age  GPA
+0        103  Cara   19  3.9
+1        101  Asha   18  3.8
+2        102   Ben   20  3.2</pre></section><section><h2>9. CSV files and headers — the important differences</h2><p>Reading a CSV <strong>loads</strong> data into memory. Saving a DataFrame <strong>writes</strong> data to a file. Sending data to Airtable <strong>uploads</strong> data over the network.</p><table><tr><th>Goal</th><th>Option</th><th>What happens</th></tr><tr><td>Use the file’s first line as column names</td><td><code>header=0</code> (usual default)</td><td>The header line is not a data record.</td></tr><tr><td>Read a file with no header</td><td><code>header=None</code></td><td>First line remains data; columns are labeled 0, 1, 2…</td></tr><tr><td>Name columns in a headerless file</td><td><code>header=None, names=[...]</code></td><td>First line remains data; supplied names label columns.</td></tr><tr><td>Replace an existing file header</td><td><code>header=0, names=[...]</code></td><td>Original header is consumed and supplied names replace it.</td></tr><tr><td>Skip the header and use numbered columns</td><td><code>skiprows=1, header=None</code></td><td>First physical line is skipped; data is preserved.</td></tr><tr><td>Hide headings when printing</td><td><code>to_string(header=False)</code></td><td>Affects displayed text only.</td></tr><tr><td>Write a file without headings</td><td><code>to_csv(header=False)</code></td><td>Affects the saved CSV only.</td></tr></table><p class="note">A DataFrame always has column labels. “Remove headers” can mean skip a file header, replace column labels, hide headings in output, or save without a header. These are separate tasks. Using <code>header=None</code> on a file that already has a header will treat that header as an ordinary data row.</p><p>For the next examples, create <code>students.csv</code> with this content:</p><pre>StudentID,Name,Age,GPA
+101,Asha,18,3.8
+102,Ben,20,3.2
+103,Cara,19,3.9</pre><p>Also create <code>students_no_header.csv</code> with the same data but without the first line:</p><pre>101,Asha,18,3.8
+102,Ben,20,3.2
+103,Cara,19,3.9</pre><p>Run from the folder containing those files. A relative path is resolved from the terminal’s current working directory.</p></section><section><h2>Example 30: Load a CSV with a header</h2><p><code>read_csv()</code> returns a DataFrame.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students.csv&quot;)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9</pre></section><section><h2>Example 31: Specify the header explicitly</h2><p>Header 0 uses the first data-relevant line as column names.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students.csv&quot;, header=0)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9</pre></section><section><h2>Example 32: Read a file with no header</h2><p>Preserve the first student record with <code>header=None</code>.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students_no_header.csv&quot;, header=None)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out">  0    1  2   3
+101 Asha 18 3.8
+102  Ben 20 3.2
+103 Cara 19 3.9</pre></section><section><h2>Example 33: Supply names for a headerless file</h2><p>Use four names for the four fields.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students_no_header.csv&quot;, header=None,
+                 names=[&quot;StudentID&quot;, &quot;Name&quot;, &quot;Age&quot;, &quot;GPA&quot;])
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9</pre></section><section><h2>Example 34: Replace a file’s existing headings</h2><p>Use <code>header=0</code> as well as names, so the original headings do not become data.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students.csv&quot;, header=0,
+                 names=[&quot;ID&quot;, &quot;StudentName&quot;, &quot;Years&quot;, &quot;GradePointAverage&quot;])
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> ID StudentName  Years  GradePointAverage
+101        Asha     18                3.8
+102         Ben     20                3.2
+103        Cara     19                3.9</pre></section><section><h2>Example 35: Skip the header line while reading</h2><p>Skip the first physical line and use automatic numbered labels.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students.csv&quot;, skiprows=1, header=None)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out">  0    1  2   3
+101 Asha 18 3.8
+102  Ben 20 3.2
+103 Cara 19 3.9</pre></section><section><h2>Example 36: Hide headings in displayed output</h2><p>The DataFrame still contains column names.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students.csv&quot;)
+print(df.to_string(index=False, header=False))</code></pre><h3>Expected output</h3><pre class="out">101 Asha 18 3.8
+102  Ben 20 3.2
+103 Cara 19 3.9</pre></section><section><h2>Example 37: Load selected columns</h2><p>Read only Name and GPA.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students.csv&quot;, usecols=[&quot;Name&quot;, &quot;GPA&quot;])
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out">Name  GPA
+Asha  3.8
+ Ben  3.2
+Cara  3.9</pre></section><section><h2>Example 38: Load only two records</h2><p>The header is not counted as a record by <code>nrows</code>.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students.csv&quot;, nrows=2)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2</pre></section><section><h2>Example 39: Specify types when loading</h2><p>Keep identifiers as text and GPA as numeric. String IDs protect leading zeros in files that have them.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.read_csv(&quot;students.csv&quot;, dtype={&quot;StudentID&quot;: &quot;string&quot;, &quot;GPA&quot;: &quot;float64&quot;})
+print(df.to_string(index=False))
+print(&quot;ID type:&quot;, df[&quot;StudentID&quot;].dtype)</code></pre><h3>Expected output</h3><pre class="out">StudentID Name  Age  GPA
+      101 Asha   18  3.8
+      102  Ben   20  3.2
+      103 Cara   19  3.9
+ID type: string</pre></section><section><h2>Example 40: Save with headings</h2><p><code>index=False</code> avoids writing row labels as an extra CSV column. This overwrites an existing file with the same name.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df.to_csv(&quot;saved.csv&quot;, index=False)
+with open(&quot;saved.csv&quot;, encoding=&quot;utf-8&quot;) as file:
+    print(file.read().strip())</code></pre><h3>Expected output</h3><pre class="out">StudentID,Name,Age,GPA
+101,Asha,18,3.8
+102,Ben,20,3.2
+103,Cara,19,3.9</pre></section><section><h2>Example 41: Save without headings</h2><p>Use both header=False and index=False.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df.to_csv(&quot;saved_no_header.csv&quot;, index=False, header=False)
+with open(&quot;saved_no_header.csv&quot;, encoding=&quot;utf-8&quot;) as file:
+    print(file.read().strip())</code></pre><h3>Expected output</h3><pre class="out">101,Asha,18,3.8
+102,Ben,20,3.2
+103,Cara,19,3.9</pre></section><section><h2>10. Missing values and duplicates</h2><p>A missing value means no value is recorded. Numeric missing values often display as NaN. Filling or deleting them requires a decision about what the data means. A missing GPA should not automatically become zero.</p></section><section><h2>Example 42: Find missing cells</h2><p>True identifies a missing cell. Summing counts missing cells per column.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.DataFrame({&quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;], &quot;GPA&quot;: [3.8, None, 3.9]})
+print(df.isna().to_string(index=False))
+print(df.isna().sum().to_string())</code></pre><h3>Expected output</h3><pre class="out"> Name   GPA
+False False
+False  True
+False False
+Name    0
+GPA     1</pre></section><section><h2>Example 43: Remove rows with missing GPA</h2><p>Delete records missing GPA, not an entire column.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.DataFrame({&quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;], &quot;GPA&quot;: [3.8, None, 3.9]})
+df = df.dropna(subset=[&quot;GPA&quot;]).reset_index(drop=True)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out">Name  GPA
+Asha  3.8
+Cara  3.9</pre></section><section><h2>Example 44: Fill missing text</h2><p>Use a meaningful text placeholder.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.DataFrame({&quot;Name&quot;: [&quot;Asha&quot;, None]})
+df[&quot;Name&quot;] = df[&quot;Name&quot;].fillna(&quot;Unknown&quot;)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out">   Name
+   Asha
+Unknown</pre></section><section><h2>Example 45: Remove exact duplicates</h2><p>By default, all columns must match for rows to be duplicates.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df = pd.concat([df, df.iloc[[0]]], ignore_index=True)
+df = df.drop_duplicates().reset_index(drop=True)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9</pre></section><section><h2>Example 46: Remove surrounding spaces</h2><p>The str accessor applies text operations to column values.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+df[&quot;Name&quot;] = [&quot; Asha &quot;, &quot;Ben &quot;, &quot; Cara&quot;]
+df[&quot;Name&quot;] = df[&quot;Name&quot;].str.strip()
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> StudentID Name  Age  GPA
+       101 Asha   18  3.8
+       102  Ben   20  3.2
+       103 Cara   19  3.9</pre></section><section><h2>Example 47: Convert text to numbers</h2><p>Invalid numeric text becomes missing with errors="coerce". Review missing results after conversion.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.DataFrame({&quot;GPA&quot;: [&quot;3.8&quot;, &quot;absent&quot;, &quot;3.9&quot;]})
+df[&quot;GPA&quot;] = pd.to_numeric(df[&quot;GPA&quot;], errors=&quot;coerce&quot;)
+print(df.to_string(index=False))</code></pre><h3>Expected output</h3><pre class="out"> GPA
+ 3.8
+ NaN
+ 3.9</pre></section><section id="data-manipulation"><h2>10A. Hands-on DataFrame manipulation: one student dataset</h2><p><strong>Data manipulation</strong> means selecting, adding, changing, removing, calculating, or rearranging data in a table. This walkthrough uses the Name, Age, and GPA dataset from the CSV examples and connects those operations into a complete workflow.</p><p>Each example below is a separate complete program and starts with the same original three records. Changes in one example do not carry into another. The final example combines the operations in one program.</p><pre class="out">Name,Age,GPA
+John,20,3.5
+Maria,21,3.8
+David,19,3.2</pre><p class="note">Changing a DataFrame changes data in memory. Your original CSV changes only when you explicitly save to that filename. Display options such as index=False or header=False hide labels in output; they do not remove data from the DataFrame.</p></section><section><h2>Manipulation 1: Inspect the table before changing it</h2><p>shape gives the number of rows and columns. columns contains the column labels. head and tail return rows; they do not change the table.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+# Create the same three student records used in the CSV reference.
+df = pd.DataFrame({
+    &quot;Name&quot;: [&quot;John&quot;, &quot;Maria&quot;, &quot;David&quot;],
+    &quot;Age&quot;: [20, 21, 19],
+    &quot;GPA&quot;: [3.5, 3.8, 3.2]
+})
+
+print(&quot;Rows and columns:&quot;, df.shape)
+print(&quot;Column names:&quot;, list(df.columns))
+print(&quot;First two rows:&quot;)
+print(df.head(2).to_string(index=False))
+print(&quot;Last row:&quot;)
+print(df.tail(1).to_string(index=False))
+</code></pre><h3>Expected output</h3><pre class="out">Rows and columns: (3, 3)
+Column names: [&#x27;Name&#x27;, &#x27;Age&#x27;, &#x27;GPA&#x27;]
+First two rows:
+ Name  Age  GPA
+ John   20  3.5
+Maria   21  3.8
+Last row:
+ Name  Age  GPA
+David   19  3.2</pre></section><section><h2>Manipulation 2: Select rows, columns, and cells</h2><p>loc uses row and column labels; iloc uses numeric positions starting at zero. Here label 1 and position 1 both identify Maria. After sorting or deleting, labels and positions can differ.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+# Create the same three student records used in the CSV reference.
+df = pd.DataFrame({
+    &quot;Name&quot;: [&quot;John&quot;, &quot;Maria&quot;, &quot;David&quot;],
+    &quot;Age&quot;: [20, 21, 19],
+    &quot;GPA&quot;: [3.5, 3.8, 3.2]
+})
+
+# One column returns a Series; two columns return a DataFrame.
+print(df[&quot;Name&quot;].to_string(index=False))
+print(df[[&quot;Name&quot;, &quot;GPA&quot;]].to_string(index=False))
+print(&quot;Maria&#x27;s GPA:&quot;, df.loc[1, &quot;GPA&quot;])
+print(&quot;First student&#x27;s name:&quot;, df.iloc[0, 0])
+</code></pre><h3>Expected output</h3><pre class="out"> John
+Maria
+David
+ Name  GPA
+ John  3.5
+Maria  3.8
+David  3.2
+Maria&#x27;s GPA: 3.8
+First student&#x27;s name: John</pre></section><section><h2>Manipulation 3: Add a student and a calculated column</h2><p>concat joins tables. ignore_index=True creates consecutive row labels. Assigning a column expression calculates a value for every row.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+# Create the same three student records used in the CSV reference.
+df = pd.DataFrame({
+    &quot;Name&quot;: [&quot;John&quot;, &quot;Maria&quot;, &quot;David&quot;],
+    &quot;Age&quot;: [20, 21, 19],
+    &quot;GPA&quot;: [3.5, 3.8, 3.2]
+})
+
+new_student = pd.DataFrame([{&quot;Name&quot;: &quot;Asha&quot;, &quot;Age&quot;: 22, &quot;GPA&quot;: 3.6}])
+df = pd.concat([df, new_student], ignore_index=True)
+# This is a True/False column, not a change to GPA.
+df[&quot;Honors&quot;] = df[&quot;GPA&quot;] &gt;= 3.5
+print(df.to_string(index=False))
+</code></pre><h3>Expected output</h3><pre class="out"> Name  Age  GPA  Honors
+ John   20  3.5    True
+Maria   21  3.8    True
+David   19  3.2   False
+ Asha   22  3.6    True</pre></section><section><h2>Manipulation 4: Update one cell and matching records</h2><p>Use one loc assignment to change the original table. The condition selects every matching name, so duplicate names would all be updated; use a unique identifier in real data.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+# Create the same three student records used in the CSV reference.
+df = pd.DataFrame({
+    &quot;Name&quot;: [&quot;John&quot;, &quot;Maria&quot;, &quot;David&quot;],
+    &quot;Age&quot;: [20, 21, 19],
+    &quot;GPA&quot;: [3.5, 3.8, 3.2]
+})
+
+# Change the cell at row label 0, column GPA.
+df.loc[0, &quot;GPA&quot;] = 3.7
+# Update Maria using a condition instead of a row number.
+df.loc[df[&quot;Name&quot;] == &quot;Maria&quot;, &quot;Age&quot;] = 22
+print(df.to_string(index=False))
+</code></pre><h3>Expected output</h3><pre class="out"> Name  Age  GPA
+ John   20  3.7
+Maria   22  3.8
+David   19  3.2</pre></section><section><h2>Manipulation 5: Filter records and calculate an average</h2><p>A filter returns selected records. Assign it to another variable to retain the complete original table. Parenthesize each condition when combining conditions with &amp; (and) or | (or).</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+# Create the same three student records used in the CSV reference.
+df = pd.DataFrame({
+    &quot;Name&quot;: [&quot;John&quot;, &quot;Maria&quot;, &quot;David&quot;],
+    &quot;Age&quot;: [20, 21, 19],
+    &quot;GPA&quot;: [3.5, 3.8, 3.2]
+})
+
+selected = df[(df[&quot;GPA&quot;] &gt;= 3.5) &amp; (df[&quot;Age&quot;] &gt;= 20)]
+print(&quot;Selected students:&quot;)
+print(selected.to_string(index=False))
+print(&quot;Average GPA:&quot;, round(df[&quot;GPA&quot;].mean(), 2))
+print(&quot;Original row count:&quot;, len(df))
+</code></pre><h3>Expected output</h3><pre class="out">Selected students:
+ Name  Age  GPA
+ John   20  3.5
+Maria   21  3.8
+Average GPA: 3.5
+Original row count: 3</pre></section><section><h2>Manipulation 6: Remove records and a column</h2><p>Keep rows whose names are not David. drop(columns=...) removes a column. Assigning the returned table back to df makes that result your working table.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+# Create the same three student records used in the CSV reference.
+df = pd.DataFrame({
+    &quot;Name&quot;: [&quot;John&quot;, &quot;Maria&quot;, &quot;David&quot;],
+    &quot;Age&quot;: [20, 21, 19],
+    &quot;GPA&quot;: [3.5, 3.8, 3.2]
+})
+
+df = df[df[&quot;Name&quot;] != &quot;David&quot;].copy()
+df = df.drop(columns=[&quot;Age&quot;])
+df = df.reset_index(drop=True)
+print(df.to_string(index=False))
+</code></pre><h3>Expected output</h3><pre class="out"> Name  GPA
+ John  3.5
+Maria  3.8</pre></section><section><h2>Manipulation 7: Sort and reset row labels</h2><p>ascending=False sorts largest to smallest. Sorting changes row order but retains labels unless you reset them. drop=True prevents the old labels from becoming a column.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+# Create the same three student records used in the CSV reference.
+df = pd.DataFrame({
+    &quot;Name&quot;: [&quot;John&quot;, &quot;Maria&quot;, &quot;David&quot;],
+    &quot;Age&quot;: [20, 21, 19],
+    &quot;GPA&quot;: [3.5, 3.8, 3.2]
+})
+
+df = df.sort_values(by=&quot;GPA&quot;, ascending=False)
+print(&quot;Sorted table with original labels:&quot;)
+print(df.to_string())
+df = df.reset_index(drop=True)
+print(&quot;Sorted table with new labels:&quot;)
+print(df.to_string())
+</code></pre><h3>Expected output</h3><pre class="out">Sorted table with original labels:
+    Name  Age  GPA
+1  Maria   21  3.8
+0   John   20  3.5
+2  David   19  3.2
+Sorted table with new labels:
+    Name  Age  GPA
+0  Maria   21  3.8
+1   John   20  3.5
+2  David   19  3.2</pre></section><section><h2>Manipulation 8: Complete workflow: read → manipulate → save</h2><p>This self-contained program writes a demonstration CSV, reads it into a DataFrame, adds and updates records, filters and sorts the table, and saves the result. In your own project, start at read_csv when students.csv already exists. The demonstration overwrites students.csv and students_manipulated.csv in the working folder.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+# Create the same three student records used in the CSV reference.
+df = pd.DataFrame({
+    &quot;Name&quot;: [&quot;John&quot;, &quot;Maria&quot;, &quot;David&quot;],
+    &quot;Age&quot;: [20, 21, 19],
+    &quot;GPA&quot;: [3.5, 3.8, 3.2]
+})
+
+# Write a demonstration input file with the reference data.
+df.to_csv(&quot;students.csv&quot;, index=False)
+
+# Read the CSV. Its first line already contains column names.
+df = pd.read_csv(&quot;students.csv&quot;)
+
+# Add one record without overwriting an existing row label.
+new_student = pd.DataFrame([{&quot;Name&quot;: &quot;Asha&quot;, &quot;Age&quot;: 22, &quot;GPA&quot;: 3.6}])
+df = pd.concat([df, new_student], ignore_index=True)
+
+# Update John&#x27;s GPA, then remove David&#x27;s record.
+df.loc[df[&quot;Name&quot;] == &quot;John&quot;, &quot;GPA&quot;] = 3.7
+df = df[df[&quot;Name&quot;] != &quot;David&quot;].copy()
+
+# Sort the remaining records and recreate consecutive row labels.
+df = df.sort_values(&quot;GPA&quot;, ascending=False).reset_index(drop=True)
+print(&quot;Final table:&quot;)
+print(df.to_string(index=False))
+
+# Save column headings, but do not save the row index.
+df.to_csv(&quot;students_manipulated.csv&quot;, index=False)
+print(&quot;Saved students_manipulated.csv&quot;)
+
+# Read back the saved file to check its actual contents.
+with open(&quot;students_manipulated.csv&quot;, &quot;r&quot;, encoding=&quot;utf-8&quot;) as file:
+    print(file.read().strip())
+</code></pre><h3>Expected output</h3><pre class="out">Final table:
+ Name  Age  GPA
+Maria   21  3.8
+ John   20  3.7
+ Asha   22  3.6
+Saved students_manipulated.csv
+Name,Age,GPA
+Maria,21,3.8
+John,20,3.7
+Asha,22,3.6</pre></section><section><h2>Use the manipulated data with the Airtable examples</h2><p>The new walkthrough has three columns: Name, Age, and GPA. For a three-field Airtable Students table, these field names must match exactly. After reading students_manipulated.csv, use df.to_dict(orient="records") to prepare its rows.</p><p>The existing complete uploader in section 12 requires four columns, including StudentID. To use that uploader with this dataset, add unique IDs before saving:</p><pre><code># Run after manipulation, before saving the final DataFrame.
+# Keep identifiers attached to the same students across later updates.
+df["StudentID"] = df["Name"].map({"John": 101, "Maria": 102, "Asha": 104})
+df = df[["StudentID", "Name", "Age", "GPA"]]
+df.to_csv("students_manipulated.csv", index=False)</code></pre><p>In the section 12 program, change the input filename from students.csv to students_manipulated.csv. Use the four Airtable fields listed in section 11. This demonstration mapping assumes the three remaining names are unique; a real dataset should already have stable unique IDs.</p></section><section><h2>11. Prepare DataFrame data for Airtable</h2><p><strong>Airtable</strong> stores records in tables inside a base. Its <strong>Web API</strong> is an interface your Python program uses to send requests. A <strong>POST</strong> request creates records. <strong>JSON</strong> is the structured format used for the request body.</p><ol><li>Create an Airtable base and a table named Students.</li><li>Create fields matching the DataFrame: StudentID (Number, integer), Name (Single line text, suitable as primary field), Age (Number, integer), GPA (Number, decimal).</li><li>Find your base ID (<code>app...</code>) and table ID (<code>tbl...</code>) in Airtable’s API documentation or table URL.</li><li>Create a personal access token at <a href="https://airtable.com/create/tokens">Airtable’s token page</a>.</li><li>Add the <code>data.records:write</code> scope and grant access to this base. Your Airtable account must also be allowed to edit the table. Reading records is a separate operation requiring <code>data.records:read</code>.</li></ol><p>Field names must match exactly. StudentID is your own field; it is different from Airtable’s generated record ID (<code>rec...</code>).</p></section><section><h2>Example 48: Convert rows into Python dictionaries</h2><p><code>to_dict(orient="records")</code> returns a list of dictionaries, one per row. This conversion alone does not upload anything.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+records = df.to_dict(orient=&quot;records&quot;)
+print(records)</code></pre><h3>Expected output</h3><pre class="out">[{&#x27;StudentID&#x27;: 101, &#x27;Name&#x27;: &#x27;Asha&#x27;, &#x27;Age&#x27;: 18, &#x27;GPA&#x27;: 3.8}, {&#x27;StudentID&#x27;: 102, &#x27;Name&#x27;: &#x27;Ben&#x27;, &#x27;Age&#x27;: 20, &#x27;GPA&#x27;: 3.2}, {&#x27;StudentID&#x27;: 103, &#x27;Name&#x27;: &#x27;Cara&#x27;, &#x27;Age&#x27;: 19, &#x27;GPA&#x27;: 3.9}]</pre></section><section><h2>Example 49: Create an Airtable request body</h2><p>Airtable requires the keys records and fields. Those keys are part of its API format; df and records are ordinary Python variable names.</p><h3>Complete program</h3><pre><code>import pandas as pd
+
+data = {
+    &quot;StudentID&quot;: [101, 102, 103],
+    &quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;],
+    &quot;Age&quot;: [18, 20, 19],
+    &quot;GPA&quot;: [3.8, 3.2, 3.9]
+}
+df = pd.DataFrame(data)
+
+import json
+records = df.to_dict(orient=&quot;records&quot;)
+payload = {&quot;records&quot;: [{&quot;fields&quot;: record} for record in records]}
+print(json.dumps(payload, indent=2))</code></pre><h3>Expected output</h3><pre class="out">{
+  &quot;records&quot;: [
+    {
+      &quot;fields&quot;: {
+        &quot;StudentID&quot;: 101,
+        &quot;Name&quot;: &quot;Asha&quot;,
+        &quot;Age&quot;: 18,
+        &quot;GPA&quot;: 3.8
+      }
+    },
+    {
+      &quot;fields&quot;: {
+        &quot;StudentID&quot;: 102,
+        &quot;Name&quot;: &quot;Ben&quot;,
+        &quot;Age&quot;: 20,
+        &quot;GPA&quot;: 3.2
+      }
+    },
+    {
+      &quot;fields&quot;: {
+        &quot;StudentID&quot;: 103,
+        &quot;Name&quot;: &quot;Cara&quot;,
+        &quot;Age&quot;: 19,
+        &quot;GPA&quot;: 3.9
+      }
+    }
+  ]
+}</pre></section><section><h2>Example 50: Prepare missing values for JSON</h2><p>JSON cannot use pandas NaN as a valid number. Replace missing cells with None, then omit them from each fields dictionary so Airtable leaves those cells empty.</p><h3>Complete program</h3><pre><code>import pandas as pd
+df = pd.DataFrame({&quot;Name&quot;: [&quot;Asha&quot;, &quot;Ben&quot;, &quot;Cara&quot;], &quot;GPA&quot;: [3.8, None, 3.9]})
+import json
+clean = df.astype(object).where(pd.notna(df), None)
+records = clean.to_dict(orient=&quot;records&quot;)
+payload = {&quot;records&quot;: []}
+for record in records:
+    fields = {}
+    for key, value in record.items():
+        if value is not None:
+            fields[key] = value
+    payload[&quot;records&quot;].append({&quot;fields&quot;: fields})
+print(json.dumps(payload, indent=2, allow_nan=False))</code></pre><h3>Expected output</h3><pre class="out">{
+  &quot;records&quot;: [
+    {
+      &quot;fields&quot;: {
+        &quot;Name&quot;: &quot;Asha&quot;,
+        &quot;GPA&quot;: 3.8
+      }
+    },
+    {
+      &quot;fields&quot;: {
+        &quot;Name&quot;: &quot;Ben&quot;
+      }
+    },
+    {
+      &quot;fields&quot;: {
+        &quot;Name&quot;: &quot;Cara&quot;,
+        &quot;GPA&quot;: 3.9
+      }
+    }
+  ]
+}</pre></section><section><h2>12. Complete program: CSV → DataFrame → Airtable</h2><p>Use the three-record <code>students.csv</code> shown in section 9. This program also works with a larger file containing these same required columns; only those four columns are uploaded.</p><p>Set these environment variables in your terminal before running the program. Replace the placeholders with your actual values.</p><h3>Windows PowerShell</h3><pre><code>$env:AIRTABLE_TOKEN = "YOUR_PERSONAL_ACCESS_TOKEN"
+$env:AIRTABLE_BASE_ID = "appYOUR_BASE_ID"
+$env:AIRTABLE_TABLE_ID = "tblYOUR_TABLE_ID"
+python upload_students.py</code></pre><h3>macOS / Linux terminal</h3><pre><code>export AIRTABLE_TOKEN='YOUR_PERSONAL_ACCESS_TOKEN'
+export AIRTABLE_BASE_ID='appYOUR_BASE_ID'
+export AIRTABLE_TABLE_ID='tblYOUR_TABLE_ID'
+python upload_students.py</code></pre><p>Save the following program as <code>upload_students.py</code>. Keep your token private and do not include it in submitted files or screenshots.</p><pre><code>import os
+import json
+import time
+import pandas as pd
+import requests
+
+# Keep credentials out of your program source.
+token = os.environ[&quot;AIRTABLE_TOKEN&quot;]
+base_id = os.environ[&quot;AIRTABLE_BASE_ID&quot;]
+table_id = os.environ[&quot;AIRTABLE_TABLE_ID&quot;]
+
+# Load and validate the CSV before sending anything.
+df = pd.read_csv(&quot;students.csv&quot;)
+columns = [&quot;StudentID&quot;, &quot;Name&quot;, &quot;Age&quot;, &quot;GPA&quot;]
+missing_columns = [name for name in columns if name not in df.columns]
+if missing_columns:
+    raise ValueError(f&quot;Missing columns: {missing_columns}&quot;)
+df = df[columns].copy()
+if df[&quot;StudentID&quot;].isna().any() or df[&quot;StudentID&quot;].duplicated().any():
+    raise ValueError(&quot;StudentID must be present and unique in this file.&quot;)
+for name in [&quot;StudentID&quot;, &quot;Age&quot;, &quot;GPA&quot;]:
+    df[name] = pd.to_numeric(df[name], errors=&quot;raise&quot;)
+
+# Missing optional values become None, then are omitted from fields.
+clean = df.astype(object).where(pd.notna(df), None)
+records = clean.to_dict(orient=&quot;records&quot;)
+airtable_records = []
+for record in records:
+    fields = {}
+    for key, value in record.items():
+        if value is not None:
+            fields[key] = value
+    airtable_records.append({&quot;fields&quot;: fields})
+
+url = f&quot;https://api.airtable.com/v0/{base_id}/{table_id}&quot;
+headers = {&quot;Authorization&quot;: f&quot;Bearer {token}&quot;}
+
+# Airtable allows at most 10 records per create request.
+uploaded = 0
+for start in range(0, len(airtable_records), 10):
+    batch = airtable_records[start:start + 10]
+    payload = {&quot;records&quot;: batch}
+    json.dumps(payload, allow_nan=False)  # Check JSON compatibility.
+    response = requests.post(url, headers=headers, json=payload, timeout=30)
+    if not response.ok:
+        raise RuntimeError(
+            f&quot;Upload stopped after {uploaded} records. &quot;
+            f&quot;HTTP {response.status_code}: {response.text}&quot;
+        )
+    uploaded += len(response.json()[&quot;records&quot;])
+    if start + 10 &lt; len(airtable_records):
+        time.sleep(0.25)
+print(f&quot;Uploaded {uploaded} records.&quot;)
+</code></pre><h3>Expected output after a successful upload</h3><pre class="out">Uploaded 3 records.</pre><p>This is conditional output: the upload code was syntax-checked, but no live Airtable request was made. With the required permissions, matching fields, and a successful response, the three student records appear in your Airtable table.</p><p class="note"><strong>Running this again creates new Airtable records.</strong> A matching StudentID does not automatically update an existing record. This create-only example is not a synchronization or upsert program. If an upload stops after some batches or a network timeout, inspect Airtable before rerunning; records may already have been created.</p></section><section><h2>13. Understand the upload program</h2><table><tr><th>Code / term</th><th>Meaning</th></tr><tr><td><code>os.environ[...]</code></td><td>Read settings from the process environment. Missing settings raise KeyError.</td></tr><tr><td><code>Authorization: Bearer ...</code></td><td>Send the access token as authentication. Bearer is the required authentication scheme.</td></tr><tr><td><code>records</code></td><td>The list of Airtable record objects in the body.</td></tr><tr><td><code>fields</code></td><td>A dictionary mapping Airtable field names to values.</td></tr><tr><td><code>range(0, ..., 10)</code></td><td>Start a batch at positions 0, 10, 20, and so on.</td></tr><tr><td><code>requests.post(..., json=payload)</code></td><td>Convert the payload to JSON, set the JSON content type, and send it.</td></tr><tr><td><code>timeout=30</code></td><td>Limit network waiting for the request.</td></tr><tr><td><code>response.ok</code></td><td>Check whether the response has an HTTP status below 400.</td></tr><tr><td><code>time.sleep(0.25)</code></td><td>Space this program’s batches; other programs using the same base also count toward limits.</td></tr></table><p>Airtable supports up to 10 records per ordinary create request and limits requests per base. If a 429 rate-limit response occurs, follow Airtable’s documented waiting guidance before retrying. Do not automatically retry an uncertain create request after a network failure.</p></section><section><h2>14. Common errors</h2><ul><li><strong>ModuleNotFoundError:</strong> install packages into the same interpreter used to run the program.</li><li><strong>FileNotFoundError:</strong> check the terminal folder and filename. Use <code>import os; print(os.getcwd())</code> to see the working directory.</li><li><strong>KeyError for a column:</strong> inspect <code>list(df.columns)</code>; names are case-sensitive.</li><li><strong>First student missing after CSV loading:</strong> a headerless file needs <code>header=None</code>.</li><li><strong>Header appears as a student:</strong> the file already has a header; use <code>header=0</code>, including when supplying replacement names.</li><li><strong>A row was overwritten:</strong> assigning to an existing <code>loc</code> label updates that row. Use concat to add rows safely.</li><li><strong>Update seems lost:</strong> avoid chained assignment. Use a single <code>df.loc[condition, column] = value</code> statement.</li><li><strong>Airtable 401:</strong> check the token and authentication.</li><li><strong>Airtable 403:</strong> check token scope, base access, and account/table/field permissions.</li><li><strong>Airtable 404:</strong> verify the base/table IDs and that the token can access the resource.</li><li><strong>Airtable 422:</strong> inspect the response body for field-name, field-type, or invalid-value problems.</li><li><strong>Airtable 429:</strong> the rate limit was exceeded; follow documented waiting guidance.</li></ul></section><section><h2>15. Practice checklist</h2><ol><li>Create a four-column DataFrame for three students.</li><li>Add one student using concat.</li><li>Update a GPA by StudentID.</li><li>Remove a different student by StudentID.</li><li>Sort GPA from highest to lowest.</li><li>Display the entire resulting table.</li><li>Save it with a header and without the row index.</li><li>Read it back and confirm the same records remain.</li><li>Read a headerless version with supplied column names.</li><li>Prepare an Airtable JSON payload and inspect it before sending.</li></ol></section><section><h2>Official references</h2><ul><li><a href="https://pandas.pydata.org/docs/getting_started/">pandas getting started</a></li><li><a href="https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html">pandas read_csv reference</a></li><li><a href="https://support.airtable.com/docs/creating-personal-access-tokens">Airtable personal access tokens</a></li><li><a href="https://support.airtable.com/docs/managing-api-call-limits-in-airtable">Airtable API limits</a></li><li><a href="https://airtable.com/developers/web/api/create-records">Airtable create records</a></li></ul></section></main></body></html>
