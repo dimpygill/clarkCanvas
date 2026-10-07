@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regular Expressions (Regex) for Python Data Cleaning</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;line-height:1.55;margin:0;background:#f5f7fa;color:#20242a}
+main{max-width:1050px;margin:auto;background:white;padding:36px 46px}
+h1{font-size:30px;margin-bottom:8px} h2{margin-top:34px;border-bottom:2px solid #ddd;padding-bottom:6px}
+h3{margin-top:25px} h4{margin-bottom:5px}
+.code{background:#f3f4f6;border-left:4px solid #555;padding:12px 16px;white-space:pre-wrap;font-family:Consolas,monospace;overflow:auto}
+.output{background:#fafafa;border:1px solid #ddd;padding:10px 14px;white-space:pre-wrap;font-family:Consolas,monospace}
+.note{background:#fff8df;border-left:4px solid #d6a800;padding:12px 16px}
+.key{background:#eef6ff;border-left:4px solid #377bb5;padding:12px 16px}
+table{border-collapse:collapse;width:100%;margin:14px 0 22px}
+th,td{border:1px solid #bbb;padding:9px;text-align:left;vertical-align:top}
+th{background:#f0f2f4}
+code{font-family:Consolas,monospace}
+.small{font-size:14px;color:#555}
+.flow{text-align:center;font-weight:bold;padding:12px;background:#f7f7f7;border:1px solid #ddd}
+</style>
+</head>
+<body><main>
+<h1>Regular Expressions (Regex) for Python Data Cleaning</h1>
+<p>This document introduces regular expressions from the beginning and then applies them to realistic Python and Pandas data-cleaning tasks. </p>
+
+<h2>1. Why Regex Is Useful</h2>
+<p>A regular expression, usually called <strong>regex</strong>, is a pattern used to search, identify, validate, extract, split, or replace text.</p>
+<p>Ordinary string replacement works well when we know the exact text:</p>
+<div class="code">text = "John-Smith"
+print(text.replace("-", " "))</div>
+<div class="output">John Smith</div>
+<p>But dirty data is often unpredictable. A name might contain one space, two spaces, five spaces, or a tab. Regex lets us describe the <em>pattern</em> instead of every possible exact value.</p>
+
+<h2>2. Our Starting Example: Repeated Spaces</h2>
+<div class="code">df["name"] = df["name"].str.replace(r"\s+", " ", regex=True)</div>
+<p>Suppose the values are:</p>
+<table><tr><th>Before</th><th>After</th></tr>
+<tr><td><code>John&nbsp;&nbsp;&nbsp;&nbsp;Smith</code></td><td><code>John Smith</code></td></tr>
+<tr><td><code>Maria&nbsp;&nbsp;&nbsp;Lopez</code></td><td><code>Maria Lopez</code></td></tr>
+<tr><td><code>David&nbsp;&nbsp;Lee</code></td><td><code>David Lee</code></td></tr></table>
+<p>Break the pattern <code>r"\s+"</code> into pieces:</p>
+<table><tr><th>Part</th><th>Meaning</th></tr>
+<tr><td><code>r</code></td><td>Python raw-string prefix. Helpful when writing backslashes.</td></tr>
+<tr><td><code>\s</code></td><td>Match a whitespace character.</td></tr>
+<tr><td><code>+</code></td><td>Match one or more occurrences of the item immediately before it.</td></tr>
+<tr><td><code>\s+</code></td><td>Therefore: match one or more consecutive whitespace characters.</td></tr></table>
+<p>The replacement value is one normal space: <code>" "</code>. So every group of whitespace becomes exactly one space.</p>
+
+<h2>3. What Does <code>regex=True</code> Mean?</h2>
+<p>In Pandas:</p>
+<div class="code">df["name"].str.replace(r"\s+", " ", regex=True)</div>
+<p><code>regex=True</code> tells Pandas: <strong>interpret the first argument as a regex pattern</strong>.</p>
+<div class="key"><strong>Pattern:</strong> what should Python find?<br><strong>Replacement:</strong> what should Python put there instead?</div>
+
+<h2>4. Why Do We Write <code>r"..."</code>?</h2>
+<p>Regex frequently uses backslashes, such as <code>\d</code>, <code>\s</code>, and <code>\w</code>. Python also uses backslashes for escape sequences. A raw string makes regex patterns easier to read.</p>
+<div class="code">pattern = r"\d+"</div>
+<p>For beginner regex code, using raw strings for patterns is a good habit.</p>
+
+<h2>5. The Most Important Regex Character Classes</h2>
+<table>
+<tr><th>Pattern</th><th>Meaning</th><th>Example match</th></tr>
+<tr><td><code>\d</code></td><td>One digit, 0–9</td><td><code>7</code></td></tr>
+<tr><td><code>\D</code></td><td>One non-digit</td><td><code>A</code>, <code>-</code></td></tr>
+<tr><td><code>\s</code></td><td>One whitespace character</td><td>space, tab, newline</td></tr>
+<tr><td><code>\S</code></td><td>One non-whitespace character</td><td><code>A</code>, <code>5</code></td></tr>
+<tr><td><code>\w</code></td><td>Word character: letters, digits, underscore</td><td><code>A</code>, <code>8</code>, <code>_</code></td></tr>
+<tr><td><code>\W</code></td><td>Non-word character</td><td><code>-</code>, <code>@</code></td></tr>
+<tr><td><code>.</code></td><td>Almost any single character</td><td><code>A</code>, <code>7</code>, <code>-</code></td></tr>
+</table>
+
+<h3>5.1 What exactly is a “word character”?</h3>
+<p>In regex, <strong>word character</strong> does not mean a complete English word. It is simply the name regex gives to a category of individual characters.</p>
+<p>In Python regex, <code>\w</code> matches <strong>one word character</strong>: generally a letter, a digit, or an underscore.</p>
+<table>
+<tr><th>Character</th><th>Matched by <code>\w</code>?</th><th>Reason</th></tr>
+<tr><td><code>A</code></td><td>Yes</td><td>Letter</td></tr>
+<tr><td><code>z</code></td><td>Yes</td><td>Letter</td></tr>
+<tr><td><code>5</code></td><td>Yes</td><td>Digit</td></tr>
+<tr><td><code>_</code></td><td>Yes</td><td>Underscore</td></tr>
+<tr><td><code>@</code></td><td>No</td><td>Symbol, not a word character</td></tr>
+<tr><td><code>-</code></td><td>No</td><td>Punctuation, not a word character</td></tr>
+<tr><td><code>.</code></td><td>No</td><td>Punctuation, not a word character</td></tr>
+<tr><td>space</td><td>No</td><td>Whitespace</td></tr>
+</table>
+<p>For <code>John_123</code>, every character is matched by <code>\w</code>:</p>
+<div class="output">J  o  h  n  _  1  2  3
+✓  ✓  ✓  ✓  ✓  ✓  ✓  ✓</div>
+<p>For <code>John-Smith</code>, the hyphen is not a word character:</p>
+<div class="output">J  o  h  n  -  S  m  i  t  h
+✓  ✓  ✓  ✓  ✗  ✓  ✓  ✓  ✓  ✓</div>
+<h4>Difference between <code>\w</code> and <code>\S</code></h4>
+<p><code>\S</code> is much broader. It matches <strong>anything that is not whitespace</strong>. Therefore punctuation such as <code>@</code>, <code>-</code>, and <code>.</code> is matched by <code>\S</code>, but not by <code>\w</code>.</p>
+<table>
+<tr><th>Character</th><th><code>\S</code></th><th><code>\w</code></th></tr>
+<tr><td><code>A</code></td><td>Yes</td><td>Yes</td></tr>
+<tr><td><code>5</code></td><td>Yes</td><td>Yes</td></tr>
+<tr><td><code>_</code></td><td>Yes</td><td>Yes</td></tr>
+<tr><td><code>@</code></td><td>Yes</td><td>No</td></tr>
+<tr><td><code>-</code></td><td>Yes</td><td>No</td></tr>
+<tr><td><code>.</code></td><td>Yes</td><td>No</td></tr>
+<tr><td>space</td><td>No</td><td>No</td></tr>
+</table>
+<div class="key"><strong>Easy memory rule:</strong><br><code>\s</code> = whitespace &nbsp;&nbsp; <code>\S</code> = NOT whitespace<br><code>\w</code> = word character (letter/digit/underscore) &nbsp;&nbsp; <code>\W</code> = NOT a word character</div>
+<h4>What does <code>\w+</code> mean?</h4>
+<p><code>\w</code> matches one word character, while <code>+</code> means one or more. Therefore <code>\w+</code> matches a consecutive group of word characters.</p>
+<div class="code">import re
+
+text = "John Smith 123"
+print(re.findall(r"\w+", text))</div>
+<div class="output">['John', 'Smith', '123']</div>
+<p>Notice that regex calls <code>123</code> a match for <code>\w+</code> even though humans would not normally call <code>123</code> a word. This is why <strong>word character is technical regex terminology</strong>.</p>
+<div class="note"><strong>Python note:</strong> By default, Python 3 regex is Unicode-aware, so <code>\w</code> can match many letters and digits beyond basic English <code>A-Z</code>. For an introductory course, “letters, digits, and underscore” is the useful rule to remember.</div>
+
+<h3>5.2 Find digits</h3>
+<div class="code">import re
+
+text = "Student GPA is 3.8"
+result = re.findall(r"\d", text)
+print(result)</div>
+<div class="output">['3', '8']</div>
+
+<h3>5.2 Remove non-digits from a phone number</h3>
+<div class="code">import re
+
+phone = "(503) 555-2345"
+clean_phone = re.sub(r"\D", "", phone)
+print(clean_phone)</div>
+<div class="output">5035552345</div>
+<p><code>\D</code> means “anything that is not a digit.” <code>re.sub()</code> replaces every matched character with an empty string.</p>
+
+<h2>6. Quantifiers: How Many Times?</h2>
+<table>
+<tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><code>+</code></td><td>One or more</td><td><code>\d+</code> matches <code>503</code></td></tr>
+<tr><td><code>*</code></td><td>Zero or more</td><td><code>a*</code></td></tr>
+<tr><td><code>?</code></td><td>Zero or one</td><td><code>-?</code> makes a hyphen optional</td></tr>
+<tr><td><code>{3}</code></td><td>Exactly 3</td><td><code>\d{3}</code></td></tr>
+<tr><td><code>{2,4}</code></td><td>Between 2 and 4</td><td><code>\d{2,4}</code></td></tr>
+<tr><td><code>{3,}</code></td><td>3 or more</td><td><code>\d{3,}</code></td></tr>
+</table>
+
+<h3>6.1 Difference between <code>\d</code> and <code>\d+</code></h3>
+<div class="code">import re
+
+text = "Room 205"
+
+print(re.findall(r"\d", text))
+print(re.findall(r"\d+", text))</div>
+<div class="output">['2', '0', '5']
+['205']</div>
+
+<h2>7. Anchors: Beginning and End</h2>
+<table>
+<tr><th>Symbol</th><th>Meaning</th></tr>
+<tr><td><code>^</code></td><td>Beginning of the string</td></tr>
+<tr><td><code>$</code></td><td>End of the string</td></tr>
+</table>
+<p>For example, a five-digit ZIP code can be described as:</p>
+<div class="code">r"^\d{5}$"</div>
+<p>Read it as: beginning → exactly five digits → end.</p>
+<div class="code">import re
+
+print(bool(re.fullmatch(r"\d{5}", "97201")))
+print(bool(re.fullmatch(r"\d{5}", "9720A")))</div>
+<div class="output">True
+False</div>
+
+<h2>8. Character Sets: <code>[ ]</code></h2>
+<p>Square brackets mean “match one character from this set.”</p>
+<table>
+<tr><th>Pattern</th><th>Meaning</th></tr>
+<tr><td><code>[abc]</code></td><td>a, b, or c</td></tr>
+<tr><td><code>[0-9]</code></td><td>one digit</td></tr>
+<tr><td><code>[A-Z]</code></td><td>one uppercase English letter</td></tr>
+<tr><td><code>[a-z]</code></td><td>one lowercase English letter</td></tr>
+<tr><td><code>[A-Za-z]</code></td><td>one uppercase or lowercase English letter</td></tr>
+<tr><td><code>[^0-9]</code></td><td>anything except a digit</td></tr>
+</table>
+
+<h2>9. Alternation: OR with <code>|</code></h2>
+<div class="code">pattern = r"CS|CIS|IT"</div>
+<p>This means match <code>CS</code> OR <code>CIS</code> OR <code>IT</code>.</p>
+<div class="code">import re
+
+text = "Major: CS"
+print(re.findall(r"CS|CIS|IT", text))</div>
+<div class="output">['CS']</div>
+
+<h2>10. Groups with Parentheses</h2>
+<p>Parentheses group parts of a pattern. They are especially useful for extracting pieces of structured text.</p>
+<div class="code">import re
+
+phone = "503-555-1234"
+
+match = re.fullmatch(r"(\d{3})-(\d{3})-(\d{4})", phone)
+
+print(match.group(1))
+print(match.group(2))
+print(match.group(3))</div>
+<div class="output">503
+555
+1234</div>
+
+<h2>11. Escaping Special Regex Characters</h2>
+<p>Some characters have special regex meanings: <code>.</code>, <code>+</code>, <code>*</code>, <code>?</code>, <code>( )</code>, <code>[ ]</code>, <code>{ }</code>, <code>^</code>, <code>$</code>, and <code>|</code>.</p>
+<p>If you want an actual period, use <code>\.</code>.</p>
+<div class="code">r"\."</div>
+<p>For example, to find the period in <code>503.555.9999</code>, use <code>\.</code>, not just <code>.</code>.</p>
+
+<h2>12. Core Python <code>re</code> Operations</h2>
+<h3>12.1 <code>re.search()</code> — find a pattern somewhere</h3>
+<div class="code">import re
+
+text = "Student ID: 12345"
+
+match = re.search(r"\d+", text)
+
+if match:
+    print(match.group())</div>
+<div class="output">12345</div>
+
+<h3>12.2 <code>re.findall()</code> — return all matches</h3>
+<div class="code">import re
+
+text = "Scores: 90, 85, 100"
+numbers = re.findall(r"\d+", text)
+
+print(numbers)</div>
+<div class="output">['90', '85', '100']</div>
+
+<h3>12.3 <code>re.sub()</code> — replace matches</h3>
+<div class="code">import re
+
+text = "John     Smith"
+clean = re.sub(r"\s+", " ", text)
+
+print(clean)</div>
+<div class="output">John Smith</div>
+
+<h3>12.4 <code>re.split()</code> — split using a pattern</h3>
+<div class="code">import re
+
+text = "Python,Java;C#"
+languages = re.split(r"[,;]", text)
+
+print(languages)</div>
+<div class="output">['Python', 'Java', 'C#']</div>
+
+<h3>12.5 <code>re.fullmatch()</code> — validate the whole string</h3>
+<div class="code">import re
+
+phone = "5035551234"
+
+if re.fullmatch(r"\d{10}", phone):
+    print("Valid")
+else:
+    print("Invalid")</div>
+<div class="output">Valid</div>
+
+
+<h2>12A. Python String Functions vs Regex Functions vs Pandas Regex Functions</h2>
+<p>This distinction is important. Python provides ordinary <strong>string methods</strong>, the <code>re</code> module provides <strong>regular-expression functions</strong>, and Pandas provides <strong>Series string methods</strong> that can work with regex patterns.</p>
+
+<h3>A. Ordinary Python String Methods — No Regex Required</h3>
+<p>Use these when you are working with one Python string and you know the exact text or simple string operation you need.</p>
+<table>
+<tr><th>Function / Method</th><th>Purpose</th><th>Small Example</th><th>Result</th><th><code>regex=True</code>?</th></tr>
+<tr><td><code>text.replace(old, new)</code></td><td>Replace exact text</td><td><code>"503-555".replace("-", "")</code></td><td><code>503555</code></td><td>No. It is an ordinary string method.</td></tr>
+<tr><td><code>text.strip()</code></td><td>Remove whitespace from beginning and end</td><td><code>"  John  ".strip()</code></td><td><code>John</code></td><td>No</td></tr>
+<tr><td><code>text.lower()</code></td><td>Convert letters to lowercase</td><td><code>"JOHN".lower()</code></td><td><code>john</code></td><td>No</td></tr>
+<tr><td><code>text.upper()</code></td><td>Convert letters to uppercase</td><td><code>"john".upper()</code></td><td><code>JOHN</code></td><td>No</td></tr>
+<tr><td><code>text.title()</code></td><td>Capitalize words</td><td><code>"john smith".title()</code></td><td><code>John Smith</code></td><td>No</td></tr>
+<tr><td><code>text.split()</code></td><td>Split a string</td><td><code>"John Smith".split()</code></td><td><code>['John', 'Smith']</code></td><td>No</td></tr>
+</table>
+
+<div class="code">phone = "(503) 555-2345"
+
+# Ordinary replace() does NOT understand regex.
+# We must name the exact characters we want to remove.
+phone = phone.replace("(", "")
+phone = phone.replace(")", "")
+phone = phone.replace("-", "")
+phone = phone.replace(" ", "")
+
+print(phone)</div>
+<div class="output">5035552345</div>
+
+<h3>B. Python <code>re</code> Module — Regex Is Automatic</h3>
+<p>The <code>re</code> module is Python's regular-expression module. Its functions are specifically designed to work with regex patterns. Therefore, functions such as <code>re.sub()</code>, <code>re.search()</code>, and <code>re.findall()</code> do <strong>not</strong> need <code>regex=True</code>.</p>
+<table>
+<tr><th>Regex Function</th><th>Purpose</th><th>Small Example</th><th>Result</th><th><code>regex=True</code>?</th></tr>
+<tr><td><code>re.sub()</code></td><td>Replace text matching a regex pattern</td><td><code>re.sub(r"\D", "", "503-555")</code></td><td><code>503555</code></td><td><strong>No</strong> — it is already a regex function.</td></tr>
+<tr><td><code>re.search()</code></td><td>Find the first occurrence of a pattern anywhere in a string</td><td><code>re.search(r"\d+", "ID: 123")</code></td><td>Match for <code>123</code></td><td>No</td></tr>
+<tr><td><code>re.findall()</code></td><td>Return all matches</td><td><code>re.findall(r"\d+", "80, 90, 100")</code></td><td><code>['80','90','100']</code></td><td>No</td></tr>
+<tr><td><code>re.fullmatch()</code></td><td>Check whether the entire string matches</td><td><code>re.fullmatch(r"\d{5}", "97201")</code></td><td>A match</td><td>No</td></tr>
+<tr><td><code>re.split()</code></td><td>Split using a regex pattern</td><td><code>re.split(r"[,;]", "A,B;C")</code></td><td><code>['A','B','C']</code></td><td>No</td></tr>
+</table>
+
+<h4>Why does <code>re.sub()</code> not use <code>regex=True</code>?</h4>
+<div class="code">import re
+
+phone = "(503) 555-2345"
+
+clean_phone = re.sub(r"\D", "", phone)
+
+print(clean_phone)</div>
+<div class="output">5035552345</div>
+<p>The basic structure is:</p>
+<div class="code">re.sub(pattern, replacement, string)</div>
+<table>
+<tr><th>Argument</th><th>Our value</th><th>Meaning</th></tr>
+<tr><td><code>pattern</code></td><td><code>r"\D"</code></td><td>Find every non-digit character.</td></tr>
+<tr><td><code>replacement</code></td><td><code>""</code></td><td>Replace it with nothing.</td></tr>
+<tr><td><code>string</code></td><td><code>phone</code></td><td>The string being cleaned.</td></tr>
+</table>
+<div class="key"><strong>Remember:</strong> <code>re</code> means regular expression. Regex behavior is built into <code>re.sub()</code>, <code>re.search()</code>, <code>re.findall()</code>, etc. There is no <code>regex=True</code> argument for these functions.</div>
+
+<h3>C. Pandas String Methods — Used on a DataFrame/Series</h3>
+<p>Pandas methods such as <code>.str.replace()</code> operate on an entire Series (column). Some Pandas string methods accept regex patterns directly, while <code>.str.replace()</code> uses the <code>regex</code> parameter to specify whether its pattern should be interpreted as regex.</p>
+<table>
+<tr><th>Pandas Method</th><th>Purpose</th><th>Small Example</th><th>Regex Detail</th></tr>
+<tr><td><code>.str.replace()</code></td><td>Replace text in every value of a column</td><td><code>df["phone"].str.replace(r"\D", "", regex=True)</code></td><td>Use <code>regex=True</code> when the pattern is regex.</td></tr>
+<tr><td><code>.str.contains()</code></td><td>Check whether each value contains a pattern</td><td><code>df["name"].str.contains(r"\d", regex=True)</code></td><td>Supports regex; <code>regex</code> can be controlled explicitly.</td></tr>
+<tr><td><code>.str.fullmatch()</code></td><td>Check whether each entire value matches a regex</td><td><code>df["phone"].str.fullmatch(r"\d{10}")</code></td><td>Designed for regex; no <code>regex=True</code> parameter is needed.</td></tr>
+<tr><td><code>.str.extract()</code></td><td>Extract text captured by a regex group</td><td><code>df["address"].str.extract(r"(\d{5})")</code></td><td>Designed for regex; no <code>regex=True</code> parameter is needed.</td></tr>
+<tr><td><code>.str.strip()</code></td><td>Remove leading/trailing whitespace</td><td><code>df["name"].str.strip()</code></td><td>Ordinary string operation; no regex.</td></tr>
+<tr><td><code>.str.lower()</code></td><td>Convert a column to lowercase</td><td><code>df["major"].str.lower()</code></td><td>No regex.</td></tr>
+<tr><td><code>.str.title()</code></td><td>Capitalize words in a column</td><td><code>df["name"].str.title()</code></td><td>No regex.</td></tr>
+</table>
+
+<h3>D. The Same Phone-Cleaning Task Three Ways</h3>
+<p>This comparison shows why the functions can look similar while behaving differently.</p>
+<table>
+<tr><th>Approach</th><th>Code</th><th>When to Use It</th></tr>
+<tr><td>Python ordinary string</td><td><code>phone.replace("-", "")</code></td><td>One string; exact known text such as a hyphen.</td></tr>
+<tr><td>Python regex</td><td><code>re.sub(r"\D", "", phone)</code></td><td>One string; remove anything matching a pattern.</td></tr>
+<tr><td>Pandas regex</td><td><code>df["phone"].str.replace(r"\D", "", regex=True)</code></td><td>An entire DataFrame column; remove anything matching a pattern.</td></tr>
+</table>
+
+<p>Example data:</p>
+<div class="output">(503) 555-2345
+503-555-1234
+503.555.9999
+503/555/4567</div>
+<p>With Python regex, one individual value can be cleaned with:</p>
+<div class="code">clean_phone = re.sub(r"\D", "", phone)</div>
+<p>With Pandas, an entire column can be cleaned with:</p>
+<div class="code">df["phone"] = df["phone"].str.replace(
+    r"\D",
+    "",
+    regex=True
+)</div>
+<p>Both use the same regex pattern <code>\D</code>. The difference is the API being used: <code>re.sub()</code> works directly with a Python string, while Pandas <code>.str.replace()</code> applies the operation across a Series.</p>
+
+<h3>E. Quick Decision Table</h3>
+<table>
+<tr><th>If you want to...</th><th>Use</th><th>Example</th></tr>
+<tr><td>Replace exact text in one Python string</td><td><code>str.replace()</code></td><td><code>phone.replace("-", "")</code></td></tr>
+<tr><td>Replace a pattern in one Python string</td><td><code>re.sub()</code></td><td><code>re.sub(r"\D", "", phone)</code></td></tr>
+<tr><td>Find the first regex match in one string</td><td><code>re.search()</code></td><td><code>re.search(r"\d+", text)</code></td></tr>
+<tr><td>Find all regex matches in one string</td><td><code>re.findall()</code></td><td><code>re.findall(r"\d+", text)</code></td></tr>
+<tr><td>Validate an entire Python string</td><td><code>re.fullmatch()</code></td><td><code>re.fullmatch(r"\d{5}", zip_code)</code></td></tr>
+<tr><td>Replace a regex pattern throughout a DataFrame column</td><td><code>.str.replace(..., regex=True)</code></td><td><code>df["phone"].str.replace(r"\D", "", regex=True)</code></td></tr>
+<tr><td>Validate every value in a DataFrame column</td><td><code>.str.fullmatch()</code></td><td><code>df["phone"].str.fullmatch(r"\d{10}")</code></td></tr>
+<tr><td>Extract part of every value in a column</td><td><code>.str.extract()</code></td><td><code>df["address"].str.extract(r"(\d{5})")</code></td></tr>
+</table>
+
+<h2>13. Regex with Pandas</h2>
+<p>Pandas provides regex support through many <code>.str</code> operations.</p>
+
+<h3>13.1 Replace patterns: <code>.str.replace()</code></h3>
+<div class="code">df["name"] = df["name"].str.replace(
+    r"\s+",
+    " ",
+    regex=True
+)</div>
+
+<h3>13.2 Check whether values contain a pattern: <code>.str.contains()</code></h3>
+<div class="code"># Find rows whose major contains "science"
+result = df[df["major"].str.contains(
+    r"science",
+    case=False,
+    na=False,
+    regex=True
+)]</div>
+
+<h3>13.3 Validate complete values: <code>.str.fullmatch()</code></h3>
+<div class="code"># True when the phone contains exactly 10 digits
+valid_phone = df["phone"].str.fullmatch(
+    r"\d{10}",
+    na=False
+)</div>
+
+<h3>13.4 Extract part of a value: <code>.str.extract()</code></h3>
+<div class="code"># Extract a 5-digit ZIP code
+df["zip"] = df["address"].str.extract(r"(\d{5})")</div>
+
+<h2>14. Practical Data-Cleaning Operations</h2>
+
+<h3>14.1 Remove repeated internal spaces</h3>
+<div class="code">df["name"] = df["name"].str.replace(
+    r"\s+",
+    " ",
+    regex=True
+)</div>
+<p><strong>Pattern:</strong> <code>\s+</code> = one or more whitespace characters.<br>
+<strong>Replacement:</strong> one space.</p>
+
+<h3>14.2 Remove all non-digit characters from phone numbers</h3>
+<p>Dirty values:</p>
+<div class="output">(503) 555-2345
+503-555-1234
+503.555.9999
+503 555 4567</div>
+<div class="code">df["phone"] = df["phone"].str.replace(
+    r"\D",
+    "",
+    regex=True
+)</div>
+<p>Result:</p>
+<div class="output">5035552345
+5035551234
+5035559999
+5035554567</div>
+
+<h3>14.3 Find phone numbers that are not exactly 10 digits</h3>
+<div class="code">valid = df["phone"].str.fullmatch(r"\d{10}", na=False)
+
+invalid_rows = df[~valid]</div>
+
+<h3>14.4 Remove unwanted punctuation from names</h3>
+<div class="code">df["name"] = df["name"].str.replace(
+    r"[^A-Za-z\s'-]",
+    "",
+    regex=True
+)</div>
+<p>This example keeps English letters, whitespace, apostrophes, and hyphens. Real-world name validation should be designed carefully because names can contain characters from many writing systems.</p>
+
+<h3>14.5 Extract numbers from mixed text</h3>
+<p>Suppose:</p>
+<div class="output">"GPA: 3.8"
+"Score: 95"</div>
+<div class="code">df["number"] = df["text"].str.extract(
+    r"(\d+(?:\.\d+)?)"
+)</div>
+<p>The pattern allows an integer or a decimal number.</p>
+
+<h3>14.6 Identify values containing digits</h3>
+<div class="code">has_number = df["name"].str.contains(
+    r"\d",
+    na=False,
+    regex=True
+)
+
+print(df[has_number])</div>
+<p>This can help identify suspicious values such as <code>John123</code> in a name column.</p>
+
+<h3>14.7 Clean multiple kinds of whitespace</h3>
+<div class="code">df["name"] = (
+    df["name"]
+    .str.strip()
+    .str.replace(r"\s+", " ", regex=True)
+)</div>
+<p><code>.str.strip()</code> removes whitespace at the beginning and end. Regex then collapses repeated internal whitespace.</p>
+
+<h2>15. Email Pattern Example</h2>
+<p>A simple classroom-level pattern is:</p>
+<div class="code">r"^[^@\s]+@[^@\s]+\.[^@\s]+$"</div>
+<table>
+<tr><th>Part</th><th>Meaning</th></tr>
+<tr><td><code>^</code></td><td>start</td></tr>
+<tr><td><code>[^@\s]+</code></td><td>one or more characters that are not @ or whitespace</td></tr>
+<tr><td><code>@</code></td><td>literal @</td></tr>
+<tr><td><code>[^@\s]+</code></td><td>domain portion</td></tr>
+<tr><td><code>\.</code></td><td>literal period</td></tr>
+<tr><td><code>[^@\s]+</code></td><td>ending portion</td></tr>
+<tr><td><code>$</code></td><td>end</td></tr>
+</table>
+<div class="code">valid_email = df["email"].str.fullmatch(
+    r"[^@\s]+@[^@\s]+\.[^@\s]+",
+    na=False
+)</div>
+<div class="note"><strong>Important:</strong> email addresses can be more complex than this classroom pattern. Regex validation should match the actual requirements of the system.</div>
+
+<h2>16. Date Pattern Example</h2>
+<p>To recognize the shape <code>MM/DD/YYYY</code>:</p>
+<div class="code">r"\d{2}/\d{2}/\d{4}"</div>
+<p>Examples:</p>
+<div class="output">05/12/2004 → matches pattern
+5/12/2004  → does not match this exact pattern
+2004-05-12 → does not match</div>
+<div class="note">Matching a date pattern does <strong>not</strong> prove the date is valid. For example, <code>99/99/2025</code> has the right shape but is not a real date. Use <code>pd.to_datetime()</code> for actual date conversion/validation.</div>
+
+<h2>17. Regex Is Not Always the Best Tool</h2>
+<p>Do not use regex just because it is available.</p>
+<table>
+<tr><th>Task</th><th>Better choice</th></tr>
+<tr><td>Remove spaces from beginning/end</td><td><code>.str.strip()</code></td></tr>
+<tr><td>Convert text to lowercase</td><td><code>.str.lower()</code></td></tr>
+<tr><td>Replace one known category</td><td><code>.replace({"CS": "Computer Science"})</code></td></tr>
+<tr><td>Convert numeric data</td><td><code>pd.to_numeric()</code></td></tr>
+<tr><td>Parse real dates</td><td><code>pd.to_datetime()</code></td></tr>
+<tr><td>Find variable text patterns</td><td>Regex is often useful</td></tr>
+</table>
+
+<h2>18. Complete Data-Cleaning Example</h2>
+<p>Suppose <code>students.csv</code> contains inconsistent names, phones, majors, and GPAs.</p>
+<div class="code">import pandas as pd
+
+# ---------------------------------------------------------
+# STEP 1: Read the CSV file
+# ---------------------------------------------------------
+
+df = pd.read_csv("students.csv")
+
+
+# ---------------------------------------------------------
+# STEP 2: Clean column names
+# ---------------------------------------------------------
+
+df.columns = (
+    df.columns
+    .str.strip()
+    .str.lower()
+    .str.replace(r"\s+", "_", regex=True)
+)
+
+
+# ---------------------------------------------------------
+# STEP 3: Clean student names
+# ---------------------------------------------------------
+
+# Remove spaces from beginning and end
+df["name"] = df["name"].str.strip()
+
+# Replace repeated internal whitespace with one space
+df["name"] = df["name"].str.replace(
+    r"\s+",
+    " ",
+    regex=True
+)
+
+# Standardize capitalization
+df["name"] = df["name"].str.title()
+
+
+# ---------------------------------------------------------
+# STEP 4: Clean phone numbers
+# ---------------------------------------------------------
+
+# Remove everything that is not a digit
+df["phone"] = df["phone"].str.replace(
+    r"\D",
+    "",
+    regex=True
+)
+
+# Check whether cleaned phones contain exactly 10 digits
+df["valid_phone"] = df["phone"].str.fullmatch(
+    r"\d{10}",
+    na=False
+)
+
+
+# ---------------------------------------------------------
+# STEP 5: Clean major
+# ---------------------------------------------------------
+
+df["major"] = (
+    df["major"]
+    .str.strip()
+    .str.replace(r"\s+", " ", regex=True)
+    .str.title()
+)
+
+# Standardize known abbreviation
+df["major"] = df["major"].replace({
+    "Cs": "Computer Science"
+})
+
+
+# ---------------------------------------------------------
+# STEP 6: Convert GPA to numeric
+# ---------------------------------------------------------
+
+df["gpa"] = pd.to_numeric(
+    df["gpa"],
+    errors="coerce"
+)
+
+
+# ---------------------------------------------------------
+# STEP 7: Identify invalid GPA values
+# ---------------------------------------------------------
+
+invalid_gpa = ~df["gpa"].between(0, 4)
+
+print("Rows with invalid GPA:")
+print(df[invalid_gpa])
+
+
+# ---------------------------------------------------------
+# STEP 8: Display cleaned data
+# ---------------------------------------------------------
+
+print(df)</div>
+
+<h2>19. Reading Regex from Left to Right</h2>
+<p>Do not try to memorize a complicated expression as one object. Break it into pieces.</p>
+<p>Example:</p>
+<div class="code">r"^\d{3}-\d{3}-\d{4}$"</div>
+<table>
+<tr><th>Piece</th><th>Read it as</th></tr>
+<tr><td><code>^</code></td><td>start</td></tr>
+<tr><td><code>\d{3}</code></td><td>exactly 3 digits</td></tr>
+<tr><td><code>-</code></td><td>hyphen</td></tr>
+<tr><td><code>\d{3}</code></td><td>exactly 3 digits</td></tr>
+<tr><td><code>-</code></td><td>hyphen</td></tr>
+<tr><td><code>\d{4}</code></td><td>exactly 4 digits</td></tr>
+<tr><td><code>$</code></td><td>end</td></tr>
+</table>
+<div class="flow">START → 3 digits → - → 3 digits → - → 4 digits → END</div>
+
+<h2>20. Common Beginner Mistakes</h2>
+<h3>Mistake 1: Forgetting <code>regex=True</code></h3>
+<p>When using a regex pattern with Pandas replacement, explicitly specify <code>regex=True</code>.</p>
+
+<h3>Mistake 2: Confusing <code>\d</code> with <code>\D</code></h3>
+<p><code>\d</code> = digit. <code>\D</code> = NOT a digit.</p>
+
+<h3>Mistake 3: Using <code>.</code> when you mean an actual period</h3>
+<p><code>.</code> has a special regex meaning. Use <code>\.</code> for a literal period.</p>
+
+<h3>Mistake 4: Using regex when a normal string method is clearer</h3>
+<p>For example, use <code>.str.strip()</code> for leading/trailing whitespace rather than writing an unnecessarily complex regex.</p>
+
+<h3>Mistake 5: Treating pattern matching as semantic validation</h3>
+<p>A value can have the correct format and still be logically invalid. Regex checks text patterns; business rules and type-aware functions perform deeper validation.</p>
+
+<h2>21. Quick Reference</h2>
+<table>
+<tr><th>Pattern</th><th>Meaning</th></tr>
+<tr><td><code>\d</code></td><td>digit</td></tr>
+<tr><td><code>\D</code></td><td>non-digit</td></tr>
+<tr><td><code>\s</code></td><td>whitespace</td></tr>
+<tr><td><code>\S</code></td><td>non-whitespace</td></tr>
+<tr><td><code>\w</code></td><td>word character</td></tr>
+<tr><td><code>\W</code></td><td>non-word character</td></tr>
+<tr><td><code>+</code></td><td>one or more</td></tr>
+<tr><td><code>*</code></td><td>zero or more</td></tr>
+<tr><td><code>?</code></td><td>zero or one</td></tr>
+<tr><td><code>{n}</code></td><td>exactly n times</td></tr>
+<tr><td><code>[abc]</code></td><td>one character from the set</td></tr>
+<tr><td><code>[^abc]</code></td><td>one character not in the set</td></tr>
+<tr><td><code>^</code></td><td>start</td></tr>
+<tr><td><code>$</code></td><td>end</td></tr>
+<tr><td><code>|</code></td><td>OR</td></tr>
+<tr><td><code>( )</code></td><td>group/capture</td></tr>
+<tr><td><code>\.</code></td><td>literal period</td></tr>
+</table>
+
+<h2>22. Practice Exercises</h2>
+<p><strong>1.</strong> Convert <code>"John     Smith"</code> to <code>"John Smith"</code>.</p>
+<p><strong>2.</strong> Convert <code>"(503) 555-1234"</code> to <code>"5035551234"</code>.</p>
+<p><strong>3.</strong> Check whether <code>"97201"</code> contains exactly five digits.</p>
+<p><strong>4.</strong> Find all numbers in <code>"Scores: 80, 95, 100"</code>.</p>
+<p><strong>5.</strong> Identify rows where a name contains a digit.</p>
+<p><strong>6.</strong> Validate phone numbers after cleaning them to digits only.</p>
+<p><strong>7.</strong> Extract a five-digit ZIP code from an address.</p>
+<p><strong>8.</strong> Replace multiple spaces in column headings with underscores.</p>
+
+<h2>23. Practice Solutions</h2>
+<div class="code">import re
+
+# 1
+print(re.sub(r"\s+", " ", "John     Smith"))
+
+# 2
+print(re.sub(r"\D", "", "(503) 555-1234"))
+
+# 3
+print(bool(re.fullmatch(r"\d{5}", "97201")))
+
+# 4
+print(re.findall(r"\d+", "Scores: 80, 95, 100"))
+
+
+# Pandas examples:
+
+# 5
+rows_with_digits = df[df["name"].str.contains(
+    r"\d",
+    na=False,
+    regex=True
+)]
+
+# 6
+valid_phone = df["phone"].str.fullmatch(
+    r"\d{10}",
+    na=False
+)
+
+# 7
+df["zip"] = df["address"].str.extract(r"(\d{5})")
+
+# 8
+df.columns = (
+    df.columns
+    .str.strip()
+    .str.replace(r"\s+", "_", regex=True)
+)</div>
+
+<h2>24. Final Takeaway</h2>
+<p>Regex is a language for describing <strong>text patterns</strong>. In data cleaning it is particularly useful when values are inconsistent but follow recognizable patterns.</p>
+<div class="key">
+<strong>Think in this order:</strong><br>
+1. What does the dirty data look like?<br>
+2. What pattern identifies the unwanted or required text?<br>
+3. Do I want to find, validate, extract, split, or replace it?<br>
+4. Is regex actually the clearest tool for the job?<br>
+5. Validate the result after cleaning.
+</div>
+</main></body></html>
