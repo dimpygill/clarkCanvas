@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Cleaning with Python - Detailed Tutorial</title>
+<style>
+:root{--navy:#17345f;--blue:#2463c5;--light:#eef5ff;--green:#eaf8ef;--yellow:#fff7dc;--red:#fff0f0;--ink:#1f2937;--muted:#5b6575;--border:#d9e2ef;--code:#172033}
+*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.62}.wrap{max-width:1120px;margin:auto;background:white;min-height:100vh;box-shadow:0 0 30px #dfe5ee}.hero{padding:52px 58px;background:linear-gradient(135deg,#17345f,#285fa7);color:white}.hero h1{font-size:42px;margin:0 0 8px}.hero p{font-size:18px;margin:5px 0;opacity:.95}.content{padding:42px 58px 70px}h2{color:var(--navy);font-size:28px;margin-top:48px;border-bottom:3px solid #dbe8fa;padding-bottom:8px}h3{color:#24558e;margin-top:30px;font-size:21px}h4{margin-top:24px;color:#334155}.box{padding:18px 22px;border-radius:8px;margin:18px 0;border-left:5px solid var(--blue);background:var(--light)}.good{background:var(--green);border-left-color:#29975a}.warn{background:var(--yellow);border-left-color:#d99a12}.danger{background:var(--red);border-left-color:#d14343}.flow{font-size:18px;text-align:center;padding:22px;background:#f4f7fb;border:1px solid var(--border);border-radius:8px;font-weight:bold;color:var(--navy);margin:20px 0}pre{background:var(--code);color:#f1f5f9;padding:19px 22px;border-radius:8px;overflow-x:auto;font-family:Consolas,monospace;line-height:1.55;font-size:14px}code{font-family:Consolas,monospace}.inline{background:#edf2f7;padding:2px 6px;border-radius:4px;color:#193b69}table{border-collapse:collapse;width:100%;margin:18px 0;font-size:15px}th{background:#1f4b7d;color:white;text-align:left}th,td{border:1px solid #ccd7e5;padding:10px 12px;vertical-align:top}tr:nth-child(even) td{background:#f8fafc}.step{display:inline-block;background:#2463c5;color:white;border-radius:50%;width:32px;height:32px;text-align:center;line-height:32px;font-weight:bold;margin-right:8px}.small{color:var(--muted);font-size:14px}.toc{background:#f8fafc;border:1px solid var(--border);padding:22px 28px;border-radius:8px}.toc li{margin:5px 0}.before{background:#fff5f5}.after{background:#effcf3}.tag{display:inline-block;padding:3px 8px;border-radius:12px;background:#e7effb;color:#244f83;font-size:13px;font-weight:bold}.footer{margin-top:55px;padding-top:22px;border-top:1px solid var(--border);color:var(--muted)}
+</style>
+</head>
+<body><div class="wrap">
+<div class="hero"><h1>Data Cleaning with Python</h1><p>From messy raw data → reliable, validated, analysis-ready data</p></div>
+<div class="content">
+<div class="box good"><strong>Learning goal:</strong> Understand data cleaning as a deliberate process: inspect the data, identify problems, decide appropriate rules, clean carefully, validate the result, and document what changed.</div>
+
+<h2>1. What Is Data Cleaning?</h2>
+<p><strong>Data cleaning</strong> is the process of identifying and correcting problems in a dataset so that the data is accurate, consistent, usable, and appropriate for its intended purpose.</p>
+<p>Real-world data is rarely perfect. A student dataset, for example, may contain missing GPAs, duplicated students, phone numbers written in different formats, spaces around names, impossible GPAs such as 7.5, inconsistent majors such as <code class="inline">CS</code>, <code class="inline">Computer Science</code>, and <code class="inline">computer science</code>, or dates stored in several formats.</p>
+<div class="flow">Raw Data → Inspect → Identify Problems → Define Rules → Clean → Validate → Save Clean Data</div>
+<div class="box warn"><strong>Important:</strong> Data cleaning is not the same as deleting anything unusual. An unusual value may be valid. Cleaning decisions should be based on the meaning of the data and the rules of the problem domain.</div>
+
+<h2>2. Example of Messy Data</h2>
+<table><tr><th>Name</th><th>Phone</th><th>GPA</th><th>Major</th><th>Date of Birth</th></tr>
+<tr><td> John Smith </td><td>5035551234</td><td>3.8</td><td>computer science</td><td>05/12/2004</td></tr>
+<tr><td>MARIA LOPEZ</td><td>(503) 555-2345</td><td></td><td>CS</td><td>2003-08-17</td></tr>
+<tr><td>John Smith</td><td>503-555-1234</td><td>3.8</td><td>Computer Science</td><td>05/12/2004</td></tr>
+<tr><td>David Lee</td><td>503.555.9999</td><td>7.2</td><td>Data science</td><td>not available</td></tr>
+<tr><td>Ana Garcia</td><td>N/A</td><td>three point five</td><td> DATA SCIENCE </td><td>04-10-2005</td></tr></table>
+<p>This small table already contains several common cleaning problems: whitespace, inconsistent capitalization, missing values, duplicate records, inconsistent phone formatting, invalid numeric values, incorrect data types, inconsistent categories, and invalid/mixed date formats.</p>
+
+<h2>3. The Complete Data-Cleaning Process</h2>
+<table><tr><th>Stage</th><th>Question</th><th>Typical Actions</th></tr>
+<tr><td>1. Understand</td><td>What should each field mean?</td><td>Define valid ranges, formats, required fields, unique identifiers.</td></tr>
+<tr><td>2. Load</td><td>Did Python read the data correctly?</td><td>Read CSV/Excel/database data; inspect encoding and delimiters.</td></tr>
+<tr><td>3. Inspect</td><td>What problems exist?</td><td>Check shape, columns, types, nulls, duplicates, ranges, categories.</td></tr>
+<tr><td>4. Standardize</td><td>Are equivalent values represented consistently?</td><td>Trim text, normalize case, standardize categories, dates and phone numbers.</td></tr>
+<tr><td>5. Correct types</td><td>Are numbers/dates actually stored as numbers/dates?</td><td>Convert strings to numeric/date types; handle failed conversions.</td></tr>
+<tr><td>6. Missing data</td><td>What should happen when a value is absent?</td><td>Keep, remove, fill, infer, or flag—depending on context.</td></tr>
+<tr><td>7. Duplicates</td><td>Are records repeated?</td><td>Identify exact and logical duplicates; decide which record to retain.</td></tr>
+<tr><td>8. Validate</td><td>Are values logically possible?</td><td>Check ranges, allowed categories, relationships and business rules.</td></tr>
+<tr><td>9. Outliers</td><td>Are extreme values errors or legitimate observations?</td><td>Investigate; correct, retain, cap, transform, or flag as appropriate.</td></tr>
+<tr><td>10. Verify & export</td><td>Did cleaning create new problems?</td><td>Re-run checks, compare counts, preserve raw data, save cleaned output.</td></tr></table>
+
+<h2>4. Load the Dataset with Pandas</h2>
+<pre>import pandas as pd
+
+# Read the CSV file and store it in a DataFrame called df
+df = pd.read_csv("students.csv")
+
+# Display the first 5 rows
+print(df.head())</pre>
+<p>A <strong>DataFrame</strong> is a table-like structure in pandas. Rows usually represent observations/records, while columns represent variables or fields.</p>
+
+<h2>5. Always Inspect Before Cleaning</h2>
+<h3>5.1 Look at rows</h3><pre>print(df.head())       # First 5 rows
+print(df.tail())       # Last 5 rows
+print(df.sample(5))    # Random sample of 5 rows</pre>
+<h3>5.2 Check size</h3><pre>print(df.shape)</pre><p>If the result is <code class="inline">(1000, 5)</code>, there are 1,000 rows and 5 columns.</p>
+<h3>5.3 Check column names</h3><pre>print(df.columns)</pre>
+<h3>5.4 Check data types</h3><pre>print(df.dtypes)</pre>
+<h3>5.5 Get a summary</h3><pre>df.info()
+print(df.describe())
+print(df.describe(include="all"))</pre>
+<div class="box"><strong>Rule:</strong> Do not immediately start changing the data. First understand what Python loaded and what the dataset is supposed to represent.</div>
+
+<h2>6. Clean Column Names</h2>
+<p>Column names can contain spaces, inconsistent capitalization, or punctuation.</p>
+<pre># Example original names:
+# "Student Name", " Phone ", "GPA"
+
+# Remove leading/trailing spaces
+df.columns = df.columns.str.strip()
+
+# Convert names to lowercase
+df.columns = df.columns.str.lower()
+
+# Replace spaces with underscores
+df.columns = df.columns.str.replace(" ", "_")
+
+print(df.columns)</pre>
+<p>Result: <code class="inline">student_name</code>, <code class="inline">phone</code>, <code class="inline">gpa</code>.</p>
+
+<h2>7. Clean Text Data</h2>
+<h3>7.1 Remove extra spaces</h3>
+<pre>df["name"] = df["name"].str.strip()</pre>
+<table><tr><th>Before</th><th>After</th></tr><tr><td class="before">"&nbsp;&nbsp;John Smith&nbsp;&nbsp;"</td><td class="after">"John Smith"</td></tr></table>
+<h3>7.2 Standardize capitalization</h3>
+<pre># Names
+# "JOHN SMITH" → "John Smith"
+df["name"] = df["name"].str.strip().str.title()
+
+# Example category normalization
+# "DATA SCIENCE" → "data science"
+df["major"] = df["major"].str.strip().str.lower()</pre>
+<h3>7.3 Remove repeated internal spaces</h3>
+<pre># "John    Smith" → "John Smith"
+df["name"] = df["name"].str.replace(r"\s+", " ", regex=True)</pre>
+
+<h2>8. Standardize Categories</h2>
+<p>The same concept may appear under several labels.</p>
+<table><tr><th>Raw value</th><th>Standard value</th></tr><tr><td>CS</td><td>Computer Science</td></tr><tr><td>computer science</td><td>Computer Science</td></tr><tr><td>Comp Sci</td><td>Computer Science</td></tr></table>
+<pre># First normalize text
+df["major"] = df["major"].str.strip().str.lower()
+
+# Map equivalent labels to one standard label
+major_map = {
+    "cs": "Computer Science",
+    "computer science": "Computer Science",
+    "comp sci": "Computer Science",
+    "data science": "Data Science",
+    "ds": "Data Science"
+}
+
+df["major"] = df["major"].replace(major_map)</pre>
+<h3>Find unexpected categories</h3><pre>print(df["major"].value_counts(dropna=False))
+print(df["major"].unique())</pre>
+
+<h2>9. Missing Values</h2>
+<p>Missing values may appear as truly empty cells or text such as <code class="inline">N/A</code>, <code class="inline">unknown</code>, <code class="inline">-</code>, or <code class="inline">not available</code>.</p>
+<h3>9.1 Convert missing-value labels while loading</h3>
+<pre>df = pd.read_csv(
+    "students.csv",
+    na_values=["N/A", "NA", "Unknown", "unknown", "not available", "-"]
+)</pre>
+<h3>9.2 Detect missing values</h3><pre>print(df.isna())
+print(df.isna().sum())</pre>
+<h3>9.3 Option A: Remove rows</h3><pre># Remove rows where ANY value is missing
+df = df.dropna()
+
+# Better: remove only when a critical field is missing
+df = df.dropna(subset=["name"])</pre>
+<h3>9.4 Option B: Fill missing values</h3><pre># Fill missing major with a label
+df["major"] = df["major"].fillna("Unknown")
+
+# Fill missing numeric value with median
+median_gpa = df["gpa"].median()
+df["gpa"] = df["gpa"].fillna(median_gpa)</pre>
+<div class="box warn"><strong>Do not automatically replace every missing numeric value with 0.</strong> A missing GPA does not necessarily mean the student's GPA is 0.0. Missing means unknown/unavailable unless the domain explicitly defines otherwise.</div>
+<h3>9.5 Option C: Keep and flag missing data</h3><pre>df["gpa_missing"] = df["gpa"].isna()</pre>
+<p>This preserves information that the value was originally missing.</p>
+
+<h2>10. Correct Data Types</h2>
+<h3>10.1 Numeric conversion</h3>
+<p>A GPA column might be read as text because one row contains <code class="inline">three point five</code>.</p>
+<pre># Convert values to numbers.
+# Invalid values become NaN instead of crashing the program.
+df["gpa"] = pd.to_numeric(df["gpa"], errors="coerce")</pre>
+<p><code class="inline">errors="coerce"</code> means: if pandas cannot convert a value to a number, replace it with a missing value (<code class="inline">NaN</code>).</p>
+<h3>10.2 Integer types with missing values</h3><pre>df["student_id"] = pd.to_numeric(df["student_id"], errors="coerce").astype("Int64")</pre>
+<h3>10.3 Be careful with IDs and phone numbers</h3><p>A phone number is composed of digits, but it is generally an <strong>identifier/text value</strong>, not a quantity. You do not add or average phone numbers.</p>
+
+<h2>11. Clean Phone Numbers</h2>
+<p>These may all represent valid numbers but use different formats:</p>
+<pre>5035551234
+503-555-1234
+(503) 555-1234
+503.555.1234</pre>
+<h3>Remove non-digits</h3><pre># Keep only digits
+phones = df["phone"].astype("string").str.replace(r"\D", "", regex=True)
+
+df["phone"] = phones</pre>
+<h3>Validate length</h3><pre># For this example, assume US 10-digit phone numbers
+valid_phone = df["phone"].str.len() == 10
+
+print(df[~valid_phone])</pre>
+<h3>Format consistently</h3><pre>def format_phone(phone):
+    if pd.isna(phone):
+        return pd.NA
+
+    if len(phone) == 10:
+        return f"{phone[0:3]}-{phone[3:6]}-{phone[6:10]}"
+
+    return pd.NA
+
+
+df["phone"] = df["phone"].apply(format_phone)</pre>
+<div class="box warn"><strong>International data:</strong> Do not assume every phone number has 10 digits if your dataset includes multiple countries. Country codes and international formatting require different validation rules.</div>
+
+<h2>12. Clean Dates</h2>
+<p>Dates frequently arrive in mixed formats:</p><pre>05/12/2004
+2004-05-12
+May 12, 2004
+05-12-2004</pre>
+<pre># Convert values to actual datetime values.
+# Values that cannot be interpreted become NaT.
+df["date_of_birth"] = pd.to_datetime(
+    df["date_of_birth"],
+    errors="coerce"
+)</pre>
+<div class="box danger"><strong>Date ambiguity:</strong> <code>05/12/2004</code> can mean May 12 or December 5 depending on the convention. Do not guess when the source format is ambiguous. Determine the expected format first.</div>
+<h3>When the exact source format is known</h3><pre># Example: source is guaranteed to use MM/DD/YYYY
+df["date_of_birth"] = pd.to_datetime(
+    df["date_of_birth"],
+    format="%m/%d/%Y",
+    errors="coerce"
+)</pre>
+<h3>Export dates consistently</h3><pre>df["date_of_birth"] = df["date_of_birth"].dt.strftime("%Y-%m-%d")</pre>
+
+<h2>13. Find and Remove Duplicates</h2>
+<h3>13.1 Exact duplicates</h3><pre># Show duplicated rows
+print(df[df.duplicated()])
+
+# Remove exact duplicates
+df = df.drop_duplicates()</pre>
+<h3>13.2 Duplicates based on selected columns</h3><pre># A student ID should uniquely identify a student
+print(df[df.duplicated(subset=["student_id"], keep=False)])
+
+# Keep the first occurrence
+df = df.drop_duplicates(subset=["student_id"], keep="first")</pre>
+<div class="box warn"><strong>Be careful:</strong> Two students can have the same name. Do not treat identical names as duplicates unless your domain rules justify it. Prefer a reliable unique identifier such as Student ID.</div>
+
+<h2>14. Validate Numeric Ranges</h2>
+<p>Suppose GPA must be between 0.0 and 4.0.</p>
+<pre># Find invalid GPAs
+invalid_gpa = (df["gpa"] < 0) | (df["gpa"] > 4)
+
+print(df[invalid_gpa])</pre>
+<h3>Option: mark invalid values as missing</h3><pre>df.loc[invalid_gpa, "gpa"] = pd.NA</pre>
+<h3>Do not silently "fix" values without evidence</h3><p>If GPA is <code class="inline">7.2</code>, we do not know whether the intended value was 3.2, 2.7, or something else. It is safer to flag the record for review than invent a correction.</p>
+
+<h2>15. Validate Allowed Values</h2>
+<p>Suppose the only accepted enrollment quarters are Fall, Winter, Spring, and Summer.</p>
+<pre>allowed_quarters = ["Fall", "Winter", "Spring", "Summer"]
+
+invalid_rows = ~df["quarter"].isin(allowed_quarters)
+
+print(df[invalid_rows])</pre>
+<p>You can first normalize case:</p><pre>df["quarter"] = df["quarter"].str.strip().str.title()</pre>
+
+<h2>16. Find Outliers</h2>
+<p>An <strong>outlier</strong> is a value unusually far from other observations. It is not automatically an error.</p>
+<h3>Example: IQR method</h3><pre>Q1 = df["age"].quantile(0.25)
+Q3 = df["age"].quantile(0.75)
+IQR = Q3 - Q1
+
+lower_limit = Q1 - 1.5 * IQR
+upper_limit = Q3 + 1.5 * IQR
+
+outliers = df[
+    (df["age"] < lower_limit) |
+    (df["age"] > upper_limit)
+]
+
+print(outliers)</pre>
+<div class="box"><strong>Outlier ≠ error.</strong> A 70-year-old college student may be statistically unusual but completely valid. Statistical detection tells you what to investigate; domain knowledge tells you what action is appropriate.</div>
+
+<h2>17. Logical and Cross-Field Validation</h2>
+<p>Some errors cannot be found by checking one column independently.</p>
+<h3>Example: graduation year before enrollment year</h3><pre>invalid = df["graduation_year"] < df["enrollment_year"]
+print(df[invalid])</pre>
+<h3>Example: future birth dates</h3><pre>today = pd.Timestamp.today()
+future_birth_dates = df["date_of_birth"] > today
+print(df[future_birth_dates])</pre>
+<p>This is called a <strong>business rule</strong> or <strong>domain validation rule</strong>: the values may have valid data types but still make no logical sense together.</p>
+
+<h2>18. Email Cleaning and Validation</h2>
+<pre># Normalize obvious formatting issues
+df["email"] = df["email"].str.strip().str.lower()
+
+# Simple structural check (not a guarantee that the mailbox exists)
+valid_email = df["email"].str.match(
+    r"^[^\s@]+@[^\s@]+\.[^\s@]+$",
+    na=False
+)
+
+print(df[~valid_email])</pre>
+<div class="box warn">A regex can check whether an email <em>looks structurally plausible</em>. It cannot prove that the email account actually exists.</div>
+
+<h2>19. Cleaning Currency and Numeric Text</h2>
+<p>Values such as <code>$1,250.50</code> cannot be directly analyzed as numbers if stored as strings.</p>
+<pre># Remove dollar signs and commas
+df["tuition"] = (
+    df["tuition"]
+      .str.replace("$", "", regex=False)
+      .str.replace(",", "", regex=False)
+)
+
+# Convert to numeric
+df["tuition"] = pd.to_numeric(df["tuition"], errors="coerce")</pre>
+
+<h2>20. Negative Numbers and Impossible Values</h2>
+<pre># Example: age cannot be negative
+invalid_age = df["age"] < 0
+print(df[invalid_age])
+
+# Example rule for this particular dataset
+invalid_age = ~df["age"].between(14, 100)
+print(df[invalid_age])</pre>
+<p>The correct range depends on the dataset. Do not copy arbitrary ranges into a real project without understanding the population.</p>
+
+<h2>21. Leading Zeros</h2>
+<p>ZIP codes, student IDs, and product codes may contain leading zeros:</p><pre>ZIP Code:  02139
+Student ID: 001245</pre>
+<p>If converted to integers, the leading zeros disappear. Keep such identifiers as strings when those zeros are meaningful.</p>
+<pre>df = pd.read_csv(
+    "students.csv",
+    dtype={"student_id": "string", "zip_code": "string"}
+)</pre>
+
+<h2>22. Encoding Problems</h2>
+<p>Names may contain characters such as <strong>José, Zoë, François, 李</strong>. Use an appropriate text encoding when reading the file.</p>
+<pre>df = pd.read_csv("students.csv", encoding="utf-8-sig")</pre>
+<p><code class="inline">utf-8-sig</code> reads UTF-8 text and also handles the BOM that may appear at the beginning of CSV files exported by some applications such as Excel.</p>
+
+<h2>23. Do Not Modify Raw Data Permanently</h2>
+<div class="box danger"><strong>Best practice:</strong> Preserve the original raw file. Cleaning should produce a separate cleaned dataset so you can reproduce or audit your work.</div>
+<pre># Read raw data
+raw_df = pd.read_csv("students_raw.csv")
+
+# Make a working copy
+df = raw_df.copy()
+
+# ...clean df...
+
+# Save separately
+df.to_csv("students_clean.csv", index=False)</pre>
+
+<h2>24. Validate After Cleaning</h2>
+<p>Cleaning is not finished when the code stops producing errors. Recheck the result.</p>
+<pre># Check dimensions
+print(df.shape)
+
+# Check missing values
+print(df.isna().sum())
+
+# Check duplicates
+print("Duplicates:", df.duplicated().sum())
+
+# Check data types
+print(df.dtypes)
+
+# Check GPA range
+print(df["gpa"].min())
+print(df["gpa"].max())
+
+# Check categories
+print(df["major"].value_counts(dropna=False))</pre>
+<h3>Use assertions for important rules</h3><pre># Stop the program if the rule is violated
+assert df["student_id"].is_unique
+assert df["gpa"].dropna().between(0, 4).all()</pre>
+
+<h2>25. Keep an Audit Trail</h2>
+<p>For important projects, record what was changed rather than making invisible modifications.</p>
+<pre>print("Rows before cleaning:", len(raw_df))
+print("Rows after cleaning:", len(df))
+print("Rows removed:", len(raw_df) - len(df))</pre>
+<p>You can also create flags rather than immediately deleting suspicious records:</p>
+<pre>df["invalid_gpa"] = ~df["gpa"].between(0, 4)
+df["missing_phone"] = df["phone"].isna()</pre>
+
+
+<p>This example combines several common cleaning steps. The exact rules should always be adapted to the dataset.</p>
+<pre>import pandas as pd
+
+# ---------------------------------------------------------
+# STEP 1: LOAD DATA
+# ---------------------------------------------------------
+
+df = pd.read_csv(
+    "students_raw.csv",
+    encoding="utf-8-sig",
+    na_values=["N/A", "NA", "Unknown", "unknown", "not available", "-"]
+)
+
+# ---------------------------------------------------------
+# STEP 2: INSPECT DATA
+# ---------------------------------------------------------
+
+print(df.head())
+print(df.shape)
+print(df.dtypes)
+print(df.isna().sum())
+
+# ---------------------------------------------------------
+# STEP 3: CLEAN COLUMN NAMES
+# ---------------------------------------------------------
+
+df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
+# ---------------------------------------------------------
+# STEP 4: CLEAN NAMES
+# ---------------------------------------------------------
+
+df["name"] = df["name"].str.strip()
+df["name"] = df["name"].str.replace(r"\s+", " ", regex=True)
+df["name"] = df["name"].str.title()
+
+# ---------------------------------------------------------
+# STEP 5: CLEAN GPA
+# ---------------------------------------------------------
+
+# Convert GPA to numeric; invalid text becomes NaN
+df["gpa"] = pd.to_numeric(df["gpa"], errors="coerce")
+
+# GPA must be from 0 through 4
+invalid_gpa = ~df["gpa"].between(0, 4) & df["gpa"].notna()
+
+# Mark impossible GPA values as missing
+df.loc[invalid_gpa, "gpa"] = pd.NA
+
+# ---------------------------------------------------------
+# STEP 6: CLEAN MAJOR
+# ---------------------------------------------------------
+
+df["major"] = df["major"].str.strip().str.lower()
+
+major_map = {
+    "cs": "Computer Science",
+    "computer science": "Computer Science",
+    "comp sci": "Computer Science",
+    "ds": "Data Science",
+    "data science": "Data Science"
+}
+
+df["major"] = df["major"].replace(major_map)
+
+# ---------------------------------------------------------
+# STEP 7: CLEAN PHONE NUMBERS
+# ---------------------------------------------------------
+
+df["phone"] = (
+    df["phone"]
+      .astype("string")
+      .str.replace(r"\D", "", regex=True)
+)
+
+# Keep only 10-digit numbers for this US-only example
+invalid_phone = df["phone"].notna() & (df["phone"].str.len() != 10)
+df.loc[invalid_phone, "phone"] = pd.NA
+
+# ---------------------------------------------------------
+# STEP 8: REMOVE DUPLICATES
+# ---------------------------------------------------------
+
+df = df.drop_duplicates()
+
+# ---------------------------------------------------------
+# STEP 9: VALIDATE
+# ---------------------------------------------------------
+
+print("Missing values:")
+print(df.isna().sum())
+
+print("Duplicate rows:", df.duplicated().sum())
+print("GPA minimum:", df["gpa"].min())
+print("GPA maximum:", df["gpa"].max())
+
+# ---------------------------------------------------------
+# STEP 10: SAVE CLEAN DATA
+# ---------------------------------------------------------
+
+df.to_csv("students_clean.csv", index=False)
+
+print("Data cleaning completed.")</pre>
+
+<h2>27. Before and After</h2>
+<table><tr><th>Problem</th><th>Before</th><th>Possible cleaned representation</th></tr>
+<tr><td>Spaces</td><td>" John Smith "</td><td>"John Smith"</td></tr>
+<tr><td>Case</td><td>"computer science"</td><td>"Computer Science"</td></tr>
+<tr><td>Category synonym</td><td>"CS"</td><td>"Computer Science"</td></tr>
+<tr><td>Phone format</td><td>"(503) 555-1234"</td><td>"5035551234" or a chosen display format</td></tr>
+<tr><td>Invalid numeric text</td><td>"three point five"</td><td>Missing/flagged unless a justified conversion rule exists</td></tr>
+<tr><td>Impossible GPA</td><td>7.2</td><td>Flagged/missing pending correction</td></tr>
+<tr><td>Duplicate</td><td>Same verified record twice</td><td>One retained record</td></tr>
+<tr><td>Missing value</td><td>"N/A"</td><td>NaN / pd.NA</td></tr></table>
+
+<h2>28. Common Mistakes in Data Cleaning</h2>
+<table><tr><th>Mistake</th><th>Why it is risky</th></tr>
+<tr><td>Deleting every row with any missing value</td><td>May discard large amounts of useful information.</td></tr>
+<tr><td>Replacing every missing number with 0</td><td>Zero and unknown have different meanings.</td></tr>
+<tr><td>Automatically deleting all outliers</td><td>Extreme observations may be legitimate.</td></tr>
+<tr><td>Guessing corrections</td><td>Changes the underlying information without evidence.</td></tr>
+<tr><td>Using names alone to detect duplicates</td><td>Different people can share a name.</td></tr>
+<tr><td>Converting IDs to integers</td><td>Can destroy leading zeros and identifier formatting.</td></tr>
+<tr><td>Overwriting the raw dataset</td><td>Removes your ability to reproduce or audit cleaning.</td></tr>
+<tr><td>Cleaning without validating afterward</td><td>Your cleaning code itself can introduce errors.</td></tr></table>
+
+<h2>29. A Professional Cleaning Checklist</h2>
+<div class="box good"><strong>Before cleaning:</strong> Understand the dataset, define what each column means, identify required fields, expected types, acceptable ranges, allowed categories, unique keys, and business rules.</div>
+<table><tr><th>Check</th><th>Examples</th></tr>
+<tr><td>Structure</td><td>Correct rows, columns, headers, delimiters</td></tr>
+<tr><td>Column names</td><td>No accidental spaces or inconsistent naming</td></tr>
+<tr><td>Data types</td><td>GPA numeric, dates datetime, IDs strings where appropriate</td></tr>
+<tr><td>Missing values</td><td>Detected and handled intentionally</td></tr>
+<tr><td>Duplicates</td><td>Exact and logical duplicates investigated</td></tr>
+<tr><td>Text</td><td>Whitespace and case standardized where appropriate</td></tr>
+<tr><td>Categories</td><td>Equivalent labels mapped consistently</td></tr>
+<tr><td>Ranges</td><td>GPA 0–4, realistic domain-specific ranges</td></tr>
+<tr><td>Formats</td><td>Dates, phones, currency, IDs standardized</td></tr>
+<tr><td>Cross-field rules</td><td>Related columns logically consistent</td></tr>
+<tr><td>Outliers</td><td>Investigated rather than blindly removed</td></tr>
+<tr><td>Validation</td><td>Checks rerun after transformations</td></tr>
+<tr><td>Reproducibility</td><td>Raw file retained; cleaning code saved</td></tr></table>
+
+<h2>30. Key Pandas Functions to Remember</h2>
+<table><tr><th>Function</th><th>Purpose</th></tr>
+<tr><td><code>pd.read_csv()</code></td><td>Read CSV data</td></tr>
+<tr><td><code>head()</code></td><td>Inspect first rows</td></tr>
+<tr><td><code>info()</code></td><td>Inspect columns, types, non-null counts</td></tr>
+<tr><td><code>isna()</code></td><td>Detect missing values</td></tr>
+<tr><td><code>fillna()</code></td><td>Fill missing values</td></tr>
+<tr><td><code>dropna()</code></td><td>Remove selected missing records</td></tr>
+<tr><td><code>duplicated()</code></td><td>Detect duplicates</td></tr>
+<tr><td><code>drop_duplicates()</code></td><td>Remove duplicates</td></tr>
+<tr><td><code>str.strip()</code></td><td>Remove surrounding whitespace</td></tr>
+<tr><td><code>str.lower()</code> / <code>str.title()</code></td><td>Normalize text case</td></tr>
+<tr><td><code>replace()</code></td><td>Replace or standardize values</td></tr>
+<tr><td><code>pd.to_numeric()</code></td><td>Convert data to numbers</td></tr>
+<tr><td><code>pd.to_datetime()</code></td><td>Convert data to dates/times</td></tr>
+<tr><td><code>between()</code></td><td>Check numeric ranges</td></tr>
+<tr><td><code>isin()</code></td><td>Check allowed categories</td></tr>
+<tr><td><code>value_counts()</code></td><td>Inspect category frequencies</td></tr>
+<tr><td><code>to_csv()</code></td><td>Save cleaned data</td></tr></table>
+
+<h2>31. Final Concept</h2>
+<div class="flow">Good Data Cleaning = Understanding + Detection + Appropriate Decisions + Transformation + Validation + Documentation</div>
+<p>The most important skill is not memorizing pandas functions. It is learning to ask: <strong>What does this value mean? What values are valid? Is this truly an error? What evidence supports the correction? How can I verify that my cleaning worked?</strong></p>
+</div></div></body></html>
