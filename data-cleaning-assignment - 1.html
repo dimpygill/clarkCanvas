@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Cleaning In-Class Assignment | Python &amp; Pandas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #1A2E44;
+      --teal:   #1E7A5F;
+      --blue:   #2C5F8A;
+      --amber:  #D97706;
+      --red:    #DC2626;
+      --code-bg:#172033;
+      --bg:     #F8F9FB;
+      --surface:#FFFFFF;
+      --border: #E2E8F0;
+      --text:   #1E293B;
+      --muted:  #64748B;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 60%, #1E5F6A 100%);
+      color: #fff;
+      padding: 56px 32px 48px;
+      text-align: center;
+    }
+    .hero .tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+    .hero p {
+      font-size: 1.05rem;
+      opacity: 0.85;
+      max-width: 620px;
+      margin: 0 auto 28px;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      font-size: 0.88rem;
+      opacity: 0.8;
+    }
+    .meta-row span { display: flex; align-items: center; gap: 6px; }
+    .meta-row svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── LAYOUT ── */
+    .page { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    /* ── SECTION TITLES ── */
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 48px 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px; height: 30px;
+      background: var(--teal);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px 28px;
+      margin-bottom: 20px;
+    }
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 10px;
+    }
+
+    /* ── OBJECTIVE LIST ── */
+    .obj-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .obj-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.95rem;
+    }
+    .obj-list li::before {
+      content: "✓";
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px; height: 22px;
+      background: #DCFCE7;
+      color: var(--teal);
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── COLUMN TABLE ── */
+    .col-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 12px; }
+    .col-table th {
+      background: var(--navy);
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .col-table th:first-child { border-radius: 8px 0 0 0; }
+    .col-table th:last-child  { border-radius: 0 8px 0 0; }
+    .col-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .col-table tr:last-child td { border-bottom: none; }
+    .col-table tr:nth-child(even) td { background: #F8FAFC; }
+    .col-table code {
+      font-family: var(--mono);
+      background: #EEF2FF;
+      color: var(--blue);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-red   { background: #FEE2E2; color: var(--red); }
+    .badge-amber { background: #FEF3C7; color: #92400E; }
+    .badge-teal  { background: #D1FAE5; color: #065F46; }
+
+    /* ── TASK STEPS ── */
+    .task {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    .task-header {
+      background: var(--navy);
+      color: #fff;
+      padding: 13px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .task-header .step-num {
+      background: rgba(255,255,255,0.15);
+      border-radius: 6px;
+      padding: 2px 9px;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .task-header h3 { font-size: 1rem; font-weight: 600; }
+    .task-body { padding: 18px 20px; }
+    .task-body p { font-size: 0.93rem; margin-bottom: 12px; color: #374151; }
+    .task-body p:last-child { margin-bottom: 0; }
+    .task-body ul { padding-left: 20px; font-size: 0.93rem; color: #374151; }
+    .task-body ul li { margin-bottom: 6px; }
+
+    /* ── CODE BLOCKS ── */
+    .code-block {
+      background: var(--code-bg);
+      border-radius: 8px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .code-block pre {
+      font-family: var(--mono);
+      font-size: 0.83rem;
+      line-height: 1.6;
+      color: #E2E8F0;
+      white-space: pre;
+    }
+    .code-block pre .cm  { color: #64748B; } /* comment */
+    .code-block pre .kw  { color: #7DD3FC; } /* keyword */
+    .code-block pre .fn  { color: #A5F3FC; } /* function */
+    .code-block pre .st  { color: #86EFAC; } /* string */
+    .code-block pre .nb  { color: #FDE68A; } /* number/bool */
+
+    /* ── HINT BOX ── */
+    .hint {
+      background: #EFF6FF;
+      border-left: 4px solid var(--blue);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #1E3A5F;
+      margin: 10px 0;
+    }
+    .hint strong { color: var(--blue); }
+
+    .warn {
+      background: #FFFBEB;
+      border-left: 4px solid var(--amber);
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #78350F;
+      margin: 10px 0;
+    }
+    .warn strong { color: var(--amber); }
+
+    /* ── SUMMARY TEMPLATE ── */
+    .summary-box {
+      background: var(--code-bg);
+      border-radius: 10px;
+      padding: 20px 22px;
+      margin-top: 10px;
+    }
+    .summary-box pre {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      line-height: 1.8;
+      color: #E2E8F0;
+      white-space: pre;
+    }
+    .summary-box pre .label { color: #7DD3FC; }
+    .summary-box pre .val   { color: #86EFAC; }
+    .summary-box pre .head  { color: #FDE68A; font-weight: bold; }
+    .summary-box pre .sep   { color: #475569; }
+
+    /* ── CHECKLIST ── */
+    .checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.93rem;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+    }
+    .checklist li::before {
+      content: "☐";
+      font-size: 1.1rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      font-size: 0.83rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .hero { padding: 36px 20px 32px; }
+      .page { padding: 28px 16px 60px; }
+      .col-table { font-size: 0.82rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ────────────────────── HERO ────────────────────── -->
+<div class="hero">
+  <div class="tag">In-Class Assignment</div>
+  <h1>Student Data Cleaning<br>with Python &amp; Pandas</h1>
+  <p>Load a real-world messy dataset, clean it column by column, and produce a detailed quality report.</p>
+  <div class="meta-row">
+    <span>
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/></svg>
+      Fall 2026
+    </span>
+    <span>
+      <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+      ~75–90 minutes
+    </span>
+    <span>
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.396 0 2.694.447 3.754 1.204A7.97 7.97 0 0112.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0012.5 4 7.97 7.97 0 009 4.804z"/></svg>
+      Reference: Data Cleaning Tutorial (shared separately)
+    </span>
+    <span>
+      <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z" clip-rule="evenodd"/></svg>
+      Individual work
+    </span>
+  </div>
+</div>
+
+<!-- ────────────────────── PAGE BODY ────────────────────── -->
+<div class="page">
+
+  <!-- ① OVERVIEW -->
+  <div class="section-title"><span class="num">1</span> Overview</div>
+  <div class="card">
+    <p>You have been given a CSV file called <strong><code>students_dirty.csv</code></strong> — a student enrollment dataset that was exported from a poorly maintained system. The data contains a mix of clean and dirty records across six columns.</p>
+    <br>
+    <p>Your job is to <strong>load the file with Pandas, clean every column systematically, and print a structured summary</strong> that documents what you found and fixed. The tutorial shared in class covers all the techniques you need — treat this as your opportunity to apply them on real data.</p>
+    <br>
+    <p>You will work in a single <strong>Jupyter Notebook</strong> (or <code>.py</code> file). Organize your code with one cell (or section) per task. Comments are expected.</p>
+  </div>
+
+  <!-- ② LEARNING OBJECTIVES -->
+  <div class="section-title"><span class="num">2</span> Learning Objectives</div>
+  <div class="card">
+    <ul class="obj-list">
+      <li>Load a CSV safely while preserving data types (e.g., string IDs with leading zeros)</li>
+      <li>Detect and remove exact duplicate rows</li>
+      <li>Identify and handle missing / null values using multiple strategies</li>
+      <li>Standardize string columns — strip whitespace, fix capitalization, reconcile synonyms</li>
+      <li>Validate and clean numeric columns (GPA range, type coercion)</li>
+      <li>Normalize phone numbers and date strings to a single consistent format</li>
+      <li>Produce a written data-quality summary report in code</li>
+    </ul>
+  </div>
+
+  <!-- ③ DATASET DESCRIPTION -->
+  <div class="section-title"><span class="num">3</span> Dataset: <code>students_dirty.csv</code></div>
+  <div class="card">
+    <p>The file has <strong>~91 rows</strong> (including the header) and <strong>6 columns</strong>. Some rows are fully clean; most have at least one problem. Your cleaning code must handle all of the issues described below.</p>
+    <br>
+    <table class="col-table">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Expected type / format</th>
+          <th>Known problems</th>
+          <th>Severity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>student_id</code></td>
+          <td>5-digit string with leading zeros<br><em>(e.g., <code>00042</code>)</em></td>
+          <td>None intentionally introduced — but Pandas will read it as an integer unless you tell it otherwise. Must stay as <code>object</code> / string.</td>
+          <td><span class="badge badge-amber">Load carefully</span></td>
+        </tr>
+        <tr>
+          <td><code>name</code></td>
+          <td>Title Case, single space between first and last name</td>
+          <td>Leading/trailing whitespace, internal double spaces, ALL CAPS names, mixed-case names</td>
+          <td><span class="badge badge-red">Fix required</span></td>
+        </tr>
+        <tr>
+          <td><code>major</code></td>
+          <td>One of: <em>Computer Science, Data Science, Information Technology, Business, Mathematics, Psychology</em></td>
+          <td>Leading/trailing spaces; synonym variants (CS, Comp Sci, COMPUTER SCIENCE, DS, data science, Data sci, IT, info tech, Biz, Math, MATHEMATICS, Psych, psychology); all-lowercase or all-uppercase</td>
+          <td><span class="badge badge-red">Fix required</span></td>
+        </tr>
+        <tr>
+          <td><code>gpa</code></td>
+          <td>Float in range <strong>0.0 – 4.0</strong></td>
+          <td>Empty strings, non-standard null markers (<code>N/A</code>, <code>unknown</code>, <code>-</code>), text values (<em>"three point five"</em>, <em>"2.5 GPA"</em>), out-of-range values (e.g., 4.2, 7.8)</td>
+          <td><span class="badge badge-red">Fix required</span></td>
+        </tr>
+        <tr>
+          <td><code>phone</code></td>
+          <td><code>(XXX) XXX-XXXX</code></td>
+          <td>Six different format variants (plain digits, dashes, dots, spaces, +1 prefix); placeholder/invalid phones (<code>555-1234</code>, <code>N/A</code>, <code>unknown</code>, <code>000-000-0000</code>, 7-digit numbers)</td>
+          <td><span class="badge badge-red">Fix required</span></td>
+        </tr>
+        <tr>
+          <td><code>date_of_birth</code></td>
+          <td><code>YYYY-MM-DD</code></td>
+          <td>Four date formats (MM/DD/YYYY, YYYY-MM-DD, MM-DD-YYYY, DD/MM/YYYY — last one is ambiguous!); text markers (<code>not available</code>, <code>N/A</code>, <code>unknown</code>); some impossible dates (day > 12 gives you a parsing hint)</td>
+          <td><span class="badge badge-red">Fix required</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+    <p>Additionally, the dataset contains <strong>exact duplicate rows</strong> and <strong>entirely blank rows</strong> (all cells empty or whitespace-only) that must be removed.</p>
+  </div>
+
+  <!-- ④ TASKS -->
+  <div class="section-title"><span class="num">4</span> Tasks</div>
+
+  <!-- Task 1 -->
+  <div class="task">
+    <div class="task-header">
+      <span class="step-num">Task 1</span>
+      <h3>Load the CSV</h3>
+    </div>
+    <div class="task-body">
+      <p>Import Pandas and load <code>students_dirty.csv</code>. You <strong>must</strong> force <code>student_id</code> to be read as a string so leading zeros are preserved.</p>
+      <div class="code-block"><pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+df = pd.<span class="fn">read_csv</span>(<span class="st">"students_dirty.csv"</span>, dtype={<span class="st">"student_id"</span>: <span class="st">"str"</span>})
+<span class="cm"># Record the starting shape</span>
+rows_original = len(df)
+print(<span class="st">f"Loaded: {df.shape[0]} rows × {df.shape[1]} columns"</span>)</pre></div>
+      <p>After loading, print <code>df.head(10)</code> and <code>df.info()</code> to get a first look at the data.</p>
+    </div>
+  </div>
+
+  <!-- Task 2 -->
+  <div class="task">
+    <div class="task-header">
+      <span class="step-num">Task 2</span>
+      <h3>Remove Blank Rows &amp; Exact Duplicates</h3>
+    </div>
+    <div class="task-body">
+      <p><strong>Step A — Drop entirely blank rows.</strong> Some rows contain only empty strings or whitespace. Replace all whitespace-only cells with <code>NaN</code>, then drop rows where every column is null.</p>
+      <div class="code-block"><pre>df = df.<span class="fn">replace</span>(r<span class="st">"^\s*$"</span>, pd.NA, regex=<span class="nb">True</span>)
+blank_rows_removed = df.<span class="fn">isnull</span>().<span class="fn">all</span>(axis=<span class="nb">1</span>).<span class="fn">sum</span>()
+df = df.<span class="fn">dropna</span>(how=<span class="st">"all"</span>).<span class="fn">reset_index</span>(drop=<span class="nb">True</span>)</pre></div>
+      <p><strong>Step B — Remove exact duplicate rows.</strong> Count them before dropping.</p>
+      <div class="code-block"><pre>duplicates_removed = df.<span class="fn">duplicated</span>().<span class="fn">sum</span>()
+df = df.<span class="fn">drop_duplicates</span>().<span class="fn">reset_index</span>(drop=<span class="nb">True</span>)</pre></div>
+      <div class="hint"><strong>Hint:</strong> Do this <em>before</em> you clean any columns — duplicates are easier to spot when values are still identical.</div>
+    </div>
+  </div>
+
+  <!-- Task 3 -->
+  <div class="task">
+    <div class="task-header">
+      <span class="step-num">Task 3</span>
+      <h3>Clean the <code>name</code> Column</h3>
+    </div>
+    <div class="task-body">
+      <p>Fix all name formatting issues in one pipeline:</p>
+      <ul>
+        <li>Strip leading/trailing whitespace</li>
+        <li>Collapse any internal runs of spaces to a single space</li>
+        <li>Apply Title Case</li>
+      </ul>
+      <div class="code-block"><pre>df[<span class="st">"name"</span>] = (
+    df[<span class="st">"name"</span>]
+    .<span class="fn">str</span>.<span class="fn">strip</span>()
+    .<span class="fn">str</span>.<span class="fn">replace</span>(r<span class="st">"\s+"</span>, <span class="st">" "</span>, regex=<span class="nb">True</span>)
+    .<span class="fn">str</span>.<span class="fn">title</span>()
+)</pre></div>
+      <p>Track how many names were changed by comparing to the values before cleaning.</p>
+    </div>
+  </div>
+
+  <!-- Task 4 -->
+  <div class="task">
+    <div class="task-header">
+      <span class="step-num">Task 4</span>
+      <h3>Standardize the <code>major</code> Column</h3>
+    </div>
+    <div class="task-body">
+      <p>First strip whitespace, then map every synonym to the official name.</p>
+      <div class="code-block"><pre>df[<span class="st">"major"</span>] = df[<span class="st">"major"</span>].<span class="fn">str</span>.<span class="fn">strip</span>()
+
+MAJOR_MAP = {
+    <span class="cm"># Computer Science variants</span>
+    <span class="st">"CS"</span>:               <span class="st">"Computer Science"</span>,
+    <span class="st">"Comp Sci"</span>:         <span class="st">"Computer Science"</span>,
+    <span class="st">"computer science"</span>: <span class="st">"Computer Science"</span>,
+    <span class="st">"COMPUTER SCIENCE"</span>: <span class="st">"Computer Science"</span>,
+    <span class="st">"Computer science"</span>: <span class="st">"Computer Science"</span>,
+    <span class="cm"># Data Science variants</span>
+    <span class="st">"DS"</span>:               <span class="st">"Data Science"</span>,
+    <span class="st">"data science"</span>:    <span class="st">"Data Science"</span>,
+    <span class="st">"DATA SCIENCE"</span>:    <span class="st">"Data Science"</span>,
+    <span class="st">"Data sci"</span>:        <span class="st">"Data Science"</span>,
+    <span class="cm"># Information Technology variants</span>
+    <span class="st">"IT"</span>:               <span class="st">"Information Technology"</span>,
+    <span class="st">"info tech"</span>:       <span class="st">"Information Technology"</span>,
+    <span class="st">"information technology"</span>: <span class="st">"Information Technology"</span>,
+    <span class="cm"># Others</span>
+    <span class="st">"business"</span>:        <span class="st">"Business"</span>,
+    <span class="st">"BUSINESS"</span>:        <span class="st">"Business"</span>,
+    <span class="st">"Biz"</span>:             <span class="st">"Business"</span>,
+    <span class="st">"Math"</span>:            <span class="st">"Mathematics"</span>,
+    <span class="st">"math"</span>:            <span class="st">"Mathematics"</span>,
+    <span class="st">"MATHEMATICS"</span>:     <span class="st">"Mathematics"</span>,
+    <span class="st">"psychology"</span>:      <span class="st">"Psychology"</span>,
+    <span class="st">"Psych"</span>:           <span class="st">"Psychology"</span>,
+}
+df[<span class="st">"major"</span>] = df[<span class="st">"major"</span>].<span class="fn">replace</span>(MAJOR_MAP)</pre></div>
+      <p>After mapping, print <code>df["major"].value_counts()</code> to verify only the 6 official major names remain.</p>
+    </div>
+  </div>
+
+  <!-- Task 5 -->
+  <div class="task">
+    <div class="task-header">
+      <span class="step-num">Task 5</span>
+      <h3>Clean and Validate the <code>gpa</code> Column</h3>
+    </div>
+    <div class="task-body">
+      <p>GPA cleaning has several sub-steps. Work through them in order:</p>
+      <ul>
+        <li><strong>Step A:</strong> Replace non-standard null markers (<code>N/A</code>, <code>unknown</code>, <code>-</code>) with <code>NaN</code></li>
+        <li><strong>Step B:</strong> Replace text values that can't be parsed (<code>"three point five"</code>, <code>"four point oh"</code>, <code>"2.5 GPA"</code>) with <code>NaN</code></li>
+        <li><strong>Step C:</strong> Use <code>pd.to_numeric(..., errors="coerce")</code> to convert the column — anything still non-numeric becomes <code>NaN</code></li>
+        <li><strong>Step D:</strong> Flag rows where GPA is outside <strong>0.0 – 4.0</strong> and set them to <code>NaN</code></li>
+      </ul>
+      <div class="code-block"><pre><span class="cm"># A + B: replace known bad values</span>
+BAD_GPA = [<span class="st">"N/A"</span>, <span class="st">"unknown"</span>, <span class="st">"-"</span>,
+           <span class="st">"three point five"</span>, <span class="st">"four point oh"</span>, <span class="st">"2.5 GPA"</span>]
+df[<span class="st">"gpa"</span>] = df[<span class="st">"gpa"</span>].<span class="fn">replace</span>(BAD_GPA, pd.NA)
+
+<span class="cm"># C: coerce to numeric</span>
+df[<span class="st">"gpa"</span>] = pd.<span class="fn">to_numeric</span>(df[<span class="st">"gpa"</span>], errors=<span class="st">"coerce"</span>)
+
+<span class="cm"># D: out-of-range → NaN</span>
+invalid_gpa = (~df[<span class="st">"gpa"</span>].<span class="fn">between</span>(<span class="nb">0.0</span>, <span class="nb">4.0</span>)) &amp; df[<span class="st">"gpa"</span>].<span class="fn">notna</span>()
+invalid_gpa_count = invalid_gpa.<span class="fn">sum</span>()
+df.<span class="fn">loc</span>[invalid_gpa, <span class="st">"gpa"</span>] = pd.NA</pre></div>
+      <div class="warn"><strong>Note:</strong> Do <em>not</em> fill missing GPAs with a value like 0 or the column mean — leave them as <code>NaN</code> and report the count in your summary. Silently filling missing academic records is bad practice.</div>
+    </div>
+  </div>
+
+  <!-- Task 6 -->
+  <div class="task">
+    <div class="task-header">
+      <span class="step-num">Task 6</span>
+      <h3>Normalize the <code>phone</code> Column</h3>
+    </div>
+    <div class="task-body">
+      <p>Target format: <code>(XXX) XXX-XXXX</code> (10-digit US phone numbers only).</p>
+      <ul>
+        <li>Strip all non-digit characters, then check digit count</li>
+        <li>If the result is 11 digits starting with <code>1</code>, remove the country code</li>
+        <li>If the result is exactly 10 digits, reformat to <code>(XXX) XXX-XXXX</code></li>
+        <li>Otherwise, the value is invalid — set to <code>NaN</code></li>
+      </ul>
+      <div class="code-block"><pre><span class="kw">import</span> re
+
+<span class="kw">def</span> <span class="fn">clean_phone</span>(val):
+    <span class="kw">if</span> pd.<span class="fn">isna</span>(val):
+        <span class="kw">return</span> pd.NA
+    digits = re.<span class="fn">sub</span>(<span class="st">r"\D"</span>, <span class="st">""</span>, str(val))
+    <span class="kw">if</span> len(digits) == <span class="nb">11</span> <span class="kw">and</span> digits[<span class="nb">0</span>] == <span class="st">"1"</span>:
+        digits = digits[<span class="nb">1</span>:]
+    <span class="kw">if</span> len(digits) == <span class="nb">10</span>:
+        <span class="kw">return</span> <span class="st">f"({digits[:3]}) {digits[3:6]}-{digits[6:]}"</span>
+    <span class="kw">return</span> pd.NA   <span class="cm"># invalid</span>
+
+df[<span class="st">"phone"</span>] = df[<span class="st">"phone"</span>].<span class="fn">apply</span>(clean_phone)</pre></div>
+      <p>Count how many rows ended up with <code>NaN</code> after cleaning — those are invalid phones.</p>
+    </div>
+  </div>
+
+  <!-- Task 7 -->
+  <div class="task">
+    <div class="task-header">
+      <span class="step-num">Task 7</span>
+      <h3>Parse and Standardize <code>date_of_birth</code></h3>
+    </div>
+    <div class="task-body">
+      <p>Target format: <code>YYYY-MM-DD</code>. The file has four formats, and one (<code>DD/MM/YYYY</code>) is ambiguous with <code>MM/DD/YYYY</code>.</p>
+      <p>Your strategy: replace text markers with <code>NaN</code>, then use <code>pd.to_datetime</code> with <code>dayfirst=False</code> and <code>errors="coerce"</code>. Dates where the day part &gt; 12 are unambiguous; ambiguous ones will be parsed as MM/DD.</p>
+      <div class="code-block"><pre>BAD_DATES = [<span class="st">"not available"</span>, <span class="st">"N/A"</span>, <span class="st">"unknown"</span>]
+df[<span class="st">"date_of_birth"</span>] = df[<span class="st">"date_of_birth"</span>].<span class="fn">replace</span>(BAD_DATES, pd.NA)
+
+df[<span class="st">"date_of_birth"</span>] = pd.<span class="fn">to_datetime</span>(
+    df[<span class="st">"date_of_birth"</span>],
+    dayfirst=<span class="nb">False</span>,
+    errors=<span class="st">"coerce"</span>
+).<span class="fn">dt</span>.<span class="fn">strftime</span>(<span class="st">"%Y-%m-%d"</span>)</pre></div>
+      <div class="hint"><strong>Hint:</strong> Rows with dates like <code>24/07/1998</code> (day=24) will parse correctly. Rows like <code>03/09/2006</code> are ambiguous — Pandas treats them as MM/DD. Document this limitation in your summary.</div>
+    </div>
+  </div>
+
+  <!-- Task 8 -->
+  <div class="task">
+    <div class="task-header">
+      <span class="step-num">Task 8</span>
+      <h3>Print the Data Quality Summary Report</h3>
+    </div>
+    <div class="task-body">
+      <p>At the end of your notebook, print a formatted summary. Your output must include every section shown below. Replace the <code>___</code> placeholders with your actual computed values.</p>
+      <div class="summary-box"><pre><span class="head">═══════════════════════════════════════════════════
+  DATA CLEANING SUMMARY — students_dirty.csv
+═══════════════════════════════════════════════════</span>
+
+<span class="label">SHAPE</span>
+<span class="sep">  Before cleaning :  </span><span class="val">___ rows</span>
+<span class="sep">  After cleaning  :  </span><span class="val">___ rows</span>
+
+<span class="label">DUPLICATES &amp; BLANKS</span>
+<span class="sep">  Blank rows removed      :  </span><span class="val">___</span>
+<span class="sep">  Exact duplicate rows    :  </span><span class="val">___</span>
+
+<span class="label">NULL VALUES (after cleaning)</span>
+<span class="sep">  student_id      :  </span><span class="val">___</span>
+<span class="sep">  name            :  </span><span class="val">___</span>
+<span class="sep">  major           :  </span><span class="val">___</span>
+<span class="sep">  gpa             :  </span><span class="val">___  (includes missing + invalid)</span>
+<span class="sep">  phone           :  </span><span class="val">___  (includes bad format phones)</span>
+<span class="sep">  date_of_birth   :  </span><span class="val">___  (includes text markers)</span>
+
+<span class="label">FORMATTING FIXES</span>
+<span class="sep">  name  — whitespace/case fixed  :  </span><span class="val">___</span>
+<span class="sep">  major — whitespace stripped    :  </span><span class="val">___</span>
+<span class="sep">  major — synonyms mapped        :  </span><span class="val">___</span>
+<span class="sep">  gpa   — out-of-range set null  :  </span><span class="val">___</span>
+<span class="sep">  phone — reformatted (valid)    :  </span><span class="val">___</span>
+<span class="sep">  phone — invalid set null       :  </span><span class="val">___</span>
+<span class="sep">  dob   — text markers removed   :  </span><span class="val">___</span>
+
+<span class="label">MAJOR DISTRIBUTION (final)</span>
+<span class="val">  [paste value_counts() output here]</span>
+
+<span class="label">NOTES</span>
+<span class="val">  [Write 2–3 sentences about any limitations or</span>
+<span class="val">   assumptions you made during cleaning, e.g.,</span>
+<span class="val">   how you handled ambiguous DD/MM vs MM/DD dates.]</span>
+
+<span class="head">═══════════════════════════════════════════════════</span></pre></div>
+      <div class="hint"><strong>Tip:</strong> Build each count as a variable during the cleaning steps (e.g., <code>duplicates_removed = df.duplicated().sum()</code>) so the final print statement just references those variables.</div>
+    </div>
+  </div>
+
+  <!-- ⑤ SUBMISSION CHECKLIST -->
+  <div class="section-title"><span class="num">5</span> Submission Checklist</div>
+  <div class="card">
+    <p style="margin-bottom:14px;">Before you're done, verify every item below:</p>
+    <ul class="checklist">
+      <li><code>student_id</code> is stored as a string — leading zeros are intact (e.g., <code>00042</code>)</li>
+      <li>All names are in Title Case with no extra spaces</li>
+      <li><code>major</code> contains only the 6 official names — confirm with <code>value_counts()</code></li>
+      <li>GPA column is numeric type; all values are either in [0.0, 4.0] or <code>NaN</code></li>
+      <li>All valid phone numbers are in <code>(XXX) XXX-XXXX</code> format; invalid ones are <code>NaN</code></li>
+      <li>All parseable dates are in <code>YYYY-MM-DD</code> format; text markers are <code>NaN</code></li>
+      <li>Blank rows and duplicate rows have been removed</li>
+      <li>The summary report is printed and includes every section listed in Task 8</li>
+      <li>Your notebook/script runs top-to-bottom without errors</li>
+      <li>You included a 2–3 sentence "Notes" section explaining any assumptions you made</li>
+    </ul>
+  </div>
+
+  <!-- ⑥ GRADING -->
+  <div class="section-title"><span class="num">6</span> Grading Breakdown</div>
+  <div class="card">
+    <table class="col-table">
+      <thead>
+        <tr><th>Component</th><th>Points</th><th>What we look for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Loading correctly</td>
+          <td>10</td>
+          <td><code>dtype</code> specified for <code>student_id</code>; shape printed</td>
+        </tr>
+        <tr>
+          <td>Duplicates &amp; blanks removed</td>
+          <td>15</td>
+          <td>Both types removed in the correct order; counts tracked</td>
+        </tr>
+        <tr>
+          <td><code>name</code> cleaning</td>
+          <td>15</td>
+          <td>Strip, collapse spaces, title-case; count of fixes tracked</td>
+        </tr>
+        <tr>
+          <td><code>major</code> standardization</td>
+          <td>20</td>
+          <td>All synonyms mapped; value_counts shows only 6 values</td>
+        </tr>
+        <tr>
+          <td><code>gpa</code> validation</td>
+          <td>20</td>
+          <td>Bad markers handled; numeric coercion; out-of-range nulled</td>
+        </tr>
+        <tr>
+          <td><code>phone</code> normalization</td>
+          <td>20</td>
+          <td>Correct target format; invalid phones are <code>NaN</code></td>
+        </tr>
+        <tr>
+          <td><code>date_of_birth</code> parsing</td>
+          <td>15</td>
+          <td>Text markers handled; consistent YYYY-MM-DD output</td>
+        </tr>
+        <tr>
+          <td>Summary report + Notes</td>
+          <td>20</td>
+          <td>All sections present; counts are accurate; notes explain assumptions</td>
+        </tr>
+        <tr>
+          <td><strong>Total</strong></td>
+          <td><strong>135</strong></td>
+          <td><em>(graded out of 100 as extra credit above 100)</em></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ⑦ REFERENCE -->
+  <div class="section-title"><span class="num">7</span> Quick Reference</div>
+  <div class="card">
+    <h3 style="margin-bottom:12px;">Pandas methods you'll use most</h3>
+    <table class="col-table">
+      <thead>
+        <tr><th>Task</th><th>Pandas call</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Load with forced dtypes</td><td><code>pd.read_csv("file.csv", dtype={"col": "str"})</code></td></tr>
+        <tr><td>Replace whitespace-only with NaN</td><td><code>df.replace(r"^\s*$", pd.NA, regex=True)</code></td></tr>
+        <tr><td>Drop all-null rows</td><td><code>df.dropna(how="all")</code></td></tr>
+        <tr><td>Count duplicates</td><td><code>df.duplicated().sum()</code></td></tr>
+        <tr><td>Strip whitespace</td><td><code>df["col"].str.strip()</code></td></tr>
+        <tr><td>Collapse internal spaces</td><td><code>df["col"].str.replace(r"\s+", " ", regex=True)</code></td></tr>
+        <tr><td>Map synonym dict</td><td><code>df["col"].replace(DICT)</code></td></tr>
+        <tr><td>Coerce to numeric</td><td><code>pd.to_numeric(df["col"], errors="coerce")</code></td></tr>
+        <tr><td>Range filter</td><td><code>df["col"].between(0, 4)</code></td></tr>
+        <tr><td>Count nulls per column</td><td><code>df.isnull().sum()</code></td></tr>
+        <tr><td>Parse dates</td><td><code>pd.to_datetime(df["col"], dayfirst=False, errors="coerce")</code></td></tr>
+        <tr><td>Format dates as string</td><td><code>.dt.strftime("%Y-%m-%d")</code></td></tr>
+        <tr><td>Strip non-digits (regex)</td><td><code>re.sub(r"\D", "", string)</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /page -->
+
+<footer>
+  Clark College — CIS / Data Science &nbsp;|&nbsp; Fall 2026 &nbsp;|&nbsp;
+  
+</footer>
+
+</body>
+</html>
