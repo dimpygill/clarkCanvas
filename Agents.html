@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width" name="viewport"/><title>Introduction to Agents</title>
+<style>body{font:17px/1.65 Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 22px;color:#243044}h1,h2{color:#18365a}h2{margin-top:36px}pre{background:#f1f5f9;padding:20px;overflow:auto;border-radius:9px;font-size:14px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccd5df;padding:10px;text-align:left}th{background:#e8eef5}.note{border-left:4px solid #4b7a9e;padding:12px;background:#f5f8fb}</style></head><body>
+<h1>Introduction to Agents: Rule-Based vs LLM-Powered</h1><p><strong>Python Tutorial · Student Support Example</strong></p>
+
+<div class="note"><strong>How this tutorial is organized:</strong> Part A explains the concepts. Part B builds a rule-based agent. Part C adds Claude to the same agent. Part D compares both versions. In each part, the <strong>general structure comes first</strong>, followed by the <strong>Student Support example</strong>.</div>
+
+<h2>Part A — Concepts</h2>
+
+<h2>1. What is an agent?</h2><p>An <strong>agent</strong> is a system that receives information about its environment, makes a decision, and takes an action toward a goal. A simple teaching model is <strong>Observe → Decide → Act</strong>. Some agents use fixed rules; others use AI models. Not every program that contains an if-statement is meaningfully autonomous.</p>
+
+<h2>2. Two types of agents</h2>
+<h3>Rule-based agent</h3><p>A rule-based agent uses rules written in advance by a programmer, in the form <em>if CONDITION, then ACTION; otherwise, OTHER ACTION</em>. It does not learn from data or invent its own criteria.</p>
+<h3>LLM-powered agent</h3><p>An LLM-powered agent uses a large language model (such as Claude) to interpret information, generate responses, and sometimes select tools or actions. Rules can still make the core decisions while the LLM handles language tasks; that is an <strong>LLM-assisted workflow</strong>. To make it more agentic, the system could choose among approved tools, check results, and take authorized follow-up actions.</p>
+
+<h2>3. The example used throughout: Student Support Agent</h2><p>We have an Excel file named <code>student_progress.xlsx</code> with these columns: <strong>Student ID, Student Name, Attendance (%), Assignment Score (%)</strong>.</p>
+<p><strong>The rule:</strong> if attendance is below 70% OR assignment score is below 60%, mark the student as <strong>Needs Help</strong>; otherwise, <strong>Doing Well</strong>. We use <strong>OR</strong>, so meeting either low-performance condition triggers support.</p>
+<table><tr><th>Student</th><th>Attendance</th><th>Score</th><th>Decision</th></tr><tr><td>Riya</td><td>65%</td><td>80%</td><td>Needs Help</td></tr><tr><td>Sam</td><td>90%</td><td>55%</td><td>Needs Help</td></tr><tr><td>Alex</td><td>85%</td><td>75%</td><td>Doing Well</td></tr></table>
+
+<h2>Part B — Rule-Based Version</h2>
+
+<h2>4. General structure of a rule-based agent program</h2>
+<ol><li><b>Observe:</b> Read the input data (here, an Excel file).</li>
+<li><b>Loop:</b> Process one record at a time.</li>
+<li><b>Decide:</b> Apply the fixed if/else rule to that record.</li>
+<li><b>Act:</b> Record the decision and recommended action.</li>
+<li><b>Save:</b> Write all results to an output file.</li></ol>
+
+<h2>5. Example: complete beginner Python program</h2><p>No lambda, no apply(), and no machine learning.</p><pre><code>import pandas as pd
+
+students = pd.read_excel("student_progress.xlsx")
+statuses = []
+actions = []
+
+for index, student in students.iterrows():
+    name = student["Student Name"]
+    attendance = student["Attendance (%)"]
+    score = student["Assignment Score (%)"]
+
+    if attendance &lt; 70 or score &lt; 60:
+        status = "Needs Help"
+        action = "Offer a support meeting"
+    else:
+        status = "Doing Well"
+        action = "Send an encouragement message"
+
+    statuses.append(status)
+    actions.append(action)
+    print(name, "-", status, "-", action)
+
+students["Status"] = statuses
+students["Recommended Action"] = actions
+students.to_excel("student_support_results.xlsx", index=False)
+print("Results saved to student_support_results.xlsx")</code></pre>
+
+<h2>6. Understand the code step by step</h2>
+<ol><li><strong>import pandas as pd:</strong> Load the pandas library so Python can read and write Excel data.</li>
+<li><strong>read_excel:</strong> Read the input workbook into a table called <code>students</code>. <em>(Observe)</em></li>
+<li><strong>statuses and actions:</strong> Create empty lists to collect results for each student.</li>
+<li><strong>for ... iterrows():</strong> Process students one at a time, like a foreach loop in C#. <em>(Loop)</em></li>
+<li><strong>name, attendance, score:</strong> Read the current student's values.</li>
+<li><strong>if attendance &lt; 70 or score &lt; 60:</strong> Apply the fixed rule. Otherwise use <code>else</code>. <em>(Decide)</em></li>
+<li><strong>append:</strong> Add each decision and recommended action to the corresponding list. <em>(Act)</em></li>
+<li><strong>print:</strong> Show the current student's result in the terminal.</li>
+<li><strong>students["Status"] = statuses:</strong> Add a result column to the table; do the same for recommended actions.</li>
+<li><strong>to_excel:</strong> Save all student records and results in <code>student_support_results.xlsx</code>. <em>(Save)</em></li></ol>
+
+<h2>7. Run the project</h2><ol><li>Put <code>student_agent_simple.py</code> and <code>student_progress.xlsx</code> in the same folder.</li><li>Open a terminal in that folder and run <code>python -m pip install pandas openpyxl</code>.</li><li>Run <code>python student_agent_simple.py</code>.</li><li>Open <code>student_support_results.xlsx</code> to review decisions.</li></ol>
+
+<h2>8. Why is this rule-based, and is it really an AI agent?</h2><p>The thresholds (70 and 60), labels, and recommended actions are all predefined. Changing the rules requires changing the code. The program does not use an AI model or independently interpret the students' circumstances. Here, “Act” means <strong>recording a recommendation</strong>; it does not actually send messages or book meetings.</p>
+<p>It is traditional, deterministic programming. In an introductory AI course, it can illustrate a <strong>simple rule-based agent architecture</strong> because it reads observations, chooses actions using a policy, and produces action recommendations. It is not an LLM-powered agent, and calling every if/else program an autonomous agent would be misleading.</p>
+
+<h2>Part C — Same Problem with Claude</h2>
+
+<h2>9. General structure of the Claude version</h2><p>The Excel input and rule-based decisions remain unchanged. Claude is added to generate personalized draft messages. This is LLM-assisted automation, not yet a fully autonomous agent.</p><h3>Observe → Decide → Generate → Save</h3><ol><li><b>Observe:</b> pandas reads each student’s name, attendance, and assignment score from Excel.</li><li><b>Decide:</b> Python uses the same rule: attendance below 70% OR assignment score below 60% means Needs Help; otherwise Doing Well.</li><li><b>Generate:</b> Python sends a prompt to Claude containing the fictional student data and the status. Claude drafts a short, supportive message.</li><li><b>Save:</b> The program records the status, suggested action, and Claude message in a new Excel workbook. No emails are sent.</li></ol>
+
+<h2>10. Standard Claude API request structure</h2>
+<p>Before using Claude in any Python application, understand the reusable request pattern below. The student-support example is only one possible application.</p>
+<pre><code>response = client.messages.create(
+    model="MODEL_ID",
+    max_tokens=150,
+    system="Optional instructions about Claude's behavior",
+    messages=[
+        {"role": "user", "content": "Your request goes here"}
+    ]
+)</code></pre>
+<table><tr><th>Part</th><th>Purpose</th></tr>
+<tr><td><code>client.messages.create(...)</code></td><td>Calls Claude's Messages API and returns a response object.</td></tr>
+<tr><td><code>model</code></td><td>Chooses an available Claude model by its model ID.</td></tr>
+<tr><td><code>max_tokens</code></td><td>Sets the maximum number of tokens Claude may generate; it does not specify the input length.</td></tr>
+<tr><td><code>system</code></td><td>Optional high-level behavior instructions, such as being a supportive teacher. It is a separate parameter, not a message role.</td></tr>
+<tr><td><code>messages</code></td><td>A list of conversation messages, in order.</td></tr>
+<tr><td><code>role</code></td><td>Identifies the speaker: <code>user</code> (the application/person requesting something) or <code>assistant</code> (Claude's previous message in conversation history).</td></tr>
+<tr><td><code>content</code></td><td>Holds the actual text or other supported content of that message.</td></tr></table>
+<p>The <code>system</code> line is optional and may be omitted. For a new independent request, one <code>user</code> message is enough. For follow-up conversations, include prior <code>user</code> and <code>assistant</code> messages in order.</p>
+
+<h2>11. Standard Claude API response structure</h2>
+<p>The API does not return only a plain sentence. It returns a structured <strong>Message object</strong>. This is a simplified illustrative shape of a successful text response, not a literal JSON response copied from the service:</p>
+<pre><code>{
+  "id": "msg_example",
+  "type": "message",
+  "role": "assistant",
+  "model": "MODEL_ID",
+  "content": [
+    {"type": "text", "text": "Generated response goes here."}
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 45,
+    "output_tokens": 12
+  }
+}</code></pre>
+<table><tr><th>Response field</th><th>What it tells you</th></tr>
+<tr><td><code>id</code></td><td>Unique identifier assigned to the response.</td></tr>
+<tr><td><code>type</code></td><td>Object type; normally <code>message</code>.</td></tr>
+<tr><td><code>role</code></td><td><code>assistant</code>, because Claude is replying.</td></tr>
+<tr><td><code>model</code></td><td>Model used for the reply.</td></tr>
+<tr><td><code>content</code></td><td>List of content blocks. Text replies commonly include a block with <code>type: text</code> and a <code>text</code> value. Other applications may receive tool-use or other block types.</td></tr>
+<tr><td><code>stop_reason</code></td><td>Why generation stopped. <code>end_turn</code> means Claude finished; <code>max_tokens</code> means it reached the output limit. Other reasons are possible.</td></tr>
+<tr><td><code>stop_sequence</code></td><td>A matching custom stop sequence, if one was used; otherwise typically <code>null</code>.</td></tr>
+<tr><td><code>usage</code></td><td>Token-usage information, including input and output token counts. Actual usage objects can contain additional fields.</td></tr></table>
+
+<h2>12. Reading the response in Python</h2>
+<pre><code># The SDK returns a Message object, not a Python dictionary.
+print(response.role)          # assistant
+print(response.stop_reason)   # e.g. end_turn
+print(response.usage.output_tokens)
+
+# For a response whose first content block is text:
+message = response.content[0].text
+print(message)</code></pre>
+<p><strong>Why <code>response.content[0].text</code>?</strong> <code>response</code> is the full reply object; <code>content</code> is its list of blocks; <code>[0]</code> selects the first block; and <code>.text</code> reads its generated text. This shortcut works for the simple text-only Student Support Agent, but other applications should inspect each block's <code>type</code> before assuming it contains text.</p>
+<p><strong>Reusable idea:</strong> A future application can change the prompt, system instructions, model, and processing logic while using the same general request/response structure.</p>
+
+<h2>13. Example: applying the structure to the Student Support Agent</h2>
+<p>This is the new code added to the rule-based program. It fills in the standard request structure with a real model ID and the student prompt.</p>
+<pre><code>from anthropic import Anthropic
+client = Anthropic()  # Reads ANTHROPIC_API_KEY
+
+response = client.messages.create(
+    model="claude-sonnet-4-5",
+    max_tokens=150,
+    messages=[{"role": "user", "content": prompt}]
+)
+message = response.content[0].text</code></pre><p><b>Explanation:</b> <code>Anthropic()</code> connects the Python application to Claude using your API key. The <code>prompt</code> asks for a personalized two-sentence message. <code>messages.create()</code> requests the response. <code>response.content[0].text</code> extracts Claude’s generated text. The exact model ID must be available in your Anthropic account.</p>
+<h3>Illustrative result</h3><p>For a student with 65% attendance and 80% assignment score, the fixed rule returns <b>Needs Help</b>. Claude might draft: “I noticed your attendance has been below our target. Would you like to meet to discuss ways I can support you?” This is an example, not a live API output.</p>
+
+<h2>14. Run the Claude version</h2><pre><code>python -m pip install pandas openpyxl anthropic
+$env:ANTHROPIC_API_KEY="YOUR_CLAUDE_API_KEY"
+python student_agent_claude.py</code></pre><p>Run inside the Part 2 folder. The key should be entered locally and never submitted with class files. Claude calls may incur API costs. Use fictional student data; sending real student records to an external API requires appropriate institutional authorization.</p>
+
+<h2>Part D — Compare and Reflect</h2>
+
+<h2>15. Comparison</h2>
+<table><tr><th>Feature</th><th>Rule-based version</th><th>Claude-enhanced version</th></tr><tr><td>Decides who needs help</td><td>Fixed if/else rules</td><td>Same fixed if/else rules</td></tr><tr><td>Writes messages</td><td>Prewritten strings</td><td>Personalized generated text</td></tr><tr><td>Requires API key</td><td>No</td><td>Yes</td></tr><tr><td>Uses machine learning</td><td>No</td><td>Uses pretrained LLM</td></tr><tr><td>Risk</td><td>Rigid thresholds</td><td>Potential inaccurate output; review needed</td></tr><tr><td>Overall type</td><td>Deterministic traditional programming</td><td>LLM-assisted workflow, not autonomous tool-using agent</td></tr></table>
+
+</body></html>
