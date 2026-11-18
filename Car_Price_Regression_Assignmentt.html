@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Used Car Price Prediction — AI Assignment</title><style>
+:root{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#182537;background:#f5f7fb}
+body{max-width:940px;margin:36px auto;padding:0 22px 55px;line-height:1.65}
+header{background:#14345b;color:white;padding:30px;border-radius:16px}header p{color:#dbe8fb}
+h1{line-height:1.2;margin:0 0 12px}h2{color:#153a66;margin-top:32px;border-bottom:2px solid #d9e4f0;padding-bottom:7px}
+section{background:white;padding:20px 26px;margin-top:18px;border-radius:12px;border:1px solid #e0e6ef}
+table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #dce3ec;padding:10px;text-align:left}th{background:#eaf1fa}
+.note{background:#eef5ff;border-left:4px solid #3976bb;padding:12px 16px}
+a{color:#125da6}li{margin:6px 0}@media print{body{margin:0;background:white}section{break-inside:avoid}}
+</style></head><body>
+<header><h1>Used Car Price Prediction</h1><p>AI Project: Compare Linear Regression and Decision Tree Regression</p>
+<p><strong>Due and presentations:</strong> Wednesday, November 17, 2026 · <strong>10–12 minutes per student</strong></p></header>
+<section><h2>Purpose: What Is Regression?</h2><p><strong>Regression</strong> is a type of supervised machine learning used to predict a <strong>numerical value</strong> from input information (features). For example, a car’s age and mileage can help a model estimate its selling price in dollars. Regression learns patterns from examples where the actual price is known, then uses those patterns to estimate prices for cars it has not seen before. The prediction is an estimate, not a guaranteed selling price.</p><p><strong>Purpose of this project:</strong> Use a raw used-car dataset to build two regression models—Linear Regression and Decision Tree Regression. Evaluate both on the same held-out test data using MAE, RMSE, and R², and explain which model you would choose based on the results.</p>
+<p class="note"><strong>No starter code is provided.</strong> You are responsible for researching, writing, running, and explaining your own implementation. Your presentation should focus on results and reasoning—not walking through code.</p></section>
+<section><h2>1. Your raw dataset</h2><p>Use the provided CSV file. It contains intentionally uncleaned data. Do not assume every row is valid. Do not replace the provided data with a pre-cleaned dataset.</p>
+<p>Columns: CarID, Brand, Model, Year, Mileage, Condition, SellingPrice. SellingPrice is the target variable.</p></section>
+<section><h2>2. Required data-cleaning rules</h2><ol>
+<li>Inspect the dataset: report its row count, columns, data types, and missing values.</li>
+<li>Identify duplicate records. Remove genuine duplicate entries, explaining how you determined they were duplicates.</li>
+<li>Find missing values in Year, Mileage, Condition, and SellingPrice. Explain your treatment of each: investigate or exclude records with unverified missing Year; consider training-set median imputation or removal for missing Mileage; consider an Unknown category or removal for missing Condition; remove records with missing SellingPrice because this is the target. Do not invent missing selling prices.</li>
+<li>Detect invalid values: negative mileage, nonpositive prices, and impossible manufacturing years. Explain how you correct or exclude them.</li>
+<li>Standardize inconsistent text values, such as different capitalization or extra spaces in Brand and Condition.</li>
+<li>Convert numeric-looking text (including commas or currency symbols) into valid numbers where appropriate. Handle nonnumeric strings carefully.</li>
+<li>Identify extreme values and investigate them before deciding whether to keep, correct, or remove them.</li>
+<li>Create a CarAge feature from Year using a clearly stated reference year (for example, CarAge = 2026 − Year). If the calculated age is negative, investigate whether Year is a data-entry error or a legitimate future model year. Correct the value only when it can be verified; otherwise exclude the record and document why. Do not arbitrarily change negative ages to zero.</li>
+<li>Explain which features you selected and how you encoded categorical features if you use them.</li>
+<li>Report rows before and after cleaning, with a brief explanation of the changes.</li></ol>
+<p class="note"><strong>Prevent data leakage:</strong> After removing clearly invalid records and duplicates, create the train/test split before fitting any statistics-based imputation or encoding. Learn those preprocessing values from the training set and apply them to the test set.</p></section>
+<section><h2>3. Understand the two algorithms (conceptual level only)</h2>
+<table><tr><th>Linear Regression</th><th>Decision Tree Regression</th></tr>
+<tr><td>Learns an equation that combines input features to predict a numerical price. It represents an approximately linear trend.</td><td>Learns a series of if/then splits, such as whether mileage is above a threshold, and predicts a numerical price from the final group.</td></tr>
+<tr><td>Strength: simple and interpretable; limitation: may miss complex nonlinear patterns.</td><td>Strength: can capture nonlinear patterns; limitation: a deep tree may overfit training data.</td></tr></table>
+<p><strong>You do not need to memorize algorithm formulas.</strong> You must be able to explain in your own words how each algorithm learns, why they can produce different predictions, and one strength and limitation of each.</p></section>
+<section><h2>4. Train and compare fairly</h2><ol>
+<li>Use the same selected features and target for both models.</li>
+<li>Use the same 80% training / 20% held-out test split for both models.</li>
+<li>Train a Linear Regression model and a Decision Tree Regression model. Explain any tree complexity control you chose.</li>
+<li>Predict prices for the same test cars using both models.</li>
+<li>Calculate MAE, RMSE, and R² separately for each model using the test set.</li>
+<li>Display at least five test cars with actual price and both predicted prices.</li></ol></section>
+<section><h2>5. Evaluation metrics: what, how, and why?</h2>
+<table><tr><th>Metric</th><th>How it is calculated</th><th>Why it matters</th></tr>
+<tr><td><strong>MAE</strong> (Mean Absolute Error)</td><td>Take the absolute value of each actual-minus-predicted error, add them, divide by number of cars.</td><td>Shows typical prediction error in dollars. Lower is better.</td></tr>
+<tr><td><strong>RMSE</strong> (Root Mean Squared Error)</td><td>Square each error, average the squares, then take the square root.</td><td>Penalizes large pricing mistakes more strongly. Lower is better.</td></tr>
+<tr><td><strong>R²</strong> (R-squared)</td><td>Compare the model's total squared prediction error with the total squared deviations from the test-set mean price.</td><td>Shows how much variation is explained relative to a mean-price benchmark. Higher is better; values can be negative.</td></tr></table>
+<p><strong>Worked example:</strong> Actual prices = $10,000, $15,000, $20,000; predicted prices = $11,000, $14,000, $18,000. Absolute errors = $1,000, $1,000, $2,000. MAE = (1000+1000+2000)/3 = <strong>$1,333.33</strong>. RMSE = √[(1,000,000+1,000,000+4,000,000)/3] = <strong>$1,414.21</strong>. The actual mean is $15,000, so R² = 1 − 6,000,000/50,000,000 = <strong>0.88</strong>.</p>
+<p><strong>Manual calculation requirement:</strong> Select at least three of your own test records and demonstrate the steps for calculating their MAE and RMSE. Explain why a calculation on three selected rows may differ from the metrics calculated on the entire test set. Show how R² is computed or interpreted using your full test-set results.</p>
+<p><strong>Why calculate metrics yourself?</strong> A prediction alone cannot tell you whether a model is reliable. Metrics quantify error, reveal costly large mistakes, and allow evidence-based comparison. A model with a lower MAE is preferable when typical dollar error matters most; a model with a lower RMSE may be preferable when unusually large mistakes are especially costly. R² helps assess improvement over predicting a constant average, but does not tell you the dollar error.</p></section>
+<section><h2>6. Decision-making questions</h2><p>Use your <em>actual results</em> to answer:</p><ol>
+<li>Which model has the lower MAE? What does that mean in dollars?</li>
+<li>Which has the lower RMSE? Does one model appear to make more serious errors?</li>
+<li>Which has the higher R²? Does that agree with the other metrics?</li>
+<li>What would matter most if a $5,000 pricing mistake were especially costly?</li>
+<li>Which model would you select for this dataset, and why? Cite at least two metrics and discuss a limitation.</li>
+<li>What did cleaning the dataset change, and why was cleaning necessary?</li></ol></section>
+<section><h2>7. Presentation (10–12 minutes; no code walkthrough)</h2><ol>
+<li>Introduce the car-price prediction problem and dataset.</li>
+<li>Explain important data-quality problems and cleaning decisions.</li>
+<li>Explain conceptually what Linear Regression and Decision Tree Regression do, and how they differ.</li>
+<li>Show both models' predictions and a side-by-side table of MAE, RMSE, and R².</li>
+<li>Explain what the metrics mean, how they are calculated, and which real-world decisions each supports.</li>
+<li>State which model you chose, supported by your actual evaluation results, and mention limitations.</li></ol>
+<p class="note">You are presenting your <strong>findings, comparisons, and decisions</strong>, not your Python source code.</p></section>
+<section><h2>8. Submission Requirements</h2><p>Submit <strong>one ZIP folder</strong> containing:</p><ol><li><strong>Two working models:</strong> Linear Regression and Decision Tree Regression, including the code and all files needed to run each model.</li><li><strong>Cleaned dataset:</strong> The cleaned CSV file used to train and test the models.</li><li><strong>Run instructions (README):</strong> Explain step by step how to install required libraries, locate the cleaned CSV file, and run each model. Include the commands needed and describe where predictions and MAE, RMSE, and R² results will appear.</li></ol><p>Before submitting, extract your ZIP into a new folder and verify that <strong>both models run successfully</strong> using the included files, generate car-price predictions, and display MAE, RMSE, and R². Do not rely on files outside the ZIP.</p>
+<p><strong>Focus:</strong> Understanding, experimentation, and thoughtful explanation. Focus on clear reasoning rather than memorizing formulas.</p></section></body></html>
